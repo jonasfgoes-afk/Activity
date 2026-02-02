@@ -1,515 +1,464 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cobra Kai S01E04 (Adults)</title>
+    <title>English Pronunciation Practice - Cobra Kai (S01E06)</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
         }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            width: 100%;
-        }
-        
-        header {
-            background: #2c3e50;
-            color: white;
-            padding: 25px;
+
+        .intro {
+            background-color: #e8f0fe;
+            color: #1a73e8;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #d2e3fc;
+            max-width: 600px;
             text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .slider-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            overflow: hidden;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 0 0 20px 0;
+        }
+
+        .top-header {
+            display: flex;
+            align-items: center;
+            background-color: #ecf0f1;
+            height: 40px;
+            padding: 0 10px;
+            justify-content: space-between;
+        }
+
+        .progress-container {
+            flex-grow: 1;
+            background-color: #bdc3c7;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-right: 15px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #3498db;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .btn-reset {
+            background: none;
+            border: 1px solid #95a5a6;
+            color: #7f8c8d;
+            padding: 4px 8px;
+            font-size: 0.8em;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
         }
         
-        h1 {
-            font-size: 26px;
+        .btn-reset:hover {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .slide-content {
+            padding: 20px 20px 0 20px;
+        }
+
+        .slide {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            animation: fadeIn 0.5s;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .english-text {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
             margin-bottom: 10px;
         }
-        
-        .intro {
-            font-size: 15px;
-            opacity: 0.9;
-            line-height: 1.5;
-            margin-top: 10px;
-            background: rgba(255,255,255,0.1);
-            padding: 10px;
-            border-radius: 8px;
-        }
-        
-        .content {
-            padding: 25px;
-        }
-        
-        .sentence-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
-            border-left: 6px solid #3498db;
-            transition: transform 0.3s, box-shadow 0.3s;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            text-align: left;
-        }
-        
-        .sentence-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-        }
-        
-        .timestamp {
-            display: inline-block;
-            background: #3498db;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-        
-        .portuguese {
-            color: #444;
-            font-size: 18px;
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-        
-        .english {
-            color: #111;
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-        
-        .transliteration {
-            color: #7f8c8d;
+
+        .phonetic-text {
+            font-size: 1.1em;
+            color: #d35400;
             font-style: italic;
-            font-size: 16px;
-            margin-bottom: 20px;
-            line-height: 1.4;
+            margin-bottom: 8px;
         }
-        
+
+        .portuguese-text {
+            font-size: 1em;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+
+        .stage-wrapper {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            justify-content: center;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .stage-segment {
+            flex: 1;
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            transition: background-color 0.4s ease, transform 0.2s;
+        }
+
+        .stage-segment.completed {
+            background-color: #27ae60;
+            transform: scale(1.1);
+        }
+
         .controls {
             display: flex;
-            gap: 12px;
-            margin-top: 10px;
+            gap: 10px;
+            margin-bottom: 15px;
             flex-wrap: wrap;
-            justify-content: flex-start;
-            width: 100%;
+            justify-content: center;
         }
-        
+
         button {
             padding: 10px 20px;
             border: none;
-            border-radius: 8px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            transition: all 0.2s;
+            font-size: 1em;
+            transition: background 0.3s;
             display: flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            gap: 5px;
         }
-        
-        .play-btn { background: #2ecc71; color: white; }
-        .slow-btn { background: #f39c12; color: white; }
-        .record-btn { background: #e74c3c; color: white; }
-        .reset-btn { background: #95a5a6; color: white; margin-left: auto; }
 
-        .record-btn.recording {
-            background: #c0392b;
-            animation: pulse 1.5s infinite;
-        }
-        
-        button:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        .progress-container {
-            margin-top: 20px;
-            background: white;
-            padding: 8px;
-            border-radius: 8px;
-            width: 100%;
-        }
-        
-        .progress-steps {
+        .btn-play { background-color: #3498db; color: white; }
+        .btn-play:hover { background-color: #2980b9; }
+
+        .btn-slow { background-color: #f1c40f; color: #2c3e50; }
+        .btn-slow:hover { background-color: #f39c12; }
+
+        .btn-record { background-color: #e74c3c; color: white; }
+        .btn-record:hover { background-color: #c0392b; }
+        .btn-record.recording { animation: pulse 1.5s infinite; background-color: #c0392b; }
+
+        .nav-controls {
             display: flex;
-            gap: 6px;
-            height: 8px;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding: 15px 20px 0 20px;
+            box-sizing: border-box;
         }
-        
-        .step {
-            flex: 1;
-            background: #ecf0f1;
-            border-radius: 4px;
-            transition: background 0.3s;
+
+        .btn-nav {
+            background-color: #ecf0f1;
+            color: #2c3e50;
         }
+        .btn-nav:hover { background-color: #bdc3c7; }
         
-        .step.completed {
-            background: #2ecc71;
+        .counter {
+            font-weight: bold;
+            color: #7f8c8d;
         }
-        
-        .feedback {
+
+        .result {
             margin-top: 15px;
-            font-size: 15px;
+            font-weight: bold;
             min-height: 24px;
-            font-weight: 500;
+            text-align: center;
+            padding: 0 20px;
         }
-        
-        .feedback.success { color: #27ae60; }
-        .feedback.error { color: #e67e22; }
-        .feedback.listening { color: #e74c3c; font-style: italic; }
+
+        .success { color: #27ae60; }
+        .error { color: #c0392b; }
 
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
 
-        /* Footer Attribution */
         footer {
             text-align: center;
-            margin-top: 30px;
-            padding: 20px;
-            color: #7f8c8d;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 400px;
-            text-align: center;
-        }
-        .close-btn {
             margin-top: 20px;
-            background: #3498db;
-            color: white;
-            width: 100%;
-            justify-content: center;
-            padding: 12px;
-        }
-
-        @media (max-width: 600px) {
-            .controls { justify-content: space-between; }
-            button { flex: 1; justify-content: center; font-size: 13px; padding: 10px 5px; }
-            .english { font-size: 19px; }
-            .reset-btn { margin-left: 0; flex: 0 0 auto; }
+            color: #95a5a6;
+            font-size: 0.8em;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1>🥋 Cobra Kai S01E04</h1>
-        <div class="intro">
-            Acesse o link pelo navegador Chrome. Clique em (▶️ Play) para ouvir, em (🐢 Slow) para ouvir mais lentamente e em (🔴 Record) para treinar a sua pronúncia. Repita cada item com no mínimo 60% da pronúncia correta, por quatro vezes. A identificação de voz tem cerca de 90% de precisão e o programa pode apresentar bugs.
-        </div>
-    </header>
-    
-    <div class="content" id="cards-container">
-        </div>
-</div>
-
-<footer>
-    Created by Jonas Freitas Goes
-</footer>
-
-<div id="error-modal" class="modal">
-    <div class="modal-content">
-        <h3>🎤 Microphone Access</h3>
-        <p style="margin-top:10px; color:#666;">It seems your browser doesn't support direct recording or permission was denied. You can still use the playback features!</p>
-        <button class="close-btn" onclick="closeModal()">Okay</button>
+    <div class="intro">
+        Acesse o link pelo navegador Chrome. Clique em (▶️ Play) para ouvir, em (🐢 Slow) para ouvir mais lentamente e em (🔴 Record) para treinar a sua pronúncia. Repita cada item com no mínimo 60% da pronúncia correta, <strong>por três vezes</strong>.
     </div>
-</div>
 
-<script>
-    // 10151401190618050920011907150519
-    const sentences = [
-        { 
-            time: "02:38", 
-            en: "No! Cobra Kai never dies!", 
-            pt: "Não! O Cobra Kai nunca morre!", 
-            trans: "Nôu! Côbrha Kái néverh dáiz!" 
-        },
-        { 
-            time: "04:42", 
-            en: "Excuse me, officer. Could you just give us a minute?", 
-            pt: "Com licença, policial. Pode nos dar um minuto?", 
-            trans: "Ecskíuzmi óficerh. Cúdiu djâst guívasa mínut?" 
-        },
-        { 
-            time: "06:43", 
-            en: "Your note said he'd be gone two weeks, and it's been almost a month.", 
-            pt: "Seu bilhete dizia que ele ficaria fora duas semanas, e já faz quase um mês.", 
-            trans: "Iórh nôut séríd bigón tchu uícs end itsbinól môusta mânth." 
-        },
-        { 
-            time: "11:20", 
-            en: "You could make something of yourself.", 
-            pt: "Você poderia se tornar alguém na vida.", 
-            trans: "Iu cúdmêic sâmthing oviór sélf." 
-        },
-        { 
-            time: "17:40", 
-            en: "You gave up on day one.", 
-            pt: "Você desistiu no primeiro dia.", 
-            trans: "Iu guêi vâp ondêiuán." 
-        },
-        { 
-            time: "22:29", 
-            en: "I won't fail him again.", 
-            pt: "Não vou falhar com ele de novo.", 
-            trans: "Ái uôunt fêiolrrim aghén." 
-        },
-        { 
-            time: "24:47", 
-            en: "I'm gonna teach you the best defense that you can know.", 
-            pt: "Vou te ensinar a melhor defesa que você pode conhecer.", 
-            trans: "Áimgana títchiu thebést diféns thét iu kenôu." 
-        }
-    ];
+    <div class="slider-container">
+        <div class="top-header">
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <button class="btn-reset" onclick="resetLesson()" title="Reset all progress">🔄 Reset</button>
+        </div>
 
-    const STORAGE_KEY = 'cobra_kai_s01e04_adults_v2';
-    let recognition;
-    let currentRecIndex = -1;
-    let progressData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        <div class="slide-content">
+            <div id="slides-wrapper"></div>
+            <div class="result" id="result-msg"></div>
 
-    function init() {
-        const container = document.getElementById('cards-container');
-        
-        sentences.forEach((item, index) => {
-            if (!progressData[index]) progressData[index] = 0;
+            <div class="nav-controls">
+                <button class="btn-nav" onclick="changeSlide(-1)">⬅️ Previous</button>
+                <span class="counter" id="slide-counter">1 / 7</span>
+                <button class="btn-nav" id="btn-next" onclick="changeSlide(1)">Next ➡️</button>
+            </div>
+        </div>
+    </div>
 
-            const card = document.createElement('div');
-            card.className = 'sentence-card';
-            
-            card.innerHTML = `
-                <div class="timestamp">${item.time}</div>
-                <div class="portuguese">🇧🇷 ${item.pt}</div>
-                <div class="english">🇺🇸 ${item.en}</div>
-                <div class="transliteration">🔤 ${item.trans}</div>
-                
-                <div class="controls">
-                    <button class="play-btn" onclick="speak('${item.en.replace(/'/g, "\\'")}', 1)">▶️ Play</button>
-                    <button class="slow-btn" onclick="speak('${item.en.replace(/'/g, "\\'")}', 0.75)">🐢 Slow</button>
-                    <button class="record-btn" id="rec-${index}" onclick="toggleRecord(${index})">🔴 Record</button>
-                    <button class="reset-btn" onclick="resetProgress(${index})">🔁</button>
-                </div>
-                
-                <div class="feedback" id="feedback-${index}"></div>
+    <footer style="text-align: center; margin-top: 20px;">Created by Jonas Freitas Goes</footer>
 
-                <div class="progress-container">
-                    <div class="progress-steps" id="prog-${index}">
-                        ${renderProgressBar(progressData[index])}
+    <script>
+        // 10151401190618050920011907150519
+
+        const sentences = [
+            {
+                en: "No! Cobra Kai never dies!",
+                pt: "Não! O Cobra Kai nunca morre!",
+                phonetic: "Nôu! Côbrha Kái né-verh dáiz!"
+            },
+            {
+                en: "Excuse me, officer. Could you just give us a minute?",
+                pt: "Com licença, policial. Pode nos dar um minuto?",
+                phonetic: "Ecs-kíuz-mi ó-fi-cerh. Cúd-iú djâst ghív-as a mí-nut?"
+            },
+            {
+                en: "Your note said he'd be gone two weeks, and it's been almost a month.",
+                pt: "Seu bilhete dizia que ele ficaria fora duas semanas, e já faz quase um mês.",
+                phonetic: "Iórh nôut sér-id ríd bi ghón tchu uícs énd its bin ól-môust a mânth."
+            },
+            {
+                en: "You could make something of yourself.",
+                pt: "Você poderia se tornar alguém na vida.",
+                phonetic: "Iú cúd mêic sâm-thing óv iórh sélf."
+            },
+            {
+                en: "You gave up on day one.",
+                pt: "Você desistiu no primeiro dia.",
+                phonetic: "Iú ghêiv áp ón dêi uán."
+            },
+            {
+                en: "I won't fail him again.",
+                pt: "Não vou falhar com ele de novo.",
+                phonetic: "Ái uôunt fêiol rrim a-ghén."
+            },
+            {
+                en: "I'm gonna teach you the best defense that you can know.",
+                pt: "Vou te ensinar a melhor defesa que você pode conhecer.",
+                phonetic: "Áim ghó-na títch iú the bést di-féns thét iú kén nôu."
+            }
+        ];
+
+        let currentSlide = 0;
+        let recognition;
+        let isRecording = false;
+        let slideProgress = new Array(sentences.length).fill(0);
+
+        function init() {
+            const wrapper = document.getElementById('slides-wrapper');
+            sentences.forEach((item, index) => {
+                const slide = document.createElement('div');
+                slide.className = `slide ${index === 0 ? 'active' : ''}`;
+                slide.innerHTML = `
+                    <div class="english-text">${item.en}</div>
+                    <div class="phonetic-text">${item.phonetic}</div>
+                    <div class="portuguese-text">${item.pt}</div>
+                    <div class="stage-wrapper" id="stage-wrapper-${index}">
+                        <div class="stage-segment"></div>
+                        <div class="stage-segment"></div>
+                        <div class="stage-segment"></div>
                     </div>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-
-        // Initialize Speech API
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.lang = 'en-US';
-            recognition.interimResults = false;
-
-            recognition.onstart = () => {
-                document.getElementById(`feedback-${currentRecIndex}`).className = "feedback listening";
-                document.getElementById(`feedback-${currentRecIndex}`).innerText = "Listening...";
-            };
-
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                handleResult(transcript);
-            };
-
-            recognition.onerror = (event) => {
-                stopRecordingUI();
-                const fb = document.getElementById(`feedback-${currentRecIndex}`);
-                if(fb) {
-                    fb.innerText = "Error: Could not hear you clearly.";
-                    fb.className = "feedback error";
-                }
-            };
-            
-            recognition.onend = () => stopRecordingUI();
-        }
-    }
-
-    function toggleRecord(index) {
-        if (!recognition) {
-            document.getElementById('error-modal').style.display = 'flex';
-            return;
+                    <div class="controls">
+                        <button class="btn-play" onclick="playAudio('${item.en.replace(/'/g, "\\'")}', 1)">▶️ Play</button>
+                        <button class="btn-slow" onclick="playAudio('${item.en.replace(/'/g, "\\'")}', 0.5)">🐢 Slow</button>
+                        <button class="btn-record" id="rec-btn-${index}" onclick="toggleRecording(${index})">🔴 Record</button>
+                    </div>
+                `;
+                wrapper.appendChild(slide);
+            });
+            updateUI();
+            setupSpeechRecognition();
         }
 
-        // Mutual Exclusion: Stop playback if active
-        window.speechSynthesis.cancel();
+        function resetLesson() {
+            if(confirm("Tem certeza que deseja reiniciar o progresso?")) {
+                currentSlide = 0;
+                slideProgress = new Array(sentences.length).fill(0);
+                const slides = document.querySelectorAll('.slide');
+                slides.forEach(s => s.classList.remove('active'));
+                slides[0].classList.add('active');
+                document.querySelectorAll('.stage-segment').forEach(seg => seg.classList.remove('completed'));
+                document.getElementById('result-msg').textContent = "";
+                document.getElementById('result-msg').className = "result";
+                speechSynthesis.cancel();
+                if(isRecording) stopRecording(0); 
+                updateUI();
+            }
+        }
 
-        if (currentRecIndex === index) {
+        function changeSlide(direction) {
+            const slides = document.querySelectorAll('.slide');
+            slides[currentSlide].classList.remove('active');
+            speechSynthesis.cancel();
+            if (isRecording) stopRecording(currentSlide);
+            currentSlide += direction;
+            if (currentSlide < 0) currentSlide = slides.length - 1;
+            if (currentSlide >= slides.length) currentSlide = 0;
+            slides[currentSlide].classList.add('active');
+            document.getElementById('result-msg').textContent = "";
+            document.getElementById('result-msg').className = "result";
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('slide-counter').textContent = `${currentSlide + 1} / ${sentences.length}`;
+            const progressPercentage = ((currentSlide + 1) / sentences.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercentage}%`;
+        }
+
+        function updateStageVisuals(slideIndex) {
+            const wrapper = document.getElementById(`stage-wrapper-${slideIndex}`);
+            const segments = wrapper.querySelectorAll('.stage-segment');
+            const score = slideProgress[slideIndex];
+            segments.forEach((seg, i) => {
+                if (i < score) seg.classList.add('completed');
+                else seg.classList.remove('completed');
+            });
+        }
+
+        function playAudio(text, rate) {
+            if (isRecording) stopRecording(currentSlide);
+            speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = rate;
+            speechSynthesis.speak(utterance);
+        }
+
+        function setupSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.onstart = () => {
+                    isRecording = true;
+                    document.getElementById(`rec-btn-${currentSlide}`).classList.add('recording');
+                    document.getElementById('result-msg').textContent = "Listening...";
+                    document.getElementById('result-msg').className = "result";
+                };
+                recognition.onend = () => {
+                    isRecording = false;
+                    const btn = document.getElementById(`rec-btn-${currentSlide}`);
+                    if(btn) btn.classList.remove('recording');
+                };
+                recognition.onresult = (event) => {
+                    const speechResult = event.results[0][0].transcript;
+                    checkPronunciation(speechResult);
+                };
+            } else { alert("Navegador não suportado."); }
+        }
+
+        function toggleRecording(index) {
+            speechSynthesis.cancel();
+            if (isRecording) stopRecording(index);
+            else recognition.start();
+        }
+
+        function stopRecording(index) {
             recognition.stop();
-            return;
+            isRecording = false;
+            const btn = document.getElementById(`rec-btn-${index}`);
+            if(btn) btn.classList.remove('recording');
         }
-        currentRecIndex = index;
-        updateRecordBtnUI(index, true);
-        recognition.start();
-    }
 
-    function handleResult(spokenText) {
-        const targetText = sentences[currentRecIndex].en;
-        const feedbackEl = document.getElementById(`feedback-${currentRecIndex}`);
-        
-        const cleanSpoken = spokenText.toLowerCase().replace(/[^a-z0-9\s]/g, '');
-        const cleanTarget = targetText.toLowerCase().replace(/[^a-z0-9\s]/g, '');
-        
-        // Strict Mode: 60% Similarity required. NO .includes() allowed.
-        const similarity = calculateSimilarity(cleanSpoken, cleanTarget);
-
-        if (similarity > 0.6) {
-            progressData[currentRecIndex] = Math.min(progressData[currentRecIndex] + 1, 4);
-            saveProgress();
-            updateProgressBarUI(currentRecIndex);
-            feedbackEl.innerText = `✅ "${spokenText}" - Good job!`;
-            feedbackEl.className = "feedback success";
-        } else {
-            feedbackEl.innerText = `❌ "${spokenText}" - Try again!`;
-            feedbackEl.className = "feedback error";
+        function checkPronunciation(spokenText) {
+            const targetText = sentences[currentSlide].en;
+            const similarityScore = calculateSimilarity(spokenText.toLowerCase(), targetText.toLowerCase());
+            const msgDiv = document.getElementById('result-msg');
+            const percentage = Math.round(similarityScore * 100);
+            if (similarityScore >= 0.6) {
+                if (slideProgress[currentSlide] < 3) {
+                    slideProgress[currentSlide]++;
+                    updateStageVisuals(currentSlide);
+                }
+                msgDiv.textContent = `✅ Success (${slideProgress[currentSlide]}/3): "${spokenText}" (${percentage}%)`;
+                msgDiv.className = "result success";
+            } else {
+                msgDiv.textContent = `❌ Try again: "${spokenText}" (${percentage}%)`;
+                msgDiv.className = "result error";
+            }
         }
-    }
 
-    function calculateSimilarity(s1, s2) {
-        let longer = s1;
-        let shorter = s2;
-        if (s1.length < s2.length) { longer = s2; shorter = s1; }
-        let longerLength = longer.length;
-        if (longerLength == 0) { return 1.0; }
-        return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
-    }
-    
-    function editDistance(s1, s2) {
-        s1 = s1.toLowerCase(); s2 = s2.toLowerCase();
-        let costs = new Array();
-        for (let i = 0; i <= s1.length; i++) {
-            let lastValue = i;
-            for (let j = 0; j <= s2.length; j++) {
-                if (i == 0) costs[j] = j;
-                else {
-                    if (j > 0) {
+        function calculateSimilarity(s1, s2) {
+            s1 = s1.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
+            s2 = s2.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
+            let longer = s1.length >= s2.length ? s1 : s2;
+            let shorter = s1.length < s2.length ? s1 : s2;
+            if (longer.length === 0) return 1.0;
+            return (longer.length - editDistance(longer, shorter)) / parseFloat(longer.length);
+        }
+
+        function editDistance(s1, s2) {
+            s1 = s1.toLowerCase(); s2 = s2.toLowerCase();
+            const costs = [];
+            for (let i = 0; i <= s1.length; i++) {
+                let lastValue = i;
+                for (let j = 0; j <= s2.length; j++) {
+                    if (i === 0) costs[j] = j;
+                    else if (j > 0) {
                         let newValue = costs[j - 1];
-                        if (s1.charAt(i - 1) != s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-                        costs[j - 1] = lastValue;
-                        lastValue = newValue;
+                        if (s1.charAt(i - 1) !== s2.charAt(j - 1))
+                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                        costs[j - 1] = lastValue; lastValue = newValue;
                     }
                 }
+                if (i > 0) costs[s2.length] = lastValue;
             }
-            if (i > 0) costs[s2.length] = lastValue;
+            return costs[s2.length];
         }
-        return costs[s2.length];
-    }
-
-    function speak(text, rate) {
-        // Mutual Exclusion: Stop recording if active
-        if (recognition && currentRecIndex !== -1) {
-            recognition.abort();
-            stopRecordingUI();
-        }
-
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US';
-        utterance.rate = rate;
-        window.speechSynthesis.speak(utterance);
-    }
-
-    function updateRecordBtnUI(index, isRecording) {
-        document.querySelectorAll('.record-btn').forEach(btn => {
-            btn.classList.remove('recording');
-            btn.innerHTML = '🔴 Record';
-        });
-        if (isRecording) {
-            const btn = document.getElementById(`rec-${index}`);
-            btn.classList.add('recording');
-            btn.innerHTML = '⏹ Stop';
-        }
-    }
-
-    function stopRecordingUI() {
-        updateRecordBtnUI(-1, false);
-        currentRecIndex = -1;
-    }
-
-    function renderProgressBar(level) {
-        let html = '';
-        for (let i = 0; i < 4; i++) {
-            html += `<div class="step ${i < level ? 'completed' : ''}"></div>`;
-        }
-        return html;
-    }
-
-    function updateProgressBarUI(index) {
-        document.getElementById(`prog-${index}`).innerHTML = renderProgressBar(progressData[index]);
-    }
-
-    function resetProgress(index) {
-        progressData[index] = 0;
-        saveProgress();
-        updateProgressBarUI(index);
-        document.getElementById(`feedback-${index}`).innerText = "";
-    }
-
-    function saveProgress() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(progressData));
-    }
-
-    function closeModal() {
-        document.getElementById('error-modal').style.display = 'none';
-    }
-
-    window.onload = init;
-</script>
-
+        init();
+    </script>
 </body>
 </html>
