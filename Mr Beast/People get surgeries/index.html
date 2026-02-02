@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English Practice for Kids!</title>
+    <title>English Pronunciation Practice</title>
     <style>
         body {
-            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
-            background-color: #fffae6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -18,67 +18,72 @@
         }
 
         .intro {
-            background-color: #eef9ff;
+            background-color: #e8f0fe;
             color: #1a73e8;
             padding: 15px;
-            border-radius: 15px;
-            border: 2px dashed #3498db;
+            border-radius: 8px;
+            border: 1px solid #d2e3fc;
             max-width: 600px;
             text-align: center;
             margin-bottom: 20px;
-            font-size: 0.95em;
+            font-size: 0.9em;
             line-height: 1.5;
         }
 
         .slider-container {
             position: relative;
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
             overflow: hidden;
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             padding: 0 0 20px 0;
         }
 
         .top-header {
             display: flex;
             align-items: center;
-            background-color: #f1f3f4;
-            height: 50px;
-            padding: 0 15px;
+            background-color: #ecf0f1;
+            height: 40px;
+            padding: 0 10px;
             justify-content: space-between;
         }
 
         .progress-container {
             flex-grow: 1;
-            background-color: #dfe6e9;
-            height: 12px;
-            border-radius: 6px;
+            background-color: #bdc3c7;
+            height: 8px;
+            border-radius: 4px;
             overflow: hidden;
             margin-right: 15px;
         }
 
         .progress-bar {
             height: 100%;
-            background-color: #2ecc71;
+            background-color: #3498db;
             width: 0%;
             transition: width 0.3s ease;
         }
 
         .btn-reset {
-            background-color: #ff7675;
-            border: none;
-            color: white;
-            padding: 6px 12px;
+            background: none;
+            border: 1px solid #95a5a6;
+            color: #7f8c8d;
+            padding: 4px 8px;
             font-size: 0.8em;
-            border-radius: 8px;
+            border-radius: 4px;
             cursor: pointer;
-            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .btn-reset:hover {
+            background-color: #95a5a6;
+            color: white;
         }
 
         .slide-content {
-            padding: 30px 20px 0 20px;
+            padding: 20px 20px 0 20px;
         }
 
         .slide {
@@ -86,142 +91,136 @@
             flex-direction: column;
             align-items: center;
             text-align: center;
-            animation: bounceIn 0.6s;
+            animation: fadeIn 0.5s;
         }
 
         .slide.active {
             display: flex;
         }
 
-        @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.05); }
-            70% { transform: scale(0.9); }
-            100% { transform: scale(1); opacity: 1; }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .english-text {
-            font-size: 2em;
+            font-size: 1.6em;
             font-weight: bold;
-            color: #2d3436;
+            color: #2c3e50;
             margin-bottom: 10px;
         }
 
         .phonetic-text {
-            font-size: 1.2em;
+            font-size: 1.1em;
             color: #d35400;
             font-style: italic;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
         }
 
         .portuguese-text {
             font-size: 1.1em;
-            color: #636e72;
-            margin-bottom: 25px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
         }
 
         .stage-wrapper {
             display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
+            gap: 8px;
+            margin-bottom: 20px;
             justify-content: center;
             width: 100%;
-            max-width: 150px;
+            max-width: 200px;
         }
 
         .stage-segment {
             flex: 1;
-            height: 15px;
-            background-color: #eee;
-            border-radius: 50%;
-            transition: background-color 0.3s, transform 0.2s;
-            border: 2px solid #ddd;
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            transition: background-color 0.4s ease, transform 0.2s;
         }
 
         .stage-segment.completed {
-            background-color: #f1c40f;
-            transform: scale(1.2);
-            border-color: #f39c12;
+            background-color: #27ae60;
+            transform: scale(1.1);
         }
 
         .controls {
             display: flex;
-            gap: 15px;
+            gap: 10px;
             margin-bottom: 15px;
+            flex-wrap: wrap;
             justify-content: center;
         }
 
         button.action-btn {
-            padding: 12px 25px;
+            padding: 10px 20px;
             border: none;
-            border-radius: 12px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 1.1em;
-            font-weight: bold;
-            color: white;
-            transition: transform 0.2s;
+            font-size: 1em;
+            transition: background 0.3s;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
+            color: white;
         }
 
         .btn-play { background-color: #3498db; }
-        .btn-slow { background-color: #9b59b6; }
+        .btn-slow { background-color: #f1c40f; color: #2c3e50 !important; }
         .btn-record { background-color: #e74c3c; }
-        .btn-record.recording { animation: pulse 1s infinite; }
+        .btn-record.recording { animation: pulse 1.5s infinite; background-color: #c0392b; }
 
         .nav-controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            margin-top: 25px;
-            border-top: 2px solid #f1f3f4;
-            padding: 20px 20px 0 20px;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding: 15px 20px 0 20px;
             box-sizing: border-box;
         }
 
         .btn-nav {
-            background-color: #dfe6e9;
-            color: #2d3436;
+            background-color: #ecf0f1;
+            color: #2c3e50;
             border: none;
-            padding: 10px 18px;
-            border-radius: 10px;
-            font-weight: bold;
+            padding: 8px 15px;
+            border-radius: 5px;
             cursor: pointer;
         }
 
         .counter {
             font-weight: bold;
-            color: #b2bec3;
+            color: #7f8c8d;
         }
 
         .result {
             margin-top: 15px;
             font-weight: bold;
-            min-height: 30px;
+            min-height: 24px;
             text-align: center;
-            color: #2ecc71;
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
 
         footer {
             text-align: center;
-            margin-top: 25px;
+            margin-top: 20px;
             color: #95a5a6;
-            font-size: 0.85em;
+            font-size: 0.8em;
         }
     </style>
 </head>
 <body>
 
     <div class="intro">
-        Acesse o link pelo navegador Chrome. Clique em (▶️ Play) para ouvir, em (🐢 Slow) para ouvir mais lentamente e em (🔴 Record) para treinar a sua pronúncia. Repita cada item com no mínimo 60% da pronúncia correta, <strong>por três vezes</strong>.
+        Acesse o link pelo navegador Chrome. Clique em (▶️ Play) para ouvir, em (🐢 Slow) para ouvir mais lentamente e em (🔴 Record) para treinar a sua pronúncia. Repita cada item com no mínimo 60% da pronúncia correta, por quatro vezes. A identificação de voz tem cerca de 90% de precisão e o programa pode apresentar bugs.
     </div>
 
     <div class="slider-container">
@@ -239,7 +238,7 @@
             <div class="nav-controls">
                 <button class="btn-nav" onclick="changeSlide(-1)">⬅️ Previous</button>
                 <span class="counter" id="slide-counter">1 / 7</span>
-                <button class="btn-nav" onclick="changeSlide(1)">Next ➡️</button>
+                <button class="btn-nav" id="btn-next" onclick="changeSlide(1)">Next ➡️</button>
             </div>
         </div>
     </div>
@@ -291,7 +290,7 @@
         }
 
         function resetLesson() {
-            if(confirm("Reiniciar o jogo?")) {
+            if(confirm("Reiniciar todo o progresso?")) {
                 currentSlide = 0;
                 slideProgress.fill(0);
                 const slides = document.querySelectorAll('.slide');
@@ -303,12 +302,12 @@
             }
         }
 
-        function changeSlide(dir) {
+        function changeSlide(direction) {
             const slides = document.querySelectorAll('.slide');
             slides[currentSlide].classList.remove('active');
             speechSynthesis.cancel();
             if (isRecording) stopRecording(currentSlide);
-            currentSlide = (currentSlide + dir + sentences.length) % sentences.length;
+            currentSlide = (currentSlide + direction + sentences.length) % sentences.length;
             slides[currentSlide].classList.add('active');
             document.getElementById('result-msg').textContent = "";
             updateUI();
@@ -337,8 +336,9 @@
         }
 
         function setupSpeechRecognition() {
-            if ('webkitSpeechRecognition' in window) {
-                recognition = new webkitSpeechRecognition();
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
                 recognition.lang = 'en-US';
                 recognition.onstart = () => {
                     isRecording = true;
@@ -373,11 +373,9 @@
                     slideProgress[currentSlide]++;
                     updateStageVisuals(currentSlide);
                 }
-                msg.innerHTML = `🌟 You said: "${spoken}"`;
-                msg.style.color = "#2ecc71";
+                msg.innerHTML = `<span style="color: #27ae60">✅ Correct: "${spoken}"</span>`;
             } else {
-                msg.innerHTML = `☁️ Try again: "${spoken}"`;
-                msg.style.color = "#e74c3c";
+                msg.innerHTML = `<span style="color: #c0392b">❌ Try again: "${spoken}"</span>`;
             }
         }
 
