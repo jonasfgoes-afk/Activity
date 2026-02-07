@@ -16,7 +16,7 @@ body { font-family:'Inter',sans-serif; background:#f3f4f6; }
 .type-affirmative { color:#059669; }
 .type-negative { color:#dc2626; }
 .type-interrogative { color:#2563eb; }
-.recording-pulse { animation:pulse 1.2s infinite; color:#ef4444; }
+.recording-pulse { animation:pulse 1.2s infinite; }
 @keyframes pulse { 0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)} }
 .step-dot { width:12px; height:12px; border-radius:50%; border:2px solid #e5e7eb; transition:.3s; }
 .step-dot.active { background:#10b981; border-color:#10b981; box-shadow:0 0 8px rgba(16,185,129,.4); }
@@ -30,7 +30,7 @@ body { font-family:'Inter',sans-serif; background:#f3f4f6; }
     <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Jonas Way English</span>
     <span id="counter" class="text-sm font-semibold text-gray-700">Loading…</span>
   </div>
-  <button onclick="confirmReset()" class="text-gray-400 hover:text-red-500">⟲</button>
+  <button onclick="confirmReset()" class="text-gray-400 hover:text-red-500 text-xl">⟲</button>
 </div>
 
 <div class="w-full max-w-md bg-white rounded-b-xl shadow-lg p-8 min-h-[480px] flex flex-col justify-between">
@@ -95,12 +95,13 @@ function init() {
         <div id="step-${i}-3" class="step-dot"></div>
       </div>
 
-      <div class="flex justify-center items-center gap-4">
-        <button onclick="playAudio('${item.en}',0.5)" class="w-12 h-12 bg-orange-50 text-orange-500 rounded-full">🐢</button>
-        <button onclick="playAudio('${item.en}',1)" class="w-20 h-20 bg-blue-600 text-white rounded-full">▶️</button>
-        <button onclick="toggleRecording()" class="w-16 h-16 bg-red-100 text-red-600 rounded-full">🎤</button>
+      <div class="flex justify-center items-center gap-6">
+        <button onclick="playAudio('${item.en}',0.5)" class="w-12 h-12 rounded-full text-2xl">🐢</button>
+        <button onclick="playAudio('${item.en}',1)" class="w-20 h-20 rounded-full text-3xl">▶️</button>
+        <button onclick="toggleRecording()" class="w-16 h-16 rounded-full text-2xl">🎤</button>
       </div>
     `;
+
     wrapper.appendChild(card);
 
     const d = document.createElement("div");
@@ -140,9 +141,8 @@ function setupSpeechRecognition() {
 
   recognition.onend = () => isRecording = false;
 
-  recognition.onresult = e => {
+  recognition.onresult = e =>
     checkPronunciation(e.results[0][0].transcript);
-  };
 }
 
 function toggleRecording() {
@@ -151,7 +151,7 @@ function toggleRecording() {
 }
 
 /* =======================
-   PRONUNCIATION FEEDBACK
+   FEEDBACK
 ======================= */
 function checkPronunciation(spokenText) {
   const target = sentences[currentIndex].en;
@@ -169,9 +169,11 @@ function checkPronunciation(spokenText) {
         `step-${currentIndex}-${slideProgress[currentIndex]}`
       ).classList.add("active");
     }
-    msg.innerHTML = `<span class="text-green-500">✅ Success (${Math.round(score*100)}%): "${spokenText}"</span>`;
+    msg.innerHTML =
+      `✅ Success (${Math.round(score*100)}%): "${spokenText}"`;
   } else {
-    msg.innerHTML = `<span class="text-red-500">❌ Try again (${Math.round(score*100)}%): "${spokenText}"</span>`;
+    msg.innerHTML =
+      `❌ Try again (${Math.round(score*100)}%): "${spokenText}"`;
   }
 
   updateUI();
@@ -185,7 +187,7 @@ function calculateSimilarity(s1, s2) {
   s2 = s2.replace(/[^\w\s]/g,"").trim();
   let longer = s1.length < s2.length ? s2 : s1;
   let shorter = s1.length < s2.length ? s1 : s2;
-  if (longer.length === 0) return 1.0;
+  if (!longer.length) return 1.0;
 
   const costs = [];
   for (let i=0;i<=longer.length;i++){
@@ -226,5 +228,6 @@ function confirmReset() {
   if (confirm("Reset everything?")) location.reload();
 }
 </script>
+
 </body>
 </html>
