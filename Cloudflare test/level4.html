@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Jonas Way English - Mastery System</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jonas Way English – Level 4</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -17,19 +17,9 @@ body { font-family:'Inter',sans-serif; background:#f3f4f6; }
 .type-negative { color:#dc2626; }
 .type-interrogative { color:#2563eb; }
 .recording-pulse { animation:pulse 1.2s infinite; }
-@keyframes pulse {
-  0%{transform:scale(1)}
-  50%{transform:scale(1.1)}
-  100%{transform:scale(1)}
-}
-.step-dot {
-  width:12px;height:12px;border-radius:50%;
-  border:2px solid #e5e7eb;transition:.3s;
-}
-.step-dot.active {
-  background:#10b981;border-color:#10b981;
-  box-shadow:0 0 8px rgba(16,185,129,.4);
-}
+@keyframes pulse { 0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)} }
+.step-dot { width:12px; height:12px; border-radius:50%; border:2px solid #e5e7eb; transition:.3s; }
+.step-dot.active { background:#10b981; border-color:#10b981; box-shadow:0 0 8px rgba(16,185,129,.4); }
 </style>
 </head>
 
@@ -38,81 +28,73 @@ body { font-family:'Inter',sans-serif; background:#f3f4f6; }
 <!-- HEADER -->
 <div class="w-full max-w-md bg-white rounded-t-xl shadow-sm border-b p-4 flex justify-between items-center">
   <div>
-    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Jonas Way English</span><br />
+    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Jonas Way English</span><br>
     <span id="counter" class="text-sm font-semibold text-gray-700">Loading…</span>
   </div>
-  <button onclick="confirmReset()" class="text-xl text-gray-400 hover:text-red-500">⟲</button>
+  <button onclick="confirmReset()" class="text-gray-400 hover:text-red-500 text-xl">⟲</button>
 </div>
 
-<!-- CARD -->
+<!-- MAIN -->
 <div class="w-full max-w-md bg-white rounded-b-xl shadow-lg p-8 min-h-[480px] flex flex-col justify-between">
+
   <div id="cards-wrapper"></div>
 
   <div id="result-msg" class="min-h-[40px] text-center font-bold text-sm mt-2"></div>
 
   <div class="mt-4">
     <div class="flex justify-between gap-4 mb-6">
-      <button onclick="changeSlide(-1)" class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-lg font-bold">Back</button>
-      <button onclick="changeSlide(1)" class="flex-1 py-3 bg-gray-800 text-white rounded-lg font-bold">Next</button>
+      <button onclick="changeSlide(-1)" class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-lg font-bold hover:bg-gray-200">Back</button>
+      <button onclick="changeSlide(1)" class="flex-1 py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-black">Next</button>
     </div>
     <div id="global-progress" class="flex justify-center gap-1.5"></div>
   </div>
 </div>
 
-<footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method v5.0</footer>
+<footer class="mt-6 text-gray-400 text-xs">
+  Jonas Way English – Mastery Method · Level 4
+</footer>
 
 <script>
-/* =====================
-   DATA
-===================== */
-const sentences = [
-  { type:"Affirmative", en:"I do my best.", pt:"Eu dou o meu melhor.", phonetic:"ai du mái bést" },
-  { type:"Affirmative", en:"You do your best.", pt:"Você dá o seu melhor.", phonetic:"iú du iórh bést" },
-  { type:"Affirmative", en:"He does his best.", pt:"Ele dá o seu melhor.", phonetic:"ri dâz rís bést" },
-  { type:"Affirmative", en:"She does her best.", pt:"Ela dá o seu melhor.", phonetic:"chí dâz rhêr bést" },
-  { type:"Affirmative", en:"It does its best.", pt:"Isso dá o seu melhor.", phonetic:"êt dâz êts bést" },
-  { type:"Affirmative", en:"We do our best.", pt:"Nós damos o nosso melhor.", phonetic:"uí du áuôr bést" },
-  { type:"Affirmative", en:"They do their best.", pt:"Eles dão o seu melhor.", phonetic:"thêi du thêr bést" },
-
-  { type:"Negative", en:"I don’t do my best.", pt:"Eu não dou o meu melhor.", phonetic:"ai dôunt du mái bést" },
-  { type:"Negative", en:"You don’t do your best.", pt:"Você não dá o seu melhor.", phonetic:"iúron du iórh bést" },
-  { type:"Negative", en:"He doesn’t do his best.", pt:"Ele não dá o seu melhor.", phonetic:"ri dâzênt du rís bést" },
-  { type:"Negative", en:"She doesn’t do her best.", pt:"Ela não dá o seu melhor.", phonetic:"chí dâzênt du rhêr bést" },
-  { type:"Negative", en:"It doesn’t do its best.", pt:"Isso não dá o seu melhor.", phonetic:"êt dâzênt du êts bést" },
-  { type:"Negative", en:"We don’t do our best.", pt:"Nós não damos o nosso melhor.", phonetic:"uíron du áuôr bést" },
-  { type:"Negative", en:"They don’t do their best.", pt:"Eles não dão o seu melhor.", phonetic:"thêi dôunt du thêr bést" },
-
-  { type:"Interrogative", en:"Do I do my best?", pt:"Eu dou o meu melhor?", phonetic:"duái du mái bést" },
-  { type:"Interrogative", en:"Do you do your best?", pt:"Você dá o seu melhor?", phonetic:"duiú du iórh bést" },
-  { type:"Interrogative", en:"Does he do his best?", pt:"Ele dá o seu melhor?", phonetic:"dâz ri du rís bést" },
-  { type:"Interrogative", en:"Does she do her best?", pt:"Ela dá o seu melhor?", phonetic:"dâz chí du rhêr bést" },
-  { type:"Interrogative", en:"Does it do its best?", pt:"Isso dá o seu melhor?", phonetic:"dâzêt du êts bést" },
-  { type:"Interrogative", en:"Do we do our best?", pt:"Nós damos o nosso melhor?", phonetic:"du uí du áuôr bést" },
-  { type:"Interrogative", en:"Do they do their best?", pt:"Eles dão o seu melhor?", phonetic:"du thêi du thêr bést" }
-];
-
+/* =======================
+   GLOBAL STATE
+======================= */
+let sentences = [];
 let currentIndex = 0;
-let slideProgress = new Array(sentences.length).fill(0);
 let isRecording = false;
+let slideProgress = [];
 let recognition;
 
-/* =====================
+/* =======================
+   FETCH FROM WORKER
+======================= */
+fetch("https://level4.jonasfgoes.workers.dev/")
+.then(res => res.json())
+.then(data => {
+  sentences = data;
+  slideProgress = new Array(sentences.length).fill(0);
+  init();
+})
+.catch(() => alert("Failed to load content"));
+
+/* =======================
    INIT
-===================== */
+======================= */
 function init() {
   const wrapper = document.getElementById("cards-wrapper");
   const globalProgress = document.getElementById("global-progress");
+
   wrapper.innerHTML = "";
   globalProgress.innerHTML = "";
 
-  sentences.forEach((s,i)=>{
-    const card=document.createElement("div");
-    card.className=`card ${i===0?"active":""} text-center`;
-    card.innerHTML=`
-      <span class="grammar-tag type-${s.type.toLowerCase()}">${s.type}</span>
-      <h2 class="text-3xl font-bold mt-2 mb-2">${s.en}</h2>
-      <p class="text-blue-600 italic mb-1">${s.phonetic}</p>
-      <p class="text-gray-400 text-sm mb-6">${s.pt}</p>
+  sentences.forEach((item, i) => {
+    const card = document.createElement("div");
+    card.className = `card ${i===0?"active":""} text-center`;
+
+    card.innerHTML = `
+      <span class="grammar-tag type-${item.type.toLowerCase()}">${item.type}</span>
+      <h2 class="text-3xl font-bold text-gray-800 mt-2 mb-2">${item.en}</h2>
+      <p class="text-xl text-blue-600 italic mb-1">${item.phonetic}</p>
+      <p class="text-gray-400 text-sm mb-6">${item.pt}</p>
 
       <div class="flex justify-center gap-3 mb-8">
         <div id="step-${i}-1" class="step-dot"></div>
@@ -120,16 +102,26 @@ function init() {
         <div id="step-${i}-3" class="step-dot"></div>
       </div>
 
-      <div class="flex justify-center items-center gap-6">
-        <button onclick="playAudio('${s.en}',0.5)" class="text-2xl">🐢</button>
-        <button onclick="playAudio('${s.en}',1)" class="text-3xl">▶️</button>
-        <button onclick="toggleRecording()" class="text-2xl">🎤</button>
+      <div class="w-full flex justify-center">
+        <div class="flex items-center gap-6 mx-auto">
+          <button onclick="playAudio('${item.en}',0.6)"
+            class="w-12 h-12 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center hover:bg-orange-100">🐢</button>
+
+          <button onclick="playAudio('${item.en}',1)"
+            class="w-20 h-20 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700">▶️</button>
+
+          <button onclick="toggleRecording()"
+            class="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center hover:bg-red-200">
+            <span id="mic-icon-${i}">🎤</span>
+          </button>
+        </div>
       </div>
     `;
+
     wrapper.appendChild(card);
 
-    const d=document.createElement("div");
-    d.className="h-1 w-3 rounded-full bg-gray-200";
+    const d = document.createElement("div");
+    d.className = "h-1 w-3 rounded-full bg-gray-200";
     globalProgress.appendChild(d);
   });
 
@@ -137,99 +129,117 @@ function init() {
   updateUI();
 }
 
-/* =====================
+/* =======================
    AUDIO
-===================== */
-function playAudio(text,rate){
+======================= */
+function playAudio(text, rate) {
   speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang="en-US"; u.rate=rate;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "en-US";
+  u.rate = rate;
   speechSynthesis.speak(u);
 }
 
-/* =====================
-   SPEECH
-===================== */
-function setupSpeechRecognition(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR) return alert("Chrome required");
-  recognition=new SR();
-  recognition.lang="en-US";
+/* =======================
+   SPEECH RECOGNITION
+======================= */
+function setupSpeechRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return alert("Chrome required.");
 
-  recognition.onstart=()=>{
-    isRecording=true;
-    document.getElementById("result-msg").innerText="Listening...";
+  recognition = new SR();
+  recognition.lang = "en-US";
+
+  recognition.onstart = () => {
+    isRecording = true;
+    document.getElementById(`mic-icon-${currentIndex}`).classList.add("recording-pulse");
+    document.getElementById("result-msg").innerText = "Listening...";
   };
-  recognition.onend=()=>isRecording=false;
-  recognition.onresult=e=>checkPronunciation(e.results[0][0].transcript);
+
+  recognition.onend = () => {
+    isRecording = false;
+    document.getElementById(`mic-icon-${currentIndex}`).classList.remove("recording-pulse");
+  };
+
+  recognition.onresult = e =>
+    checkPronunciation(e.results[0][0].transcript);
 }
 
-function toggleRecording(){
-  isRecording ? recognition.stop() : recognition.start();
+function toggleRecording() {
+  if (isRecording) recognition.stop();
+  else recognition.start();
 }
 
-/* =====================
+/* =======================
    FEEDBACK
-===================== */
-function checkPronunciation(text){
-  const target=sentences[currentIndex].en;
-  const score=similarity(text,target);
-  const msg=document.getElementById("result-msg");
+======================= */
+function checkPronunciation(spokenText) {
+  const target = sentences[currentIndex].en;
+  const score = calculateSimilarity(spokenText.toLowerCase(), target.toLowerCase());
+  const msg = document.getElementById("result-msg");
 
-  if(score>=0.6){
-    if(slideProgress[currentIndex]<3){
+  if (score >= 0.6) {
+    if (slideProgress[currentIndex] < 3) {
       slideProgress[currentIndex]++;
       document.getElementById(`step-${currentIndex}-${slideProgress[currentIndex]}`).classList.add("active");
     }
-    msg.innerHTML=`✅ Success (${Math.round(score*100)}%): "${text}"`;
-  }else{
-    msg.innerHTML=`❌ Try again (${Math.round(score*100)}%): "${text}"`;
+    msg.innerHTML = `✅ Success (${Math.round(score*100)}%): "${spokenText}"`;
+  } else {
+    msg.innerHTML = `❌ Try again (${Math.round(score*100)}%): "${spokenText}"`;
   }
+
   updateUI();
 }
 
-function similarity(a,b){
-  a=a.toLowerCase().replace(/[^\w\s]/g,"");
-  b=b.toLowerCase().replace(/[^\w\s]/g,"");
-  const longer=a.length>b.length?a:b;
-  const shorter=a.length>b.length?b:a;
-  if(!longer.length) return 1;
-  const costs=[];
-  for(let i=0;i<=longer.length;i++){
+/* =======================
+   SIMILARITY
+======================= */
+function calculateSimilarity(s1, s2) {
+  s1 = s1.replace(/[^\w\s]/g,"").trim();
+  s2 = s2.replace(/[^\w\s]/g,"").trim();
+  let longer = s1.length < s2.length ? s2 : s1;
+  let shorter = s1.length < s2.length ? s1 : s2;
+  if (!longer.length) return 1.0;
+
+  const costs = [];
+  for (let i=0;i<=longer.length;i++){
     let last=i;
-    for(let j=0;j<=shorter.length;j++){
-      if(i===0) costs[j]=j;
-      else if(j>0){
+    for (let j=0;j<=shorter.length;j++){
+      if (i===0) costs[j]=j;
+      else if (j>0){
         let v=costs[j-1];
-        if(longer[i-1]!==shorter[j-1])
+        if (longer[i-1]!==shorter[j-1])
           v=Math.min(v,last,costs[j])+1;
-        costs[j-1]=last; last=v;
+        costs[j-1]=last;
+        last=v;
       }
     }
-    if(i>0) costs[shorter.length]=last;
+    if (i>0) costs[shorter.length]=last;
   }
   return (longer.length-costs[shorter.length])/longer.length;
 }
 
-/* =====================
+/* =======================
    UI
-===================== */
-function updateUI(){
-  document.querySelectorAll(".card").forEach((c,i)=>c.classList.toggle("active",i===currentIndex));
-  document.getElementById("counter").innerText=`Card ${currentIndex+1} of ${sentences.length}`;
+======================= */
+function updateUI() {
+  document.querySelectorAll(".card").forEach((c,i)=>
+    c.classList.toggle("active", i===currentIndex)
+  );
+  document.getElementById("counter").innerText =
+    `Card ${currentIndex+1} of ${sentences.length}`;
 }
 
-function changeSlide(dir){
-  currentIndex=(currentIndex+dir+sentences.length)%sentences.length;
-  document.getElementById("result-msg").innerText="";
+function changeSlide(dir) {
+  currentIndex = (currentIndex + dir + sentences.length) % sentences.length;
+  document.getElementById("result-msg").innerText = "";
   updateUI();
 }
 
-function confirmReset(){
-  if(confirm("Reset everything?")) location.reload();
+function confirmReset() {
+  if (confirm("Reset everything?")) location.reload();
 }
-
-init();
 </script>
+
 </body>
 </html>
