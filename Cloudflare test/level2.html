@@ -1,26 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jonas Way English – Level 2</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jonas Way English - Mastery System</title>
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <style>
-    body { font-family: 'Inter', sans-serif; background:#f3f4f6; }
-    .card { display:none; }
-    .card.active { display:block; }
-    .grammar-tag { font-size:.75rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
-    .type-affirmative { color:#059669; }
-    .type-negative { color:#dc2626; }
-    .type-interrogative { color:#2563eb; }
-    .recording-pulse { animation:pulse 1.2s infinite; color:#ef4444; }
-    @keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.1)} 100%{transform:scale(1)} }
-    .step-dot { width:12px; height:12px; border-radius:50%; border:2px solid #e5e7eb; }
-    .step-dot.active { background:#10b981; border-color:#10b981; box-shadow:0 0 8px rgba(16,185,129,.4); }
-  </style>
+<style>
+body { font-family:'Inter',sans-serif; background:#f3f4f6; }
+.card { display:none; }
+.card.active { display:block; }
+.grammar-tag { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+.type-affirmative { color:#059669; }
+.type-negative { color:#dc2626; }
+.type-interrogative { color:#2563eb; }
+.recording-pulse { animation:pulse 1.2s infinite; color:#ef4444; }
+@keyframes pulse { 0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)} }
+.step-dot { width:12px; height:12px; border-radius:50%; border:2px solid #e5e7eb; transition:.3s; }
+.step-dot.active { background:#10b981; border-color:#10b981; box-shadow:0 0 8px rgba(16,185,129,.4); }
+</style>
 </head>
 
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
@@ -31,66 +31,53 @@
     <div id="counter" class="text-sm font-semibold text-gray-700">Loading…</div>
   </div>
   <button onclick="confirmReset()" class="text-gray-400 hover:text-red-500">
-    ⟳
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+    </svg>
   </button>
 </div>
 
 <div class="w-full max-w-md bg-white rounded-b-xl shadow-lg p-8 min-h-[480px] flex flex-col justify-between">
   <div id="cards-wrapper"></div>
-
   <div id="result-msg" class="min-h-[40px] text-center font-bold text-sm mt-2"></div>
 
   <div class="mt-4">
     <div class="flex justify-between gap-4 mb-6">
-      <button onclick="changeSlide(-1)" class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-lg font-bold hover:bg-gray-200">
-        Back
-      </button>
-      <button onclick="changeSlide(1)" class="flex-1 py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-black">
-        Next
-      </button>
+      <button onclick="changeSlide(-1)" class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-lg font-bold hover:bg-gray-200">Back</button>
+      <button onclick="changeSlide(1)" class="flex-1 py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-black">Next</button>
     </div>
     <div id="global-progress" class="flex justify-center gap-1.5"></div>
   </div>
 </div>
 
-<footer class="mt-6 text-gray-400 text-xs">
-  Jonas Way English – Mastery Method
-</footer>
+<footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method</footer>
 
 <script>
-/* ===== GLOBAL STATE ===== */
-let sentences = [];
-let currentIndex = 0;
-let slideProgress = [];
-let isRecording = false;
-let recognition;
+let sentences=[], currentIndex=0, slideProgress=[], isRecording=false, recognition;
 
-/* ===== FETCH FROM WORKER ===== */
+/* FETCH */
 fetch("https://level2.jonasfgoes.workers.dev/")
-  .then(r => r.json())
-  .then(data => {
-    sentences = data;
-    slideProgress = new Array(sentences.length).fill(0);
-    init();
-  })
-  .catch(() => alert("Failed to load content"));
+.then(r=>r.json())
+.then(data=>{
+  sentences=data;
+  slideProgress=new Array(sentences.length).fill(0);
+  init();
+})
+.catch(()=>alert("Failed to load content"));
 
-/* ===== INIT ===== */
-function init() {
-  const wrapper = document.getElementById("cards-wrapper");
-  const progress = document.getElementById("global-progress");
+function init(){
+  const w=document.getElementById("cards-wrapper");
+  const g=document.getElementById("global-progress");
+  w.innerHTML=""; g.innerHTML="";
 
-  wrapper.innerHTML = "";
-  progress.innerHTML = "";
-
-  sentences.forEach((s, i) => {
-    const card = document.createElement("div");
-    card.className = `card ${i === 0 ? "active" : ""} text-center`;
-
-    card.innerHTML = `
+  sentences.forEach((s,i)=>{
+    const c=document.createElement("div");
+    c.className=`card ${i===0?"active":""} text-center`;
+    c.innerHTML=`
       <span class="grammar-tag type-${s.type.toLowerCase()}">${s.type}</span>
-      <h2 class="text-3xl font-bold text-gray-800 mt-2">${s.en}</h2>
-      <p class="text-xl text-blue-600 italic">${s.phonetic}</p>
+      <h2 class="text-3xl font-bold text-gray-800 mt-2 mb-2">${s.en}</h2>
+      <p class="text-xl text-blue-600 italic mb-1">${s.phonetic}</p>
       <p class="text-gray-400 text-sm mb-6">${s.pt}</p>
 
       <div class="flex justify-center gap-3 mb-8">
@@ -99,121 +86,118 @@ function init() {
         <div id="step-${i}-3" class="step-dot"></div>
       </div>
 
-      <div class="flex justify-center gap-4">
-        <button onclick="playAudio('${s.en}',0.5)" class="w-12 h-12 bg-orange-50 text-orange-500 rounded-full">🐢</button>
-        <button onclick="playAudio('${s.en}',1)" class="w-20 h-20 bg-blue-600 text-white rounded-full">▶</button>
-        <button onclick="toggleRecording()" class="w-16 h-16 bg-red-100 text-red-600 rounded-full">
-          <span id="mic-icon-${i}">🎤</span>
+      <div class="flex justify-center items-center gap-4">
+        <button onclick="playAudio('${s.en}',0.5)" class="w-12 h-12 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center hover:bg-orange-100">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path d="M12 7v5l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0"/>
+          </svg>
         </button>
-      </div>
-    `;
 
-    wrapper.appendChild(card);
+        <button onclick="playAudio('${s.en}',1)" class="w-20 h-20 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+          </svg>
+        </button>
 
-    const dot = document.createElement("div");
-    dot.className = "h-1 w-3 rounded-full bg-gray-200";
-    progress.appendChild(dot);
+        <button onclick="toggleRecording()" class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-200">
+          <svg id="mic-icon-${i}" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+          </svg>
+        </button>
+      </div>`;
+    w.appendChild(c);
+
+    const d=document.createElement("div");
+    d.className="h-1 w-3 rounded-full bg-gray-200";
+    g.appendChild(d);
   });
 
   setupSpeechRecognition();
   updateUI();
 }
 
-/* ===== AUDIO ===== */
-function playAudio(text, rate) {
+/* AUDIO */
+function playAudio(t,r){
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = "en-US";
-  u.rate = rate;
+  const u=new SpeechSynthesisUtterance(t);
+  u.lang="en-US"; u.rate=r;
   speechSynthesis.speak(u);
 }
 
-/* ===== SPEECH RECOGNITION ===== */
-function setupSpeechRecognition() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return alert("Chrome required");
+/* SPEECH */
+function setupSpeechRecognition(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR) return alert("Chrome required");
+  recognition=new SR(); recognition.lang="en-US";
 
-  recognition = new SR();
-  recognition.lang = "en-US";
-
-  recognition.onstart = () => {
-    isRecording = true;
+  recognition.onstart=()=>{
+    isRecording=true;
     document.getElementById(`mic-icon-${currentIndex}`).classList.add("recording-pulse");
-    document.getElementById("result-msg").innerText = "Listening…";
+    document.getElementById("result-msg").innerText="Listening...";
   };
-
-  recognition.onend = () => {
-    isRecording = false;
+  recognition.onend=()=>{
+    isRecording=false;
     document.getElementById(`mic-icon-${currentIndex}`).classList.remove("recording-pulse");
   };
-
-  recognition.onresult = e => checkPronunciation(e.results[0][0].transcript);
+  recognition.onresult=e=>checkPronunciation(e.results[0][0].transcript);
 }
 
-function toggleRecording() {
-  isRecording ? recognition.stop() : recognition.start();
-}
+function toggleRecording(){ isRecording?recognition.stop():recognition.start(); }
 
-/* ===== FEEDBACK ===== */
-function checkPronunciation(spoken) {
-  const target = sentences[currentIndex].en;
-  const score = similarity(spoken.toLowerCase(), target.toLowerCase());
-  const msg = document.getElementById("result-msg");
+/* FEEDBACK */
+function checkPronunciation(spoken){
+  const target=sentences[currentIndex].en.toLowerCase();
+  const score=similarity(spoken.toLowerCase(),target);
+  const msg=document.getElementById("result-msg");
 
-  if (score >= 0.6) {
-    if (slideProgress[currentIndex] < 3) {
+  if(score>=0.6){
+    if(slideProgress[currentIndex]<3){
       slideProgress[currentIndex]++;
       document.getElementById(`step-${currentIndex}-${slideProgress[currentIndex]}`).classList.add("active");
     }
-    msg.innerHTML = `✅ Success (${Math.round(score*100)}%): "${spoken}"`;
-  } else {
-    msg.innerHTML = `❌ Try again (${Math.round(score*100)}%): "${spoken}"`;
+    msg.innerHTML=`<span class="text-green-500">"${spoken}"</span>`;
+  }else{
+    msg.innerHTML=`<span class="text-red-500">"${spoken}"</span>`;
   }
-
   updateUI();
 }
 
-/* ===== SIMILARITY ===== */
+/* SIMILARITY */
 function similarity(a,b){
   a=a.replace(/[^\w\s]/g,""); b=b.replace(/[^\w\s]/g,"");
-  if(!a.length||!b.length) return 0;
-  let longer=a.length>b.length?a:b, shorter=a.length>b.length?b:a;
-  return (longer.length - levenshtein(longer,shorter)) / longer.length;
+  if(!a||!b) return 0;
+  let l=a.length>b.length?a:b, s=a.length>b.length?b:a;
+  return (l.length-lev(l,s))/l.length;
+}
+function lev(a,b){
+  const c=[];
+  for(let i=0;i<=a.length;i++){
+    let last=i;
+    for(let j=0;j<=b.length;j++){
+      if(i===0)c[j]=j;
+      else if(j>0){
+        let v=c[j-1];
+        if(a[i-1]!==b[j-1])v=Math.min(v,last,c[j])+1;
+        c[j-1]=last; last=v;
+      }
+    }
+    if(i>0)c[b.length]=last;
+  }
+  return c[b.length];
 }
 
-function levenshtein(a,b){
-  const m=[];
-  for(let i=0;i<=b.length;i++)m[i]=[i];
-  for(let j=0;j<=a.length;j++)m[0][j]=j;
-  for(let i=1;i<=b.length;i++)
-    for(let j=1;j<=a.length;j++)
-      m[i][j]=b[i-1]==a[j-1]?m[i-1][j-1]:
-      Math.min(m[i-1][j-1]+1,m[i][j-1]+1,m[i-1][j]+1);
-  return m[b.length][a.length];
-}
-
-/* ===== UI ===== */
-function updateUI() {
+/* UI */
+function updateUI(){
   document.querySelectorAll(".card").forEach((c,i)=>c.classList.toggle("active",i===currentIndex));
   document.querySelectorAll("#global-progress div").forEach((d,i)=>{
-    d.className = `h-1 w-3 rounded-full ${
-      i===currentIndex?"bg-gray-800 w-6":slideProgress[i]===3?"bg-green-500":"bg-gray-200"
-    }`;
+    d.className=`h-1 w-3 rounded-full ${i===currentIndex?"bg-gray-800 w-6":slideProgress[i]===3?"bg-green-500":"bg-gray-200"}`;
   });
-  document.getElementById("counter").innerText =
-    `Card ${currentIndex+1} of ${sentences.length}`;
+  document.getElementById("counter").innerText=`Card ${currentIndex+1} of ${sentences.length}`;
 }
-
-function changeSlide(dir){
-  currentIndex=(currentIndex+dir+sentences.length)%sentences.length;
-  document.getElementById("result-msg").innerText="";
-  updateUI();
-}
-
-function confirmReset(){
-  if(confirm("Reset everything?")) location.reload();
-}
+function changeSlide(d){ currentIndex=(currentIndex+d+sentences.length)%sentences.length; document.getElementById("result-msg").innerText=""; updateUI(); }
+function confirmReset(){ if(confirm("Reset everything?"))location.reload(); }
 </script>
-
 </body>
 </html>
