@@ -158,8 +158,6 @@ function setupSpeechRecognition(){
   recognition.onresult=e=>checkPronunciation(e.results[0][0].transcript);
 }
 
-function toggleRecording(){ isRecording?recognition.stop():recognition.start(); }
-
 function checkPronunciation(spoken){
   const target = sentences[currentIndex].en;
   const score = calculateSimilarity(
@@ -178,7 +176,11 @@ function checkPronunciation(spoken){
       saveState();
     }
 
-    msg.innerHTML = `✅ Success (${Math.round(score*100)}%): "${spoken}"`;
+    msg.innerHTML = `
+      <span class="text-green-500">
+        ✅ Success (${Math.round(score*100)}%): "${spoken}"
+      </span>
+    `;
   } else {
     msg.innerHTML = `❌ Try again (${Math.round(score*100)}%): "${spoken}"`;
   }
