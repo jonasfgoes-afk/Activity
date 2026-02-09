@@ -7,6 +7,54 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+    /* 🏆 CARD STATUS BANNERS */
+.card-banner {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    pointer-events: none;
+    animation: bannerPop 1.4s ease-out forwards;
+    z-index: 5;
+}
+
+.banner-clear {
+    background: linear-gradient(135deg, #facc15, #f59e0b);
+    color: #78350f;
+    box-shadow: 0 0 25px rgba(251, 191, 36, 0.6);
+}
+
+.banner-reinforced {
+    background: linear-gradient(135deg, #fde68a, #fbbf24);
+    color: #713f12;
+    box-shadow: 0 0 18px rgba(251, 191, 36, 0.45);
+}
+
+@keyframes bannerPop {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.6);
+    }
+    15% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.1);
+    }
+    70% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-12px) scale(0.95);
+    }
+}
+    
         body { font-family: 'Inter', sans-serif; background: #f3f4f6; -webkit-tap-highlight-color: transparent; }
 .card {
     display: none;
@@ -57,7 +105,7 @@
     position: absolute;
     color: #10b981;
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 1.4rem;
     animation: pointFloat 0.8s ease-out forwards;
     pointer-events: none;
 }
@@ -233,10 +281,13 @@ const score = calculateSimilarity(cleanSpoken, cleanTarget);
     const displaySpoken = `"${spokenText}"`;
 
     if (score >= 0.75) {
-    
-    showPointPulse(currentIndex);
-    addPointToday();
 
+    if (canEarnPoint(currentIndex)) {
+        showPointPulse(currentIndex);
+        addPointToday();
+        registerCardPoint(currentIndex);
+    }
+    
         // ✅ Progress only if not mastered yet
         if (slideProgress[currentIndex] < 3) {
     slideProgress[currentIndex]++;
@@ -420,6 +471,24 @@ function addPointToday() {
 
     points += 1;
     localStorage.setItem('jonas_way_points_today', points);
+}
+
+function canEarnPoint(cardIndex) {
+    const today = new Date().toISOString().split('T')[0];
+    const key = `jonas_way_card_points_${today}`;
+    const data = JSON.parse(localStorage.getItem(key) || '{}');
+
+    const pointsToday = data[cardIndex] || 0;
+    return pointsToday < 6; // 👈 HARD CAP
+}
+
+function registerCardPoint(cardIndex) {
+    const today = new Date().toISOString().split('T')[0];
+    const key = `jonas_way_card_points_${today}`;
+    const data = JSON.parse(localStorage.getItem(key) || '{}');
+
+    data[cardIndex] = (data[cardIndex] || 0) + 1;
+    localStorage.setItem(key, JSON.stringify(data));
 }
 
 </script>
