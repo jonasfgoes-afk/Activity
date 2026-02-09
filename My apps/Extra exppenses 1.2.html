@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2654/2654524.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Expenses">
+    
     <title>Extra Expenses</title>
     <style>
         :root {
@@ -24,6 +26,22 @@
             color: #1e293b;
         }
 
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .btn-fullscreen {
+            background: #e2e8f0;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
         .card { 
             background: white; 
             padding: 16px; 
@@ -32,7 +50,7 @@
             margin-bottom: 16px; 
         }
 
-        h2 { text-align: center; margin-bottom: 20px; }
+        h2 { margin: 0; font-size: 1.4rem; }
         h3 { font-size: 1rem; margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
 
         .form-grid { display: flex; flex-direction: column; gap: 12px; }
@@ -69,13 +87,16 @@
 </head>
 <body>
 
-    <h2>Extra Expenses</h2>
+    <div class="header-row">
+        <h2>Extra Expenses</h2>
+        <button class="btn-fullscreen" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+    </div>
 
     <div class="card">
         <div class="form-grid">
             <div class="input-group">
                 <label>Description</label>
-                <input type="text" id="desc" placeholder="What did you pay for?">
+                <input type="text" id="desc" placeholder="What did you buy?">
             </div>
             <div class="input-group">
                 <label>Price</label>
@@ -111,6 +132,16 @@
 
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    alert(`Error attempting to enable full-screen mode: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
         function getCurrentMonthKey() {
             const d = new Date();
             return `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
@@ -121,7 +152,6 @@
             if (lastVisitMonth && lastVisitMonth !== currentMonth) {
                 if (expenses.length > 0) {
                     const total = expenses.reduce((sum, item) => sum + parseFloat(item.price), 0);
-                    // Add to history if month closed
                     history.unshift({ month: lastVisitMonth, total: total.toFixed(2), items: [...expenses] });
                     expenses = [];
                     saveAll();
@@ -156,15 +186,10 @@
             if (!desc) return;
             const price = prompt("Enter price:");
             if (!price || isNaN(price)) return;
-
-            // Update the history record
             if(!history[historyIndex].items) history[historyIndex].items = [];
             history[historyIndex].items.push({ desc, price, date: "Added later" });
-            
-            // Recalculate total
             const newTotal = history[historyIndex].items.reduce((sum, item) => sum + parseFloat(item.price), 0);
             history[historyIndex].total = newTotal.toFixed(2);
-            
             saveAll();
         }
 
@@ -173,7 +198,6 @@
         }
 
         function render() {
-            // Render Current Month
             const list = document.getElementById('expenseList');
             list.innerHTML = '';
             let total = 0;
@@ -188,18 +212,14 @@
             });
             document.getElementById('currentTotal').innerText = total.toFixed(2);
 
-            // Render History
             const hList = document.getElementById('historyList');
             hList.innerHTML = history.length ? '' : '<p style="text-align:center; color:#94a3b8;">No history yet</p>';
             history.forEach((item, index) => {
                 hList.innerHTML += `
                     <div class="history-row">
-                        <div class="item-info">
-                            <span class="item-desc">${item.month}</span>
-                            <span class="item-date">Past Total</span>
-                        </div>
+                        <div class="item-info"><span class="item-desc">${item.month}</span><span class="item-date">Past Total</span></div>
                         <div class="item-price">$${item.total}</div>
-                        <button class="btn-history-add" onclick="addForgottenExpense(${index})">+ Add Forgotten</button>
+                        <button class="btn-history-add" onclick="addForgottenExpense(${index})">+ Add</button>
                     </div>`;
             });
         }
