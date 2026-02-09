@@ -537,28 +537,6 @@ function showCardBanner(text, className) {
     card.appendChild(banner);
     setTimeout(() => banner.remove(), 1500);
 }
-function confirmResetAll() {
-    if (!confirm("Deseja apagar o progresso de TODOS os cards deste conjunto?")) {
-        return;
-    }
-
-    // Reset mastery progress
-    slideProgress = new Array(sentences.length).fill(0);
-
-    // Reset navigation
-    currentIndex = 0;
-
-    // Clear result message
-    document.getElementById('result-msg').innerText = "";
-
-    // Save clean state
-    saveProgress();
-
-    // Re-render UI
-    restoreDots();
-    updateUI();
-}
-
 
 </script>
 </body>
