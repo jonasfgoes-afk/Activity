@@ -323,7 +323,9 @@ function checkPronunciation(spokenText) {
 
             // 🌟 Reinforcement milestone (6th success)
             if (data[currentIndex] === 6) {
+                setTimeout(() => {
                 showCardBanner('REINFORCED!', 'banner-reinforced');
+                }, 500);    
             }
         }
 
@@ -547,6 +549,7 @@ function showCardBanner(text, className) {
 </script>
 </body>
 </html>
+
 
 
 
