@@ -161,6 +161,11 @@ let currentIndex = 0;
 let isRecording = false;
 let slideProgress = [];
 let recognition;
+// ==================================================
+// JONAS WAY — LESSON ID (MUST BE UNIQUE)
+// ==================================================
+const LESSON_ID = '5anoch1';
+
 
 /* 🔊 iOS FIX — force English voice */
 let englishVoice = null;
@@ -176,7 +181,7 @@ function loadVoices() {
 speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
 
-const STORAGE_KEY = 'jonas_way_mastery_brazilian';
+const STORAGE_KEY = `jonas_way_mastery_${LESSON_ID}`;
 
 fetch("https://5anoch1.jonasfgoes.workers.dev/")
   .then(res => res.json())
@@ -510,8 +515,11 @@ function showPointPulse(cardIndex) {
 function addPointToday() {
     const today = new Date().toISOString().split('T')[0];
 
-    const lastDate = localStorage.getItem('jonas_way_points_date');
-    let points = parseInt(localStorage.getItem('jonas_way_points_today') || '0', 10);
+    const lastDate = localStorage.getItem(`jonas_way_points_date_${LESSON_ID}`);
+let points = parseInt(
+  localStorage.getItem(`jonas_way_points_today_${LESSON_ID}`) || '0',
+  10
+);
 
     // 🔄 Midnight reset
     if (lastDate !== today) {
@@ -525,7 +533,7 @@ function addPointToday() {
 
 function canEarnPoint(cardIndex) {
     const today = new Date().toISOString().split('T')[0];
-    const key = `jonas_way_card_points_${today}`;
+    const key = `jonas_way_card_points_${LESSON_ID}_${today}`;
     const data = JSON.parse(localStorage.getItem(key) || '{}');
 
     const pointsToday = data[cardIndex] || 0;
@@ -534,7 +542,7 @@ function canEarnPoint(cardIndex) {
 
 function registerCardPoint(cardIndex) {
     const today = new Date().toISOString().split('T')[0];
-    const key = `jonas_way_card_points_${today}`;
+    const key = `jonas_way_card_points_${LESSON_ID}_${today}`;
     const data = JSON.parse(localStorage.getItem(key) || '{}');
 
     data[cardIndex] = (data[cardIndex] || 0) + 1;
