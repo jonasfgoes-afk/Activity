@@ -515,23 +515,23 @@ function showPointPulse(cardIndex) {
 function addPointToday() {
     const today = new Date().toISOString().split('T')[0];
 
-    const lastDate = localStorage.getItem(`jonas_way_points_date_${LESSON_ID}`);
-let points = parseInt(
-  localStorage.getItem(`jonas_way_points_today_${LESSON_ID}`) || '0',
-  10
-);
+    const dateKey   = `jonas_way_points_date_${LESSON_ID}`;
+    const pointsKey = `jonas_way_points_today_${LESSON_ID}`;
 
-    // 🔄 Midnight reset
+    const lastDate = localStorage.getItem(dateKey);
+    let points = parseInt(localStorage.getItem(pointsKey) || '0', 10);
+
+    // 🔄 Midnight reset (por lição)
     if (lastDate !== today) {
         points = 0;
-        localStorage.setItem('jonas_way_points_date', today);
+        localStorage.setItem(dateKey, today);
     }
 
     points += 1;
-    localStorage.setItem('jonas_way_points_today', points);
+    localStorage.setItem(pointsKey, points);
 }
 
-function canEarnPoint(cardIndex) {
+    function canEarnPoint(cardIndex) {
     const today = new Date().toISOString().split('T')[0];
     const key = `jonas_way_card_points_${LESSON_ID}_${today}`;
     const data = JSON.parse(localStorage.getItem(key) || '{}');
