@@ -323,7 +323,7 @@ function checkPronunciation(spokenText) {
 
             const today = new Date().toISOString().split('T')[0];
             const data = JSON.parse(
-                localStorage.getItem(`jonas_way_card_points_${today}`) || '{}'
+            localStorage.getItem(`jonas_way_card_points_${LESSON_ID}_${today}`) || '{}'
             );
 
             // 🌟 Reinforcement milestone (6th success)
