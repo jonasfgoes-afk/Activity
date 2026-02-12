@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -156,26 +157,16 @@
 <footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method v6.0</footer>
 
 <script>
-    // ==================================================
-// JONAS WAY — CONFIG (REQUIRED)
-// ==================================================
-const LESSON_ID  = '3anoch1';
-const WORKER_URL = 'https://3anoch1.jonasfgoes.workers.dev/';
-
-if (
-  LESSON_ID === 'new_lesson' ||
-  WORKER_URL === 'new_worker_url'
-) {
-  throw new Error(
-    'CONFIG NOT SET: Replace LESSON_ID and WORKER_URL'
-  );
-}
-
 let sentences = [];
 let currentIndex = 0;
 let isRecording = false;
 let slideProgress = [];
 let recognition;
+// ==================================================
+// JONAS WAY — LESSON ID (MUST BE UNIQUE)
+// ==================================================
+const LESSON_ID = '5anoch1';
+
 
 /* 🔊 iOS FIX — force English voice */
 let englishVoice = null;
@@ -193,10 +184,7 @@ loadVoices();
 
 const STORAGE_KEY = `jonas_way_mastery_${LESSON_ID}`;
 
-// ⚠️ WORKFLOW RULE
-// Never hardcode backend URLs.
-// Always use WORKER_URL from CONFIG.
-fetch(WORKER_URL)
+fetch("https://5anoch1.jonasfgoes.workers.dev/")
   .then(res => res.json())
   .then(data => {
     sentences = data;
@@ -357,7 +345,8 @@ function checkPronunciation(spokenText) {
             currentDot.classList.add('active', 'pop-success');
 
             // 🏆 Card mastered
-            if (slideProgress[currentIndex] === 3) {                
+            if (slideProgress[currentIndex] === 3) {
+                cardContainer.classList.add('mastery-achieved');
                 playMasterySound();
                 showCardBanner('CLEAR!', 'banner-clear');
             }
@@ -578,3 +567,9 @@ function showCardBanner(text, className) {
 </html>
 
 
+
+
+<<<<<<< HEAD
+=======
+
+>>>>>>> 01c19ec2f397f796615c88bfd5e2605c6923fa86

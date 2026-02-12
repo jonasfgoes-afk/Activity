@@ -159,8 +159,8 @@
     // ==================================================
 // JONAS WAY — CONFIG (REQUIRED)
 // ==================================================
-const LESSON_ID  = '3anoch1';
-const WORKER_URL = 'https://3anoch1.jonasfgoes.workers.dev/';
+const LESSON_ID  = 'new_lesson';
+const WORKER_URL = 'new_worker_url';
 
 if (
   LESSON_ID === 'new_lesson' ||

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jonas Way English - Mastery System v6.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+    /* 🏆 CARD STATUS BANNERS */
+.card-banner {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 26px;
+    border-radius: 999px;
+    font-weight: 900;
+    font-size: 1.15rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    pointer-events: none;
+    animation: bannerPop 1.4s ease-out forwards;
+    z-index: 5;
+}
+.banner-clear {
+    background: linear-gradient(135deg, #facc15, #f59e0b);
+    color: #78350f;
+    box-shadow: 0 0 25px rgba(251, 191, 36, 0.6);
+}
+
+.banner-reinforced {
+    background: linear-gradient(135deg, #fde68a, #fbbf24);
+    color: #713f12;
+    box-shadow: 0 0 18px rgba(251, 191, 36, 0.45);
+}
+
+@keyframes bannerPop {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.6);
+    }
+    15% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.1);
+    }
+    70% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-12px) scale(0.95);
+    }
+}
+    
+        body { font-family: 'Inter', sans-serif; background: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+.card {
+    display: none;
+    position: relative;
+}
+
+.card.active {
+    display: block;
+}
+        .grammar-tag { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+        .type-affirmative { color: #059669; }
+        .type-negative { color: #dc2626; }
+        .type-interrogative { color: #2563eb; }
+
+        /* --- ENGINE DE ANIMAÇÕES --- */
+        .recording-pulse { animation: pulse 1.2s infinite; color: #ef4444; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+        .step-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #e5e7eb; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .step-dot.active { background-color: #10b981; border-color: #10b981; transform: scale(1.2); box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+        .pop-success { animation: pop 0.4s ease-out; }
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.6); } 100% { transform: scale(1.2); } }
+
+        .mastery-card { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid transparent; }
+        .mastery-achieved { border-color: #fbbf24; box-shadow: 0 0 30px rgba(251, 191, 36, 0.3); background: #fffbeb; transform: scale(1.02); }
+
+        .feedback-entry { animation: slideUp 0.4s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        button:active { transform: scale(0.92); }
+        /* 🎉 PARTY ANIMATION */
+.confetti {
+    position: fixed;
+    top: -10px;
+    width: 8px;
+    height: 14px;
+    opacity: 0.9;
+    animation: fall linear forwards;
+    z-index: 9999;
+}
+
+@keyframes fall {
+    to {
+        transform: translateY(110vh) rotate(360deg);
+    }
+}
+   .point-pulse {
+    position: absolute;
+    color: #10b981;
+    font-weight: 700;
+    font-size: 1.4rem;
+    animation: pointFloat 1.2s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes pointFloat {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.9);
+    }
+    20% {
+        opacity: 1;
+        transform: translateY(-6px) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-16px) scale(1.05);
+    }
+}
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+<div class="w-full max-w-md bg-white rounded-t-xl shadow-sm border-b p-4 flex justify-between items-center">
+    <div class="flex flex-col">
+        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Jonas Way English</span>
+        <span class="text-sm font-semibold text-gray-700" id="counter">Loading…</span>
+    </div>
+    <button onclick="confirmReset()" class="text-gray-400 hover:text-red-500 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+    </button>
+  </div>
+
+<div id="slider-container" class="mastery-card w-full max-w-md bg-white rounded-b-xl shadow-lg p-6 md:p-8 min-h-[500px] flex flex-col justify-between">
+    <div id="cards-wrapper"></div>
+    <div class="result min-h-[90px] flex items-center justify-center text-center mt-2" id="result-msg"></div>
+
+    <div class="mt-4">
+        <div class="flex justify-between gap-4 mb-6">
+            <button onclick="changeSlide(-1)" class="flex-1 py-4 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all">Back</button>
+            <button onclick="changeSlide(1)" class="flex-1 py-4 bg-gray-800 text-white rounded-xl font-bold hover:bg-black transition-all">Next</button>
+        </div>
+        <div id="global-progress" class="flex justify-center gap-1.5 flex-wrap"></div>
+    </div>
+</div>
+
+<footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method v6.0</footer>
+
+<script>
+/* ==================================================
+   🔧 CONFIG — EDIT ONLY THIS
+================================================== */
+const LESSON_ID  = '@@@@@';
+const WORKER_URL = 'https://@@@@@.jonasfgoes.workers.dev/';
+
+if (!LESSON_ID || !WORKER_URL || LESSON_ID === '@@@@@') {
+  throw new Error('CONFIG NOT SET');
+}
+/* ==================================================
+   🔒 CORE — DO NOT EDIT (OBFUSCATED)
+================================================== */
+(()=>{"use strict";let _s=[],_i=0,_r=!1,_p=[],_rec=null,_v=null;const _k=`jonas_way_mastery_${LESSON_ID}`;function _lv(){const e=speechSynthesis.getVoices();_v=e.find(e=>"en-US"===e.lang)||e.find(e=>e.lang.startsWith("en"))||null}speechSynthesis.onvoiceschanged=_lv,_lv();function _sp(){localStorage.setItem(_k,JSON.stringify({c:_i,p:_p}))}function _lp(){const e=localStorage.getItem(_k);if(!e)return;try{const t=JSON.parse(e);_i=t.c||0,_p=t.p||[]}catch{}}fetch(WORKER_URL).then(e=>e.json()).then(e=>{_s=e,_lp(),_p.length||(_p=new Array(_s.length).fill(0)),_init()});function _init(){_rc(),_sr(),_rd(),_ui()}function _rc(){const e=document.getElementById("cards-wrapper"),t=document.getElementById("global-progress");e.innerHTML="",t.innerHTML="",_s.forEach((n,o)=>{const r=document.createElement("div");r.className=`card ${o===_i?"active":""} text-center`,r.innerHTML=`<span class="grammar-tag type-${n.type.toLowerCase()}">${n.type}</span><h2 class="text-3xl font-bold text-gray-800 mt-2 mb-2 leading-tight">${n.en}</h2><p class="text-xl text-blue-600 font-medium italic mb-1">${n.phonetic}</p><p class="text-gray-400 mb-8 text-sm">${n.pt}</p><div class="flex justify-center gap-4 mb-10"><div id="step-${o}-1" class="step-dot"></div><div id="step-${o}-2" class="step-dot"></div><div id="step-${o}-3" class="step-dot"></div></div><div class="flex justify-center items-center gap-6"><button onclick="playAudio('${n.en}',0.5)" class="w-14 h-14 bg-orange-50 text-orange-500 rounded-full">⏱</button><button onclick="playAudio('${n.en}',1)" class="w-24 h-24 bg-blue-600 text-white rounded-full">▶</button><button onclick="toggleRecording()" class="w-20 h-20 bg-red-50 text-red-600 rounded-full"><svg id="mic-icon-${o}" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"></svg></button></div>`,e.appendChild(r);const i=document.createElement("div");i.className="h-1 w-3 rounded-full bg-gray-200",t.appendChild(i)})}function _rd(){_p.forEach((e,t)=>{for(let n=1;n<=e;n++){const o=document.getElementById(`step-${t}-${n}`);o&&o.classList.add("active")}})}window.playAudio=function(e,t){if(_r)return;speechSynthesis.cancel();const n=new SpeechSynthesisUtterance(e);n.lang="en-US",n.rate=t,_v&&(n.voice=_v),speechSynthesis.speak(n)};function _sr(){const e=window.SpeechRecognition||window.webkitSpeechRecognition;if(!e)return alert("Chrome/Safari required.");_rec=new e,_rec.lang="en-US",_rec.onstart=()=>{_r=!0,document.getElementById(`mic-icon-${_i}`)?.classList.add("recording-pulse"),document.getElementById("result-msg").innerText="Listening..."},_rec.onend=()=>{_r=!1,document.getElementById(`mic-icon-${_i}`)?.classList.remove("recording-pulse")},_rec.onresult=e=>_cp(e.results[0][0].transcript)}window.toggleRecording=function(){_r?_rec.stop():_rec.start()};function _cp(e){const t=_s[_i].en,n=_sm(e,t);n>=.75&&_p[_i]<3&&(_p[_i]++,_sp()),_ui()}function _sm(e,t){e=e.toLowerCase(),t=t.toLowerCase();let n=e.length>t.length?e:t,o=e.length>t.length?t:e;return n.length?(n.length-_lvn(n,o))/n.length:1}function _lvn(e,t){const n=[];for(let o=0;o<=e.length;o++){let r=o;for(let i=0;i<=t.length;i++)o?i&&(n[i-1]=r,r=e[o-1]!==t[i-1]?Math.min(n[i-1],r,n[i])+1:r):n[i]=i;o&&(n[t.length]=r)}return n[t.length]}function _ui(){document.querySelectorAll(".card").forEach((e,t)=>e.classList.toggle("active",t===_i)),document.getElementById("counter").innerText=`Card ${_i+1} of ${_s.length}`}window.changeSlide=function(e){_i=(_i+e+_s.length)%_s.length,_sp(),_ui()};window.confirmReset=function(){confirm("Deseja apagar o progresso DESTE card?")&&(_p[_i]=0,_sp(),_ui())}})();
+</script>
+</body>
+</html>
+
+
