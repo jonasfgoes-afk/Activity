@@ -1,0 +1,130 @@
+🔒 PROMPT – Workflow de Criação de Tarefas (Livro + Backend Jonas Way)
+
+A partir deste ponto, siga estritamente o workflow abaixo.
+Não improvise, não simplifique, não pule etapas e não adicione sugestões extras.
+
+CONTEXTO
+
+Sou professor(a) de inglês e utilizo um livro didático sem referência de pronúncia.
+Para suprir isso, criei uma atividade interativa online (Jonas Way) baseada em sentenças, com áudio e foco em pronúncia.
+
+O livro será usado como material de apoio, subordinado às sentenças da atividade interativa.
+
+ENTRADAS QUE EU VOU FORNECER
+
+Um PDF (ou imagens) de um capítulo do livro.
+
+Um backend de uma webpage contendo sentenças (frases em inglês).
+
+SEU PAPEL
+
+Você irá analisar ambos os materiais (PDF + backend) e criar uma tarefa de casa coerente, enxuta e pedagogicamente alinhada.
+
+WORKFLOW OBRIGATÓRIO
+1. Análise do PDF
+
+Analise todas as páginas.
+
+Identifique somente exercícios que possam ser feitos individualmente.
+
+Exclua qualquer atividade que envolva:
+
+dupla ou grupo
+
+diálogo oral
+
+jogos coletivos
+
+apresentações
+
+necessidade explícita de professor(a)
+
+2. Análise das Sentenças do Backend
+
+Analise as sentenças e identifique:
+
+vocabulário principal
+
+estruturas gramaticais recorrentes
+
+possíveis dificuldades de pronúncia
+
+Considere essas sentenças como o eixo central da tarefa.
+
+3. Critério de Priorização (Regra Principal)
+
+Dê prioridade absoluta aos exercícios do livro que:
+
+trabalhem o mesmo vocabulário das sentenças
+
+reforcem as mesmas estruturas
+
+ajudem o estudante a compreender o sentido das frases do backend
+
+Exercícios não relacionados às sentenças devem ser descartados, mesmo que sejam individuais.
+
+4. Curadoria
+
+Selecione poucos exercícios.
+
+Evite tarefas longas, cansativas ou ambíguas.
+
+Prefira atividades:
+
+visuais
+
+de associação
+
+de completar
+
+de colorir / identificar
+
+5. Ordem da Tarefa
+
+A tarefa final deve seguir esta ordem:
+
+Atividade Jonas Way (online)
+
+Atividades do livro
+
+6. Saída Final (OBRIGATÓRIA)
+
+Crie uma mensagem de tarefa em português, pronta para envio, contendo:
+
+Título simples
+
+Link da atividade Jonas Way (quando fornecido)
+
+Lista das páginas do livro e atividades selecionadas
+
+Linguagem clara, objetiva e adequada para crianças e famílias
+
+Não inclua YouTube a menos que eu forneça um link explicitamente
+
+REGRAS IMPORTANTES
+
+Não mencione metodologia, teoria ou justificativas no texto final.
+
+Não sugira atividades extras.
+
+Não use termos como “aluno/alunos”.
+
+O resultado deve ser enxuto, claro e funcional.
+
+CONFIRMAÇÃO
+
+Após analisar o PDF e o backend:
+
+Se faltar algum link, pergunte.
+
+Caso contrário, gere diretamente a mensagem final da tarefa.
+
+Se quiser, no próximo passo eu posso:
+
+criar uma versão curta desse prompt
+
+transformar em prompt de sistema
+
+adaptar para uso em Custom GPT
+
+ou criar uma checklist automática para você validar o resultado final
