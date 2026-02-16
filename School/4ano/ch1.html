@@ -242,11 +242,18 @@ const STORAGE_KEY = `jonas_way_mastery_${LESSON_ID}`;
 fetch(WORKER_URL)
   .then(res => res.json())
   .then(data => {
-    sentences = data;
-    loadProgress();
-    if (!slideProgress.length) slideProgress = new Array(sentences.length).fill(0);
-    init();
-  });
+  sentences = data;
+  loadProgress();
+
+  // 🔥 HARD SAFETY: backend changed → reset progress
+  if (slideProgress.length !== sentences.length) {
+    slideProgress = new Array(sentences.length).fill(0);
+    currentIndex = 0;
+    localStorage.removeItem(STORAGE_KEY);
+  }
+
+  init();
+});
 
 function saveProgress() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ currentIndex, slideProgress }));
