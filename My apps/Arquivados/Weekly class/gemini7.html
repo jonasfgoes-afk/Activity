@@ -28,7 +28,6 @@
     .menu-bar { display: flex; gap: 0.4rem; margin: 1rem 0; flex-wrap: wrap; background: #f0f4fa; padding: 0.6rem; border-radius: 30px; justify-content: center; }
     .menu-btn { background: transparent; border: none; border-radius: 40px; padding: 0.5rem 1rem; font-size: 0.9rem; font-weight: 600; color: #2c3e50; }
     .menu-btn.active { background: #1e3c72; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    .menu-btn.history-btn { color: #516a82; font-weight: 700; }
     
     .class-card { background: #ffffff; border-left: 6px solid #2b6f9b; border-radius: 24px; padding: 1rem; margin: 1.2rem 0; box-shadow: 0 8px 16px rgba(0,0,0,0.04); }
     .home-class { border-left-color: #c95d0e; }
@@ -97,10 +96,10 @@
     <button class="menu-btn active" onclick="setView('all')">All</button>
     <button class="menu-btn" onclick="setView('school')">School</button>
     <button class="menu-btn" onclick="setView('home')">Home</button>
+    <button class="menu-btn" onclick="setView('weekorder')">Week order</button>
     <button class="menu-btn" onclick="setView('individual')">Individual</button>
     <button class="menu-btn" onclick="setView('day')">By day</button>
     <button class="menu-btn" onclick="setView('presets')">Presets</button>
-    <button class="menu-btn history-btn" onclick="scrollToHistory()">History ⬇</button>
   </div>
 
   <div id="main-view">
@@ -304,27 +303,13 @@
     }
   }
 
-  function scrollToHistory() {
-    // If the user is on the Presets tab, history doesn't exist, so we switch back to 'All'
-    if (currentView === 'presets') {
-      setView('all');
-    }
-    
-    // Find the history section, open it, and scroll to it smoothly
-    const historyDetails = document.getElementById('history-details');
-    if (historyDetails) {
-      historyDetails.open = true;
-      historyDetails.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }
-
-  // --- NEW: PLAN NOTES & ARCHIVE/UNARCHIVE LOGIC ---
+  // --- NEW: PLAN NOTES & ARCHIVE LOGIC ---
   function savePlanNotes(classId, planId, value) {
     const cls = classes.find(c => c.id === classId);
     const plan = cls.plans.find(p => p.id === planId);
     if (plan) {
       plan.notes = value;
-      saveData();
+      saveData(); // Saves silently to the cloud without needing a pop-up
     }
   }
 
@@ -334,18 +319,6 @@
       const plan = cls.plans.find(p => p.id === planId);
       if (plan) {
         plan.isArchived = true;
-        saveData();
-        renderApp();
-      }
-    }
-  }
-
-  function unarchivePlan(classId, planId) {
-    if (confirm("Move this plan back to active classes?")) {
-      const cls = classes.find(c => c.id === classId);
-      const plan = cls.plans.find(p => p.id === planId);
-      if (plan) {
-        plan.isArchived = false;
         saveData();
         renderApp();
       }
@@ -531,16 +504,7 @@
 
   function setView(viewMode) {
     currentView = viewMode;
-    document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active')); 
-    
-    // We don't want the history button to stay lit up as "active" if it was just a scroll anchor
-    if(event.target.classList.contains('history-btn')) {
-      // Find what the actual current view is and keep that active
-      document.querySelector(`.menu-btn[onclick="setView('${currentView}')"]`).classList.add('active');
-    } else {
-      event.target.classList.add('active');
-    }
-
+    document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active')); event.target.classList.add('active');
     if (viewMode === 'presets') {
       document.getElementById('main-view').style.display = 'none'; document.getElementById('presets-view').style.display = 'block'; document.getElementById('main-fab').style.display = 'none';
     } else {
@@ -557,6 +521,10 @@
     if (currentView === 'home') filtered = filtered.filter(c => c.type === 'home');
     if (currentView === 'individual') { const selId = document.getElementById('individualClassSelect').value; if (selId) filtered = filtered.filter(c => c.id === selId); }
     if (currentView === 'day') { const selDay = document.getElementById('daySelect').value; filtered = filtered.filter(c => c.day === selDay); }
+    if (currentView === 'weekorder') {
+      const dayMap = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+      filtered.sort((a,b) => { let dayA = dayMap.indexOf(a.day); let dayB = dayMap.indexOf(b.day); if (dayA !== dayB) return dayA - dayB; return a.time.localeCompare(b.time); });
+    }
     return filtered;
   }
 
@@ -572,6 +540,7 @@
     if (filteredClasses.length === 0) currentContainer.innerHTML = "<p style='text-align:center; color:#8e8e93; margin-top:2rem;'>No classes to display.</p>";
 
     filteredClasses.forEach(cls => {
+      // Use the updated isPlanHistory logic which checks dates AND the archive button
       const currentPlans = cls.plans.filter(p => !isPlanHistory(p)); 
       const historyPlans = cls.plans.filter(p => isPlanHistory(p));
       
@@ -602,7 +571,7 @@
         <div class="plan-header">
           <span>📅 ${plan.date} ${isHistory ? `<span class="badge" style="background:#b9d1e9; color:#2c3e50; margin-left:5px;">Archived</span>` : ''}</span>
           <div class="plan-actions">
-            ${!isHistory ? `<button class="small" onclick="archivePlan('${cls.id}', '${plan.id}')" title="Archive plan manually">📥 arch</button>` : `<button class="small" onclick="unarchivePlan('${cls.id}', '${plan.id}')" title="Restore plan">📤 unarch</button>`}
+            ${!isHistory ? `<button class="small" onclick="archivePlan('${cls.id}', '${plan.id}')" title="Archive plan manually">📥 arch</button>` : ''}
             <button class="small" onclick="copyPlan('${cls.id}', '${plan.id}')" title="Copy activities">📄 copy</button>
             <button class="small" onclick="pastePlan('${cls.id}', '${plan.id}')" title="Paste activities">📋 paste</button>
             <button class="small" onclick="toggleDetails('plan-notes-${plan.id}')" title="Toggle Notes">📝 notes</button>

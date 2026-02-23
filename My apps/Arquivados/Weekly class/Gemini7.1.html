@@ -28,7 +28,6 @@
     .menu-bar { display: flex; gap: 0.4rem; margin: 1rem 0; flex-wrap: wrap; background: #f0f4fa; padding: 0.6rem; border-radius: 30px; justify-content: center; }
     .menu-btn { background: transparent; border: none; border-radius: 40px; padding: 0.5rem 1rem; font-size: 0.9rem; font-weight: 600; color: #2c3e50; }
     .menu-btn.active { background: #1e3c72; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    .menu-btn.history-btn { color: #516a82; font-weight: 700; }
     
     .class-card { background: #ffffff; border-left: 6px solid #2b6f9b; border-radius: 24px; padding: 1rem; margin: 1.2rem 0; box-shadow: 0 8px 16px rgba(0,0,0,0.04); }
     .home-class { border-left-color: #c95d0e; }
@@ -100,7 +99,6 @@
     <button class="menu-btn" onclick="setView('individual')">Individual</button>
     <button class="menu-btn" onclick="setView('day')">By day</button>
     <button class="menu-btn" onclick="setView('presets')">Presets</button>
-    <button class="menu-btn history-btn" onclick="scrollToHistory()">History ⬇</button>
   </div>
 
   <div id="main-view">
@@ -301,20 +299,6 @@
       let currentDay = d.getDay(); let targetDay = dayMap.indexOf(cls.day);
       let daysUntil = (targetDay - currentDay + 7) % 7; d.setDate(d.getDate() + daysUntil);
       return d.toISOString().split('T')[0];
-    }
-  }
-
-  function scrollToHistory() {
-    // If the user is on the Presets tab, history doesn't exist, so we switch back to 'All'
-    if (currentView === 'presets') {
-      setView('all');
-    }
-    
-    // Find the history section, open it, and scroll to it smoothly
-    const historyDetails = document.getElementById('history-details');
-    if (historyDetails) {
-      historyDetails.open = true;
-      historyDetails.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
 
@@ -531,16 +515,7 @@
 
   function setView(viewMode) {
     currentView = viewMode;
-    document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active')); 
-    
-    // We don't want the history button to stay lit up as "active" if it was just a scroll anchor
-    if(event.target.classList.contains('history-btn')) {
-      // Find what the actual current view is and keep that active
-      document.querySelector(`.menu-btn[onclick="setView('${currentView}')"]`).classList.add('active');
-    } else {
-      event.target.classList.add('active');
-    }
-
+    document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active')); event.target.classList.add('active');
     if (viewMode === 'presets') {
       document.getElementById('main-view').style.display = 'none'; document.getElementById('presets-view').style.display = 'block'; document.getElementById('main-fab').style.display = 'none';
     } else {

@@ -8,18 +8,25 @@
         {
           "activities": [
             {
-              "details": "Students suggest music and we watch lyrics video.",
-              "duration": 20,
-              "id": "1771716971136wndkl",
-              "isDone": false,
-              "text": "Suggestions of music"
+              "details": "- Watch one episode\n- NLTL during the video\n\nDaily dose of internet\nHiho kids\nKids react\nBrave wilderness\n",
+              "duration": 15,
+              "id": "1771852003957e04h2",
+              "isDone": true,
+              "text": "Daily dose of internet"
             },
             {
               "details": "- Explain that the game is about cooperation.\n- Encourage the students to observe the level and identify different responsibilities.\n- Help them assign positions:\n* I will cook, He/will chop, I will serve, I will wash\n",
               "duration": 30,
               "id": "1771717165806sd4m2",
-              "isDone": false,
+              "isDone": true,
               "text": "Overcooked"
+            },
+            {
+              "details": "Students suggest music and we watch lyrics video.",
+              "duration": 20,
+              "id": "1771716971136wndkl",
+              "isDone": false,
+              "text": "Suggestions of music"
             },
             {
               "details": "- Practice the sentences from card set with all the class.\n- Ask who wants to try on microfone\n- Students practicein their phones\n- We watch the episode or video\n\nContent\n- Cobra Kai\n- Creature cases\n- Drawing tutorial\n- Octonauts\n- Trash truck\n- Mr Beast\n- The singing walrus",
@@ -325,9 +332,37 @@
       "day": "Wednesday",
       "id": "1771713807778a03zv",
       "name": "4n",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "Students suggest music and we watch lyrics video.",
+              "duration": 20,
+              "id": "1771755701501jm5vb",
+              "isDone": false,
+              "text": "Suggestions of music"
+            },
+            {
+              "details": "- Explain that the game is about cooperation.\n- Encourage the students to observe the level and identify different responsibilities.\n- Help them assign positions:\n* I will cook, He/will chop, I will serve, I will wash\n",
+              "duration": 30,
+              "id": "177175570150195n1g",
+              "isDone": false,
+              "text": "Overcooked"
+            },
+            {
+              "details": "- Practice the sentences from card set with all the class.\n- Ask who wants to try on microfone\n- Students practicein their phones\n- We watch the episode or video\n\nContent\n- Cobra Kai\n- Creature cases\n- Drawing tutorial\n- Octonauts\n- Trash truck\n- Mr Beast\n- The singing walrus",
+              "duration": 40,
+              "id": "17717557015012wdoh",
+              "isDone": false,
+              "text": "JW Videos Cobra Kai"
+            }
+          ],
+          "date": "2026-02-25",
+          "id": "1771755699352a8jgs"
+        }
+      ],
       "time": "19:00",
-      "type": "home",
-      "plans": []
+      "type": "home"
     },
     {
       "day": "Thursday",
@@ -421,9 +456,37 @@
       "day": "Thursday",
       "id": "1771714059438ewj96",
       "name": "5n",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "- Comprehensible combo with some students\n* Numbers\n* Aimals\n* Colors\n- NLTL com a frase \"what do you see?\"\n- Display the images from the folder\n- Ask who wants to participate\n* Ask questions to help the student say what they see.",
+              "duration": 20,
+              "id": "17717559375922ip3k",
+              "isDone": false,
+              "text": "What do you see?"
+            },
+            {
+              "details": "Students suggest music and we watch lyrics video.",
+              "duration": 20,
+              "id": "1771755729919cvagp",
+              "isDone": false,
+              "text": "Suggestions of music - new light"
+            },
+            {
+              "details": "- Practice the sentences from card set with all the class.\n- Ask who wants to try on microfone\n- Students practicein their phones\n- We watch the episode or video\n\nContent\n- Cobra Kai\n- Creature cases\n- Drawing tutorial\n- Octonauts\n- Trash truck\n- Mr Beast\n- The singing walrus",
+              "duration": 40,
+              "id": "1771755729919f9ev1",
+              "isDone": false,
+              "text": "JW Videos Cobra Kai ep 04"
+            }
+          ],
+          "date": "2026-02-26",
+          "id": "1771755727004gvxmb"
+        }
+      ],
       "time": "19:00",
-      "type": "home",
-      "plans": []
+      "type": "home"
     }
   ],
   "presets": [
