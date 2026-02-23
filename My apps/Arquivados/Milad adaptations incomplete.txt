@@ -1,0 +1,36 @@
+Você me ajudou a criar esse app de gerenciamento de aulas. 
+
+Eu quero adaptá-lo para gerenciamento das músicas do nosso grupo da igreja.
+A interface deve estar em Português
+Substituiremos "Add new class" por "Adicionar novo culto"
+Para adicionar novo culto, não será necessário definir "type", podemos excluir esse campo.
+Ao invés de "class name", teremos "Nome do culto"
+Na seção "presets", ao invés de "atividades", teremos "louvores"
+A seção "presets" deve ser nomeada "louvores"
+Nesse app, precisaremos separar os louvores em duas categorias.
+As categorias serão: [Ensaiados] e [Novos]
+Deve ser possível alterar a a categoria dentro de um louvor
+Ao invés do campo de tempo de atividade, teremos "Tonalidade"
+As demais funções devem permanecer inateradas.
+Ao criar um novo planejamento dentro de um culto, o app deve selecionar aleatoriamente 4 louvores da categoria "ensaiados" e um louvor da categoria "novos"
+Vamos precisar criar um novo projeto do firebase.
+
+Quero adicionar um menu de configuração para definir como as músicas aleatórias serão acrescentadas.
+
+Nesse menu, deve conter opções para acrescentar louvores aleatórios,
+
+ "tonalidades diferentes", (on/off) [adviona louvores aleatórios com tonalidades diferentes].
+
+Não repetir semana passada, (on/off)
+
+Não repetir últimos 15 dias (on/off)
+
+Não repetir últimos 30 dias (on/off)
+
+Repetir 
+
+Dentro de cada planejamento, quero inserir um botão de adicionar música aleatória. Esse botão deve adicionar uma música aleatória qualquer, sem critério específico.
+
+Quero que ao tentar criar plano, mas não houver músicas ensaiadas suficientes, a mensagem "não há louvores ensaiados no banco" seja exibida
+
+Caso as opções de não repetir estejam ativas e o banco de dados não tenha músicas não repetidas suficientes, exibir a mensagem "Não há louvores suficientes para não haver repetições conforme a configuração atual."
