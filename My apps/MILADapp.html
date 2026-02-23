@@ -482,13 +482,17 @@
   }
 
   function deleteClass(classId) {
-    if(confirm("⚠️ Excluir este culto?")) {
-      if(confirm("Isso apagará todo o histórico desse culto. Tem certeza?")) {
-          cultos = cultos.filter(c => c.id !== classId); saveData();
+    if(confirm("⚠️ ETAPA 1 de 3: Deseja realmente excluir este culto?")) {
+      if(confirm("⚠️ ETAPA 2 de 3: Isso apagará TODO o histórico e todos os planejamentos vinculados a esse culto. Tem certeza?")) {
+        if(confirm("🛑 ETAPA 3 de 3: Esta ação é irreversível! Confirmar exclusão definitiva?")) {
+          cultos = cultos.filter(c => c.id !== classId); 
+          saveData();
+          renderApp();
+        }
       }
     }
   }
-
+  
   function addPlan(classId) {
     const cls = cultos.find(c => c.id === classId);
     
@@ -573,12 +577,16 @@
   }
 
   function deletePlan(classId, planId) {
-    if (confirm("✖ Excluir este planejamento de culto?")) {
-      const cls = cultos.find(c => c.id === classId);
-      cls.plans = cls.plans.filter(p => p.id !== planId); saveData();
+    if (confirm("✖ ETAPA 1 de 2: Excluir este planejamento de culto?")) {
+      if (confirm("🛑 ETAPA 2 de 2: Tem certeza? A lista de louvores separada para este dia será apagada.")) {
+        const cls = cultos.find(c => c.id === classId);
+        cls.plans = cls.plans.filter(p => p.id !== planId); 
+        saveData();
+        renderApp();
+      }
     }
   }
-
+  
   function saveDetails(classId) {
     const cls = cultos.find(c => c.id === classId);
     cls.name = document.getElementById(`edit-name-${classId}`).value; 
