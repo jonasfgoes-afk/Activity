@@ -1,0 +1,758 @@
+{
+  "classes": [
+    {
+      "day": "Monday",
+      "id": "17717091435826ce25",
+      "name": "2m",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "- Watch one episode\n- NLTL during the video\n\nDaily dose of internet\nHiho kids\nKids react\nBrave wilderness\n",
+              "duration": 15,
+              "id": "1771852003957e04h2",
+              "isDone": true,
+              "text": "Daily dose of internet"
+            },
+            {
+              "details": "- Explain that the game is about cooperation.\n- Encourage the students to observe the level and identify different responsibilities.\n- Help them assign positions:\n* I will cook, He/will chop, I will serve, I will wash\n",
+              "duration": 30,
+              "id": "1771717165806sd4m2",
+              "isDone": true,
+              "text": "Overcooked"
+            },
+            {
+              "details": "Students suggest music and we watch lyrics video.",
+              "duration": 20,
+              "id": "1771716971136wndkl",
+              "isDone": false,
+              "text": "Suggestions of music"
+            },
+            {
+              "details": "- Practice the sentences from card set with all the class.\n- Ask who wants to try on microfone\n- Students practicein their phones\n- We watch the episode or video\n\nContent\n- Cobra Kai\n- Creature cases\n- Drawing tutorial\n- Octonauts\n- Trash truck\n- Mr Beast\n- The singing walrus",
+              "duration": 40,
+              "id": "1771717057359e7519",
+              "isDone": false,
+              "text": "JW Videos Cobra Kai ep 03"
+            }
+          ],
+          "date": "2026-02-23",
+          "id": "1771714270407goeza",
+          "isArchived": true,
+          "notes": ""
+        }
+      ],
+      "time": "08:00",
+      "type": "home"
+    },
+    {
+      "day": "Monday",
+      "id": "1771713582476tltrb",
+      "name": "2t",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "- Watch one episode\n- NLTL during the video\n\nDaily dose of internet\nHiho kids\nKids react\nBrave wilderness\n",
+              "duration": 15,
+              "id": "177171790108934r05",
+              "isDone": true,
+              "text": "Youtube video Daily dose of internet"
+            },
+            {
+              "details": "-Review core sentences for intructions.\n* Colors\n* Numbers\n* Directions\n- JW deathsquared\n* \"Red, go three blocks right.\"\n- Pick one students to lead \n- Take turns",
+              "duration": 30,
+              "id": "1771717874787i6kqz",
+              "isDone": true,
+              "text": "Deathsquared"
+            }
+          ],
+          "date": "2026-02-23",
+          "id": "1771717825483b9ea5",
+          "isArchived": true,
+          "notes": "Deathsquared is too advanced for this class.\nUse JW series with easy vocab for next class"
+        },
+        {
+          "activities": [
+            {
+              "details": "- Practice the sentences from card set with all the class.\n- Ask who wants to try on microfone\n- Students practicein their phones\n- We watch the episode or video\n\nContent\n- Cobra Kai\n- Creature cases\n- Drawing tutorial\n- Octonauts\n- Trash truck\n- Mr Beast\n- The singing walrus",
+              "duration": 40,
+              "id": "1771871511590r451u",
+              "isDone": false,
+              "text": "JW Videos Creature Cases ch 7"
+            },
+            {
+              "details": "-Play it for fun. Bella likes it.",
+              "duration": 30,
+              "id": "1771871781255wx7hr",
+              "isDone": false,
+              "text": "Deathsquared"
+            }
+          ],
+          "date": "2026-03-02",
+          "id": "1771871491192d9l5r",
+          "isArchived": false,
+          "notes": "Class before was too hard\nMake easy vocab for them"
+        }
+      ],
+      "time": "14:00",
+      "type": "home"
+    },
+    {
+      "day": "Monday",
+      "id": "1771713590960i2p3x",
+      "name": "2n",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "- Practice the sentences from card set with all the class.\n- Ask who wants to try on microfone\n- Students practicein their phones\n- We watch the episode or video\n\nContent\n- Cobra Kai\n- Creature cases\n- Drawing tutorial\n- Octonauts\n- Trash truck\n- Mr Beast\n- The singing walrus",
+              "duration": 40,
+              "id": "1771717233733lvvx7",
+              "isDone": true,
+              "text": "JW Videos Cobra Kai ep 04"
+            },
+            {
+              "details": "Students suggest music and we watch lyrics video.",
+              "duration": 20,
+              "id": "17717172631156mjsd",
+              "isDone": true,
+              "text": "Suggestions of music"
+            },
+            {
+              "details": "-One person taks the hotseat\n-Students set a name on the projector\n- The person should find out the name by asking yes/no questions only.",
+              "duration": 25,
+              "id": "17717172965265us0e",
+              "isDone": true,
+              "text": "Guess who"
+            }
+          ],
+          "date": "2026-02-23",
+          "id": "1771717217817zp5zi",
+          "isArchived": false,
+          "notes": ""
+        },
+        {
+          "activities": [
+            {
+              "details": "Play the game and talk while playing",
+              "duration": 50,
+              "id": "1771891229560quwel",
+              "isDone": false,
+              "text": "Detroit Become Human"
+            }
+          ],
+          "date": "2026-03-02",
+          "id": "1771891219749j3frk",
+          "isArchived": false,
+          "notes": ""
+        }
+      ],
+      "time": "19:00",
+      "type": "home"
+    },
+    {
+      "day": "Tuesday",
+      "id": "1771713623070rwm2o",
+      "name": "G4",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "- Play the video of the song \n- NLTL on core language\n- Explain that we will go on a train and that they have to sing along\n- Practice song right before train\n- If song is too challenging, they can complete some repetitive parts.\n",
+              "duration": 30,
+              "id": "1771719267555lkkju",
+              "isDone": true,
+              "text": "Guitar train 10 little dinosaurs"
+            }
+          ],
+          "date": "2026-02-25",
+          "id": "1771718414486tnr8w",
+          "isArchived": true,
+          "notes": ""
+        }
+      ],
+      "time": "08:30",
+      "type": "school"
+    },
+    {
+      "day": "Tuesday",
+      "id": "1771713635808wkay0",
+      "name": "G3",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "- Play the video of the song \n- NLTL on core language\n- Explain that we will go on a train and that they have to sing along\n- Practice song right before train\n- If song is too challenging, they can complete some repetitive parts.\n",
+              "duration": 30,
+              "id": "1771719328165n4vu6",
+              "isDone": true,
+              "text": "Guitar train 10 little dinosaurs"
+            }
+          ],
+          "date": "2026-02-25",
+          "id": "1771719320021qd8ph",
+          "isArchived": true,
+          "notes": ""
+        }
+      ],
+      "time": "09:00",
+      "type": "school"
+    },
+    {
+      "day": "Tuesday",
+      "id": "1771713669844kvxsf",
+      "name": "5º ano",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "(JW opcional)\n- Do comprehensible combo with some of the students\n* Colors\n* Shapes\n* Parts of the body\n* Animals\n- Explain that we need silence during the activity\n- Play video tutorial\n- Pause and reinforce the language on the video\n",
+              "duration": 40,
+              "id": "1771719532199t185z",
+              "isDone": true,
+              "text": "Drawing tutorial A koala on an adventure"
+            }
+          ],
+          "date": "2026-02-25",
+          "id": "1771719522584gqu9v",
+          "isArchived": true,
+          "notes": ""
+        }
+      ],
+      "time": "10:15",
+      "type": "school"
+    },
+    {
+      "day": "Tuesday",
+      "id": "17717136771225u5at",
+      "name": "4º ano",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "(JW opcional)\n- Do comprehensible combo with some of the students\n* Colors\n* Shapes\n* Parts of the body\n* Animals\n- Explain that we need silence during the activity\n- Play video tutorial\n- Pause and reinforce the language on the video\n",
+              "duration": 40,
+              "id": "17717205062745c9uq",
+              "isDone": true,
+              "text": "Drawing tutorial A koala on an adventure"
+            }
+          ],
+          "date": "2026-02-25",
+          "id": "17717197440996hosx",
+          "isArchived": true,
+          "notes": ""
+        }
+      ],
+      "time": "11:05",
+      "type": "school"
+    },
+    {
+      "day": "Tuesday",
+      "id": "1771713702671ihmy6",
+      "name": "3t",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "- Watch one episode\n- NLTL during the video\n\nDaily dose of internet\nHiho kids\nKids react\nBrave wilderness\n",
+              "duration": 15,
+              "id": "1771720742922bhw9y",
+              "isDone": false,
+              "text": "Youtube video Daily dose of internet"
+            },
+            {
+              "details": "-Review core sentences for intructions.\n* Colors\n* Numbers\n* Directions\n- JW deathsquared\n* \"Red, go three blocks right.\"\n- Pick one students to lead \n- Take turns",
+              "duration": 30,
+              "id": "177172074292269lkc",
+              "isDone": false,
+              "text": "Deathsquared"
+            }
+          ],
+          "date": "2026-02-25",
+          "id": "1771720741798batbc",
+          "isArchived": false,
+          "notes": ""
+        }
+      ],
+      "time": "14:00",
+      "type": "home"
+    },
+    {
+      "day": "Tuesday",
+      "id": "17717137156422b671",
+      "name": "3n",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "- Practice the sentences from card set with all the class.\n- Ask who wants to try on microfone\n- Students practicein their phones\n- We watch the episode or video\n\nContent\n- Cobra Kai\n- Creature cases\n- Drawing tutorial\n- Octonauts\n- Trash truck\n- Mr Beast\n- The singing walrus",
+              "duration": 40,
+              "id": "1771720772064mpbky",
+              "isDone": false,
+              "text": "JW Videos Cobra Kai"
+            },
+            {
+              "details": "-Review core sentences for intructions.\n- Jw deathsquared + daily dose\n- Pick one students to lead \n- Take turns",
+              "duration": 30,
+              "id": "1771969800591c6agu",
+              "isDone": true,
+              "text": "Deathsquared"
+            }
+          ],
+          "date": "2026-02-24",
+          "id": "17717173729257j9xx",
+          "isArchived": false,
+          "notes": ""
+        }
+      ],
+      "time": "19:00",
+      "type": "home"
+    },
+    {
+      "day": "Wednesday",
+      "id": "1771713748557sbdpl",
+      "name": "3ºA",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "(JW opcional)\n- Do comprehensible combo with some of the students\n* Colors\n* Shapes\n* Parts of the body\n* Animals\n- Explain that we need silence during the activity\n- Play video tutorial\n- Pause and reinforce the language on the video\n",
+              "duration": 40,
+              "id": "1771720562002rwttp",
+              "isDone": true,
+              "text": "Drawing tutorial A koala on an adventure"
+            }
+          ],
+          "date": "2026-02-26",
+          "id": "1771720561049f8uby",
+          "isArchived": false,
+          "notes": ""
+        },
+        {
+          "activities": [
+            {
+              "details": "- Practice the sentences from card set with all the class.\n- Ask who wants to try on microfone\n- Students practicein their phones\n- We watch the episode or video\n\nContent\n- Cobra Kai\n- Creature cases\n- Drawing tutorial\n- Octonauts\n- Trash truck\n- Mr Beast\n- The singing walrus",
+              "duration": 40,
+              "id": "1772025782757pe5cm",
+              "isDone": false,
+              "text": "JW Videos [Name of video]"
+            }
+          ],
+          "date": "2026-03-05",
+          "id": "17720257601704hj28",
+          "isArchived": false,
+          "notes": ""
+        }
+      ],
+      "time": "08:00",
+      "type": "school"
+    },
+    {
+      "day": "Wednesday",
+      "id": "17717137611842puyq",
+      "name": "3ºB",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "(JW opcional)\n- Do comprehensible combo with some of the students\n* Colors\n* Shapes\n* Parts of the body\n* Animals\n- Explain that we need silence during the activity\n- Play video tutorial\n- Pause and reinforce the language on the video\n",
+              "duration": 40,
+              "id": "177172056483270z6r",
+              "isDone": true,
+              "text": "Drawing tutorial A koala on an adventure"
+            }
+          ],
+          "date": "2026-02-26",
+          "id": "17717205640844qwx2",
+          "isArchived": false,
+          "notes": ""
+        }
+      ],
+      "time": "09:00",
+      "type": "school"
+    },
+    {
+      "day": "Wednesday",
+      "id": "1771713790262b1oda",
+      "name": "2ºAno",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "(JW opcional)\n- Do comprehensible combo with some of the students\n* Colors\n* Shapes\n* Parts of the body\n* Animals\n- Explain that we need silence during the activity\n- Play video tutorial\n- Pause and reinforce the language on the video\n",
+              "duration": 40,
+              "id": "1771720567428euhao",
+              "isDone": false,
+              "text": "Drawing tutorial A koala on an adventure"
+            }
+          ],
+          "date": "2026-02-26",
+          "id": "1771720566596vatp2",
+          "isArchived": false,
+          "notes": ""
+        }
+      ],
+      "time": "11:00",
+      "type": "school"
+    },
+    {
+      "day": "Wednesday",
+      "id": "177171380046016kdc",
+      "name": "4t",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "- Use comprehensive combo massively in all tha class\n- Use very simple vocab",
+              "duration": 10,
+              "id": "17720393082501746p",
+              "isDone": false,
+              "text": "Combo attack"
+            },
+            {
+              "details": "- Watch one episode\n- NLTL during the video\n\nDaily dose of internet\nHiho kids\nKids react\nBrave wilderness\n",
+              "duration": 15,
+              "id": "1772039324562r4ljw",
+              "isDone": false,
+              "text": "Youtube video (Ice breaker)Daily dose"
+            },
+            {
+              "details": "- Practice the name of the animals\n- Practice the name of the maps",
+              "duration": 30,
+              "id": "1772039243146pmq9u",
+              "isDone": false,
+              "text": "Chicken Horse"
+            }
+          ],
+          "date": "2026-02-25",
+          "id": "17720392291585g5ui",
+          "isArchived": false,
+          "notes": ""
+        }
+      ],
+      "time": "14:00",
+      "type": "home"
+    },
+    {
+      "day": "Wednesday",
+      "id": "1771713807778a03zv",
+      "name": "4n",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "Students suggest music and we watch lyrics video.",
+              "duration": 20,
+              "id": "1771755701501jm5vb",
+              "isDone": true,
+              "text": "Suggestions of music"
+            },
+            {
+              "details": "- Practice the sentences from card set with all the class.\n- Ask who wants to try on microfone\n- Students practicein their phones\n- We watch the episode or video\n\nContent\n- Cobra Kai\n- Creature cases\n- Drawing tutorial\n- Octonauts\n- Trash truck\n- Mr Beast\n- The singing walrus",
+              "duration": 40,
+              "id": "17717557015012wdoh",
+              "isDone": true,
+              "text": "JW Videos Cobra Kai ep02"
+            },
+            {
+              "details": "-Review core sentences for intructions.\n- Jw deathsquared + daily dose\n- Pick one students to lead \n- Take turns",
+              "duration": 30,
+              "id": "1772060025583c9be7",
+              "isDone": false,
+              "text": "Deathsquared"
+            }
+          ],
+          "date": "2026-02-25",
+          "id": "1771755699352a8jgs",
+          "isArchived": false,
+          "notes": ""
+        }
+      ],
+      "time": "19:00",
+      "type": "home"
+    },
+    {
+      "day": "Thursday",
+      "id": "1771713894170v1mw9",
+      "name": "1ºA",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "(JW opcional)\n- Do comprehensible combo with some of the students\n* Colors\n* Shapes\n* Parts of the body\n* Animals\n- Explain that we need silence during the activity\n- Play video tutorial\n- Pause and reinforce the language on the video\n",
+              "duration": 40,
+              "id": "1771720569620v8fh6",
+              "isDone": false,
+              "text": "Drawing tutorial A koala on an adventure"
+            }
+          ],
+          "date": "2026-02-27",
+          "id": "1771720568968dulz7",
+          "isArchived": false,
+          "notes": ""
+        }
+      ],
+      "time": "08:00",
+      "type": "school"
+    },
+    {
+      "day": "Thursday",
+      "id": "1771713901165xzj6n",
+      "name": "1ºB",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "(JW opcional)\n- Do comprehensible combo with some of the students\n* Colors\n* Shapes\n* Parts of the body\n* Animals\n- Explain that we need silence during the activity\n- Play video tutorial\n- Pause and reinforce the language on the video\n",
+              "duration": 40,
+              "id": "1771720572294so1wz",
+              "isDone": false,
+              "text": "Drawing tutorial A koala on an adventure"
+            }
+          ],
+          "date": "2026-02-27",
+          "id": "1771720571654oorbm",
+          "isArchived": false,
+          "notes": ""
+        }
+      ],
+      "time": "09:00",
+      "type": "school"
+    },
+    {
+      "day": "Thursday",
+      "id": "1771713914936n7fi2",
+      "name": "G2",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "- Play the video of the song \n- NLTL on core language\n- Explain that we will go on a train and that they have to sing along\n- Practice song right before train\n- If song is too challenging, they can complete some repetitive parts.\n",
+              "duration": 30,
+              "id": "1771719420548v0laq",
+              "isDone": false,
+              "text": "Guitar train 10 little dinosaurs"
+            }
+          ],
+          "date": "2026-02-27",
+          "id": "1771719409714pw679",
+          "isArchived": false,
+          "notes": ""
+        }
+      ],
+      "time": "10:40",
+      "type": "school"
+    },
+    {
+      "day": "Thursday",
+      "id": "1771713929124t2z5e",
+      "name": "G5",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "- Play the video of the song \n- NLTL on core language\n- Explain that we will go on a train and that they have to sing along\n- Practice song right before train\n- If song is too challenging, they can complete some repetitive parts.\n",
+              "duration": 30,
+              "id": "1771719468945xrjnz",
+              "isDone": false,
+              "text": "Guitar train 10 little dinosaurs"
+            }
+          ],
+          "date": "2026-02-27",
+          "id": "1771719461417yalow",
+          "isArchived": false,
+          "notes": ""
+        }
+      ],
+      "time": "11:10",
+      "type": "school"
+    },
+    {
+      "day": "Thursday",
+      "id": "1771714059438ewj96",
+      "name": "5n",
+      "plans": [
+        {
+          "activities": [
+            {
+              "details": "What are you doing to listen to English?",
+              "duration": 15,
+              "id": "1772143168480oyrsr",
+              "isDone": true,
+              "text": "Feedback"
+            },
+            {
+              "details": "- Practice the sentences from card set with all the class.\n- Ask who wants to try on microfone\n- Students practicein their phones",
+              "duration": 30,
+              "id": "1772192093079ocyq1",
+              "isDone": true,
+              "text": "JW structure - Bonus1"
+            },
+            {
+              "details": "Students suggest music and we watch lyrics video.",
+              "duration": 20,
+              "id": "1771755729919cvagp",
+              "isDone": true,
+              "text": "Suggestions of music - new light"
+            },
+            {
+              "details": "[Etapa 1]\n- Create a google form with questions for the students\n- Translate the questions with AI\n- Create individual backend\n\n[Etapa 2]\n- Have the students practice JW\n\n[Etapa 3]\n- Have the students introduce themselves.\n- Optional - Have the record a video",
+              "duration": 15,
+              "id": "17721431907147lx1j",
+              "isDone": true,
+              "text": "Google form [etapa 1]"
+            },
+            {
+              "details": "- Practice the sentences from card set with all the class.\n- Ask who wants to try on microfone\n- Students practicein their phones\n- We watch the episode or video\n\nContent\n- Cobra Kai\n- Creature cases\n- Drawing tutorial\n- Octonauts\n- Trash truck\n- Mr Beast\n- The singing walrus",
+              "duration": 40,
+              "id": "1771755729919f9ev1",
+              "isDone": false,
+              "text": "JW Videos Cobra Kai ep 04"
+            }
+          ],
+          "date": "2026-02-26",
+          "id": "1771755727004gvxmb",
+          "isArchived": false,
+          "notes": ""
+        }
+      ],
+      "time": "19:00",
+      "type": "home"
+    }
+  ],
+  "presets": [
+    {
+      "details": "Students suggest music and we watch lyrics video.",
+      "duration": 20,
+      "id": "1771714354226og190",
+      "name": "Suggestions of music"
+    },
+    {
+      "details": "- Watch Lyric video of the song\n- Practice pronunciation with translation on the side.\n- Sing by parts\n- Sing the whole thing",
+      "duration": 45,
+      "id": "1771714458486fkfx1",
+      "name": "Learn a song [name of the song]"
+    },
+    {
+      "details": "- Practice the sentences from card set with all the class.\n- Ask who wants to try on microfone\n- Students practicein their phones\n- We watch the episode or video\n\nContent\n- Cobra Kai\n- Creature cases\n- Drawing tutorial\n- Octonauts\n- Trash truck\n- Mr Beast\n- The singing walrus",
+      "duration": 40,
+      "id": "1771714589258yv7f7",
+      "name": "JW Videos [Name of video]"
+    },
+    {
+      "details": "-One person taks the hotseat\n-Students set a name on the projector\n- The person should find out the name by asking yes/no questions only.",
+      "duration": 25,
+      "id": "17717146939646smz4",
+      "name": "Guess who"
+    },
+    {
+      "details": "(JW opcional)\n- Do comprehensible combo with some of the students\n* Colors\n* Shapes\n* Parts of the body\n* Animals\n- Explain that we need silence during the activity\n- Play video tutorial\n- Pause and reinforce the language on the video\n",
+      "duration": 40,
+      "id": "1771714997898rr3c0",
+      "name": "Drawing tutorial [Name of drawing]"
+    },
+    {
+      "details": "- Watch one episode\n- NLTL during the video\n\nDaily dose of internet\nHiho kids\nKids react\nBrave wilderness\n",
+      "duration": 15,
+      "id": "1771715116554dv8pf",
+      "name": "Youtube video (Ice breaker)[Video]"
+    },
+    {
+      "details": "- Comprehensible combo with some students\n* Numbers\n* Aimals\n* Colors\n- NLTL com a frase \"what do you see?\"\n- Display the images from the folder\n- Ask who wants to participate\n* Ask questions to help the student say what they see.",
+      "duration": 20,
+      "id": "1771715300299vvata",
+      "name": "What do you see?"
+    },
+    {
+      "details": "- Practice the sentences from card set with all the class.\n- Ask who wants to try on microfone\n- Students practicein their phones",
+      "duration": 30,
+      "id": "17717153304658mtf2",
+      "name": "JW structure - [level]"
+    },
+    {
+      "details": "- Practice the sentences from card set with all the class.\n- Go over the page of the book and explain exercises\n- Send homework \n",
+      "duration": 30,
+      "id": "1771715538842mopuo",
+      "name": "School book"
+    },
+    {
+      "details": "- Explain the rules of tha game and make sure everybody understands (redo tutorial)\n- Have a person in the hotseat with the manual on latop\n- Have the bomb in the projector.",
+      "duration": 40,
+      "id": "1771715800275oak0o",
+      "name": "Keep talking and nobody explodes"
+    },
+    {
+      "details": "-Review core sentences for intructions.\n- Jw deathsquared + daily dose\n- Pick one students to lead \n- Take turns",
+      "duration": 30,
+      "id": "1771715956633j8l01",
+      "name": "Deathsquared"
+    },
+    {
+      "details": "- Explain that the game is about cooperation.\n- Encourage the students to observe the level and identify different responsibilities.\n- Help them assign positions:\n* I will cook, He/will chop, I will serve, I will wash\n",
+      "duration": 30,
+      "id": "17717161432620mfle",
+      "name": "Overcooked"
+    },
+    {
+      "details": "- Go playlist on vlc\n- Sing with low tone\n- Pause and NLTL\n- Silence the video to hear them singing\n",
+      "duration": 30,
+      "id": "1771716530811q4de6",
+      "name": "Vocab songs [Playlist number]"
+    },
+    {
+      "details": "- Practice the name of the animals\n- Practice the name of the maps",
+      "duration": 30,
+      "id": "1771716713331uxms8",
+      "name": "Chicken Horse"
+    },
+    {
+      "details": "- Check if the class still remembers the rules\n- Practice pronunciation of each word on the board.\n- Pick the spymasters\n- Make the teams\n- Make sure everybody understands all the words.\n- Tell them they can tanslate if they need to\n- Only one word per clue on first round\n- Add time limit",
+      "duration": 30,
+      "id": "1771716949689cl2u7",
+      "name": "Codenames"
+    },
+    {
+      "details": "- Play the video of the song \n- NLTL on core language\n- Explain that we will go on a train and that they have to sing along\n- Practice song right before train\n- If song is too challenging, they can complete some repetitive parts.\n",
+      "duration": 30,
+      "id": "17717191515058c1fy",
+      "name": "Guitar train [song name]"
+    },
+    {
+      "details": "Play the game and talk while playing",
+      "duration": 50,
+      "id": "1771885306983v7hid",
+      "name": "Detroit Become Human"
+    },
+    {
+      "details": "[Etapa 1]\n- Create a google form with questions for the students\n- Translate the questions with AI\n- Create individual backend\n\n[Etapa 2]\n- Have the students practice JW\n\n[Etapa 3]\n- Have the students introduce themselves.\n- Optional - Have the record a video",
+      "duration": 50,
+      "id": "17719383745498u9lg",
+      "name": "Google form [etapa]"
+    },
+    {
+      "details": "",
+      "duration": 30,
+      "id": "17719716781379xyab",
+      "name": "Personal profile wheel"
+    },
+    {
+      "details": "- Use comprehensive combo massively in all tha class\n- Use very simple vocab",
+      "duration": 10,
+      "id": "1772039294594dvlg7",
+      "name": "Combo attack"
+    },
+    {
+      "details": "",
+      "duration": 20,
+      "id": "1772041814209198rk",
+      "name": "Paw patrol jump rope"
+    },
+    {
+      "details": "What are you doing to listen to English?",
+      "duration": 15,
+      "id": "17721431509717ncjb",
+      "name": "Feedback"
+    }
+  ]
+}
