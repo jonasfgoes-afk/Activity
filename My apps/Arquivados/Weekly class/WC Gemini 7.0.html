@@ -144,18 +144,7 @@
     <h2 style="color: #1e3c72; text-align: center;">Settings</h2>
     
     <div class="settings-group">
-      <h3>💾 Backup & Restore</h3>
-      <div style="display: flex; gap: 10px; margin-top: 10px;">
-        <button class="primary" style="flex: 1;" onclick="exportData()">📤 Export JSON</button>
-        <button class="warning" style="flex: 1; background: #eab308; color: #422006;" onclick="document.getElementById('import-file').click()">📥 Import JSON</button>
-        <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
-      </div>
-      <p style="font-size: 0.8rem; color: #666; margin-top: 8px;">Export your data to a file, or import a backup. <strong>Warning:</strong> Importing will overwrite your current app data!</p>
-    </div>
-
-    <div class="settings-group">
       <h3>📍 Teaching Locations</h3>
-      <p style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">Drag the ☰ handle to reorder how they appear in the top menu.</p>
       <div id="loc-mgmt-list"></div>
     </div>
 
@@ -169,42 +158,24 @@
     </div>
 
     <div class="settings-group">
-      <h3>🎲 Automatic Draw Profiles</h3>
-      <p style="font-size: 0.8rem; color: #666; margin-bottom: 12px;">Create different draw settings and assign them to specific classes.</p>
-      
+      <h3>🎲 Automatic Draw</h3>
       <div class="settings-row">
-        <select id="set-profile-select" style="flex:1; padding:8px; border-radius:10px; border:1px solid #ccc; margin-right: 5px; font-weight: bold; color: #1e3c72;" onchange="switchProfile()"></select>
-        <button class="primary small" onclick="createProfile()">+ New</button>
-        <button class="danger small" style="margin-left:5px;" onclick="deleteProfile()">✕</button>
+        <span>Enable Auto-Draw:</span>
+        <input type="checkbox" id="set-auto-draw" style="width:20px; height:20px;" onchange="updateSettings()">
       </div>
-
-      <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-top: 10px;">
-        <div class="settings-row" style="margin-bottom: 15px;">
-          <span>Profile Name:</span>
-          <input type="text" id="set-profile-name" style="width:140px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()">
-        </div>
-        
-        <div class="settings-row">
-          <span>Enable Auto-Draw:</span>
-          <input type="checkbox" id="set-auto-draw" style="width:20px; height:20px;" onchange="updateProfile()">
-        </div>
-        <div class="settings-row">
-          <span>Acts per draw:</span>
-          <input type="number" id="set-draw-count" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()">
-        </div>
-        <div class="settings-row">
-          <span>Avoid repeats past (days):</span>
-          <select id="set-cooldown" style="width:100px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()">
-            <option value="7">7 Days</option><option value="14">14 Days</option><option value="21">21 Days</option>
-          </select>
-        </div>
-        
-        <h4 style="margin: 15px 0 5px 0; font-size:0.9rem; color:#555;">Max limits per tag (leave blank for unlimited)</h4>
-        <div id="auto-draw-tag-limits"></div>
+      <div class="settings-row">
+        <span>Acts per draw:</span>
+        <input type="number" id="set-draw-count" style="width:60px;" onchange="updateSettings()">
       </div>
-
-      <h4 style="margin: 15px 0 5px 0; font-size:0.9rem; color:#1e3c72; border-top: 1px dashed #ccc; padding-top: 10px;">Apply this profile to classes:</h4>
-      <div id="profile-class-list" style="display:flex; flex-direction:column; gap:8px; background: #f0f4fa; padding: 10px; border-radius: 10px;"></div>
+      <div class="settings-row">
+        <span>Avoid repeats past (days):</span>
+        <select id="set-cooldown" style="width:100px;" onchange="updateSettings()">
+          <option value="7">7 Days</option><option value="14">14 Days</option><option value="21">21 Days</option>
+        </select>
+      </div>
+      
+      <h4 style="margin: 15px 0 5px 0; font-size:0.9rem; color:#555;">Max limits per tag (leave blank for unlimited)</h4>
+      <div id="auto-draw-tag-limits"></div>
     </div>
   </div>
 
@@ -321,38 +292,20 @@
     presets: [],
     locations: ['all', 'school', 'home'],
     activityTags: ['Ice breaker', 'JW'], 
-    drawProfiles: [], 
+    settings: { autoDraw: false, drawCount: 3, cooldown: 14, tagLimits: {} },
     currentLoc: 'all',
     currentView: 'day'
   };
-  
-  let currentProfileId = 'default';
-
-  function ensureDrawProfiles(data) {
-    if (!data.drawProfiles || data.drawProfiles.length === 0) {
-      data.drawProfiles = [{
-        id: 'default',
-        name: 'Default Setup',
-        autoDraw: (data.settings && data.settings.autoDraw) || false,
-        drawCount: (data.settings && data.settings.drawCount) || 3,
-        cooldown: (data.settings && data.settings.cooldown) || 14,
-        tagLimits: (data.settings && data.settings.tagLimits) || {}
-      }];
-    }
-    return data;
-  }
 
   function loadLocal() {
-    const saved = localStorage.getItem('weekly_classes_v6');
+    const saved = localStorage.getItem('weekly_classes_v5');
     if (saved) {
-      state = ensureDrawProfiles({...state, ...JSON.parse(saved)});
+      state = {...state, ...JSON.parse(saved)};
     } else {
-      const old = localStorage.getItem('weekly_classes_v5');
-      if (old) { state = ensureDrawProfiles({...state, ...JSON.parse(old)}); saveData(); }
-      else { state = ensureDrawProfiles(state); }
+      const old = localStorage.getItem('weekly_classes_v4');
+      if (old) { state = {...state, ...JSON.parse(old)}; saveData(); }
     }
     
-    currentProfileId = state.drawProfiles[0].id;
     const todayStr = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()];
     document.getElementById('daySelect').value = todayStr;
     
@@ -360,8 +313,8 @@
   }
 
   function saveData() {
-    localStorage.setItem('weekly_classes_v6', JSON.stringify(state));
-    dbRef.set({ classes: state.classes, presets: state.presets, locations: state.locations, activityTags: state.activityTags, drawProfiles: state.drawProfiles });
+    localStorage.setItem('weekly_classes_v5', JSON.stringify(state));
+    dbRef.set({ classes: state.classes, presets: state.presets, locations: state.locations, activityTags: state.activityTags, settings: state.settings });
   }
 
   dbRef.on('value', (snapshot) => {
@@ -371,10 +324,7 @@
       state.presets = cloud.presets || [];
       state.locations = cloud.locations || ['all', 'school', 'home'];
       state.activityTags = cloud.activityTags || ['Ice breaker', 'JW'];
-      
-      const migratedCloud = ensureDrawProfiles(cloud);
-      state.drawProfiles = migratedCloud.drawProfiles;
-      
+      state.settings = cloud.settings || state.settings;
       renderNav(); renderApp(); renderSettings();
     }
   });
@@ -385,27 +335,57 @@
   let delTracker = {};
 
   function requireClicks(id, totalClicks) {
-    if (totalClicks === 1) return confirm("Remove this item?");
+    if (totalClicks === 1) {
+      return confirm("Remove this item?");
+    }
+
     let btn = window.event ? window.event.target.closest('button') : null;
     if (!delTracker[id]) delTracker[id] = { step: 1 };
+    
     let d = delTracker[id];
     clearTimeout(d.timer);
     
     if (d.step === 1) { 
       if (btn) { 
-        d.origHTML = btn.innerHTML; d.origBg = btn.style.background; 
-        if (totalClicks === 2) { btn.innerHTML = "Confirm!"; btn.style.background = "#dc2626"; btn.style.color = "white"; } 
-        else if (totalClicks === 3) { btn.innerHTML = "Sure?"; btn.style.background = "#fca5a5"; btn.style.color = "#7f1d1d"; }
+        d.origHTML = btn.innerHTML; 
+        d.origBg = btn.style.background; 
+        
+        if (totalClicks === 2) {
+          btn.innerHTML = "Confirm!"; 
+          btn.style.background = "#dc2626"; 
+          btn.style.color = "white";
+        } else if (totalClicks === 3) {
+          btn.innerHTML = "Sure?"; 
+          btn.style.background = "#fca5a5"; 
+          btn.style.color = "#7f1d1d";
+        }
       }
-      d.step++; d.timer = setTimeout(() => resetDelete(id, btn), 3000); return false;
+      d.step++;
+      d.timer = setTimeout(() => resetDelete(id, btn), 3000);
+      return false;
+
     } else if (d.step === 2 && totalClicks === 3) { 
-      if (btn) { btn.innerHTML = "Confirm!"; btn.style.background = "#dc2626"; btn.style.color = "white"; }
-      d.step++; d.timer = setTimeout(() => resetDelete(id, btn), 3000); return false;
-    } else { resetDelete(id, btn); return true; }
+      if (btn) { 
+        btn.innerHTML = "Confirm!"; 
+        btn.style.background = "#dc2626"; 
+        btn.style.color = "white"; 
+      }
+      d.step++;
+      d.timer = setTimeout(() => resetDelete(id, btn), 3000);
+      return false;
+
+    } else { 
+      resetDelete(id, btn);
+      return true;
+    }
   }
 
   function resetDelete(id, btn) {
-    if (btn && delTracker[id]) { btn.innerHTML = delTracker[id].origHTML || btn.innerHTML; btn.style.background = delTracker[id].origBg || ""; btn.style.color = ""; }
+    if (btn && delTracker[id]) {
+      btn.innerHTML = delTracker[id].origHTML || btn.innerHTML;
+      btn.style.background = delTracker[id].origBg || "";
+      btn.style.color = "";
+    }
     delete delTracker[id];
   }
 
@@ -416,15 +396,17 @@
 
   function setViewType(type) {
     state.currentView = type;
-    document.querySelectorAll('button[id^="btn-"]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('btn-' + type).classList.add('active');
     
     document.getElementById('main-view').style.display = (type === 'presets' || type === 'settings') ? 'none' : 'block';
     document.getElementById('presets-view').style.display = (type === 'presets') ? 'block' : 'none';
     document.getElementById('settings-view').style.display = (type === 'settings') ? 'block' : 'none';
     document.getElementById('main-fab').style.display = (type === 'presets' || type === 'settings') ? 'none' : 'flex';
+    
     document.getElementById('classPicker').style.display = (type === 'class') ? 'flex' : 'none';
     document.getElementById('dayPicker').style.display = (type === 'day') ? 'flex' : 'none';
+    
     document.getElementById('history-section-div').style.display = (type === 'presets' || type === 'settings') ? 'none' : 'block';
     renderApp();
   }
@@ -441,16 +423,12 @@
   }
 
   // ==========================================
-  // SETTINGS, TAGS, LOCATIONS & EXPORT/IMPORT
+  // SETTINGS & TAGS & LOCATIONS
   // ==========================================
   function renderSettings() {
     document.getElementById('loc-mgmt-list').innerHTML = state.locations.filter(l => l !== 'all').map(l => `
-      <div class="loc-item" data-loc="${l}" draggable="true" ondragstart="locDragStart(event, '${l}')" ondragover="locDragOver(event)" ondrop="locDrop(event, '${l}')"
-           style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; background:white; padding:8px; border-radius:8px; border:1px solid #eee; transition: opacity 0.2s;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span class="drag-handle" ontouchstart="locTouchStart(event, '${l}')">☰</span>
-          <span style="text-transform:capitalize; font-weight:bold;">${l}</span>
-        </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:5px; background:white; padding:8px; border-radius:8px; border:1px solid #eee;">
+        <span style="text-transform:capitalize; font-weight:bold;">${l}</span>
         <button class="small danger" onclick="removeLocation('${l}')">Delete</button>
       </div>
     `).join('');
@@ -459,106 +437,14 @@
       <span class="tag-pill" style="font-size:0.8rem; padding:4px 10px; background:white;">${t} <span style="color:red; cursor:pointer; margin-left:5px;" onclick="deleteActivityTag('${t}')">✖</span></span>
     `).join('');
 
-    // --- RENDER AUTO-DRAW PROFILES ---
-    const profSelect = document.getElementById('set-profile-select');
-    profSelect.innerHTML = state.drawProfiles.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-    profSelect.value = currentProfileId;
+    document.getElementById('auto-draw-tag-limits').innerHTML = state.activityTags.map(tag => {
+      const safeId = tag.replace(/\s+/g, '-');
+      return `<div class="settings-row"><span>${tag} max:</span><input type="number" id="set-limit-${safeId}" value="${state.settings.tagLimits[tag] || ''}" style="width:60px;" onchange="updateSettings()"></div>`;
+    }).join('');
 
-    const prof = state.drawProfiles.find(p => p.id === currentProfileId) || state.drawProfiles[0];
-    if(prof) {
-      document.getElementById('set-profile-name').value = prof.name;
-      document.getElementById('set-auto-draw').checked = prof.autoDraw;
-      document.getElementById('set-draw-count').value = prof.drawCount;
-      document.getElementById('set-cooldown').value = prof.cooldown;
-
-      document.getElementById('auto-draw-tag-limits').innerHTML = state.activityTags.map(tag => {
-        const safeId = tag.replace(/\s+/g, '-');
-        return `<div class="settings-row"><span>${tag} max:</span><input type="number" id="set-limit-${safeId}" value="${prof.tagLimits[tag] || ''}" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()"></div>`;
-      }).join('');
-
-      document.getElementById('profile-class-list').innerHTML = state.classes.length > 0 ? state.classes.map(c => {
-         const isAssigned = (c.drawProfileId === prof.id) || (!c.drawProfileId && prof.id === state.drawProfiles[0].id);
-         return `<label style="display:flex; align-items:center; gap:8px; font-size:0.95rem; font-weight:500; cursor:pointer;">
-                   <input type="checkbox" style="width:18px; height:18px; accent-color:#1e3c72;" ${isAssigned ? 'checked' : ''} onchange="toggleProfileClass('${c.id}', this.checked)"> ${c.name}
-                 </label>`;
-      }).join('') : '<span style="font-size:0.85rem; color:#666;">No classes added yet.</span>';
-    }
-  }
-
-  function switchProfile() { currentProfileId = document.getElementById('set-profile-select').value; renderSettings(); }
-
-  function createProfile() {
-    const newId = generateId();
-    state.drawProfiles.push({ id: newId, name: 'New Profile', autoDraw: false, drawCount: 3, cooldown: 14, tagLimits: {} });
-    currentProfileId = newId; saveData(); renderSettings();
-  }
-
-  function deleteProfile() {
-    if (state.drawProfiles.length <= 1) return alert("You must have at least one profile.");
-    if (confirm("Delete this profile? Classes using it will revert to the default.")) {
-      state.drawProfiles = state.drawProfiles.filter(p => p.id !== currentProfileId);
-      state.classes.forEach(c => { if(c.drawProfileId === currentProfileId) c.drawProfileId = state.drawProfiles[0].id; });
-      currentProfileId = state.drawProfiles[0].id;
-      saveData(); renderSettings();
-    }
-  }
-
-  function updateProfile() {
-    const prof = state.drawProfiles.find(p => p.id === currentProfileId);
-    if(!prof) return;
-    prof.name = document.getElementById('set-profile-name').value || 'Unnamed Profile';
-    prof.autoDraw = document.getElementById('set-auto-draw').checked;
-    prof.drawCount = parseInt(document.getElementById('set-draw-count').value) || 3;
-    prof.cooldown = parseInt(document.getElementById('set-cooldown').value) || 14;
-    
-    state.activityTags.forEach(tag => {
-      const val = document.getElementById(`set-limit-${tag.replace(/\s+/g, '-')}`).value;
-      if (!prof.tagLimits) prof.tagLimits = {};
-      prof.tagLimits[tag] = val;
-    });
-    
-    const sel = document.getElementById('set-profile-select');
-    const opt = sel.querySelector(`option[value="${prof.id}"]`);
-    if(opt) opt.innerText = prof.name;
-    saveData();
-  }
-
-  function toggleProfileClass(classId, isChecked) {
-    const cls = state.classes.find(c => c.id === classId);
-    if (isChecked) { cls.drawProfileId = currentProfileId; } 
-    else { cls.drawProfileId = state.drawProfiles[0].id; }
-    saveData(); renderSettings(); 
-  }
-
-  // EXPORT / IMPORT LOGIC
-  function exportData() {
-    const dataStr = JSON.stringify(state, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url;
-    const dateStr = new Date().toISOString().split('T')[0];
-    a.download = `weekly_classes_backup_${dateStr}.json`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-  }
-
-  function importData(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const importedState = JSON.parse(e.target.result);
-        if (confirm("This will replace all your current classes, plans, and settings with the imported file. Are you sure you want to proceed?")) {
-          state = ensureDrawProfiles({
-            classes: importedState.classes || [], presets: importedState.presets || [], locations: importedState.locations || ['all', 'school', 'home'], activityTags: importedState.activityTags || ['Ice breaker', 'JW'], settings: importedState.settings || {}, drawProfiles: importedState.drawProfiles || [], currentLoc: 'all', currentView: 'day'
-          });
-          currentProfileId = state.drawProfiles[0].id;
-          saveData(); renderNav(); renderSettings(); renderApp(); alert("Data imported successfully!");
-        }
-      } catch (err) { alert("Error: The selected file is not a valid JSON backup."); }
-      event.target.value = ''; 
-    };
-    reader.readAsText(file);
+    document.getElementById('set-auto-draw').checked = state.settings.autoDraw;
+    document.getElementById('set-draw-count').value = state.settings.drawCount;
+    document.getElementById('set-cooldown').value = state.settings.cooldown;
   }
 
   function quickAddLocation() {
@@ -577,43 +463,22 @@
     if (val && !state.activityTags.includes(val)) { state.activityTags.push(val); saveData(); input.value = ''; renderSettings(); }
   }
   function deleteActivityTag(tag) {
-    if(confirm(`Delete tag "${tag}"?`)) { state.activityTags = state.activityTags.filter(t => t !== tag); state.drawProfiles.forEach(p => { if(p.tagLimits) delete p.tagLimits[tag]; }); saveData(); renderSettings(); }
+    if(confirm(`Delete tag "${tag}"?`)) { state.activityTags = state.activityTags.filter(t => t !== tag); delete state.settings.tagLimits[tag]; saveData(); renderSettings(); }
+  }
+
+  function updateSettings() {
+    state.settings.autoDraw = document.getElementById('set-auto-draw').checked;
+    state.settings.drawCount = parseInt(document.getElementById('set-draw-count').value) || 3;
+    state.settings.cooldown = parseInt(document.getElementById('set-cooldown').value) || 14;
+    state.activityTags.forEach(tag => {
+      const val = document.getElementById(`set-limit-${tag.replace(/\s+/g, '-')}`).value;
+      state.settings.tagLimits[tag] = val;
+    });
+    saveData();
   }
 
   // ==========================================
-  // DRAG & DROP REORDERING FOR LOCATIONS
-  // ==========================================
-  function reorderLocation(draggedLoc, targetLoc) {
-    const arr = state.locations.filter(l => l !== 'all');
-    const fromIdx = arr.indexOf(draggedLoc); const toIdx = arr.indexOf(targetLoc);
-    arr.splice(fromIdx, 1); arr.splice(toIdx, 0, draggedLoc);
-    state.locations = ['all', ...arr]; saveData(); renderSettings(); renderNav();
-  }
-  function locDragStart(e, loc) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', JSON.stringify({type: 'location', loc: loc})); setTimeout(() => e.target.style.opacity = '0.4', 0); }
-  function locDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
-  function locDrop(e, targetLoc) {
-    e.preventDefault(); const targetEl = e.target.closest('.loc-item'); if(targetEl) targetEl.style.opacity = '1';
-    try { const data = JSON.parse(e.dataTransfer.getData('text/plain')); if (data.type === 'location' && data.loc !== targetLoc) reorderLocation(data.loc, targetLoc); } catch(err) {}
-  }
-  let locTouchData = null;
-  function locTouchStart(e, loc) {
-    const targetItem = e.target.closest('.loc-item'); if (!targetItem) return;
-    locTouchData = { loc, targetItem, clone: targetItem.cloneNode(true), offsetX: e.touches[0].clientX - targetItem.getBoundingClientRect().left, offsetY: e.touches[0].clientY - targetItem.getBoundingClientRect().top };
-    locTouchData.clone.style.position = 'fixed'; locTouchData.clone.style.width = targetItem.offsetWidth + 'px'; locTouchData.clone.style.zIndex = '9999'; locTouchData.clone.style.opacity = '0.9'; locTouchData.clone.style.pointerEvents = 'none'; locTouchData.clone.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
-    document.body.appendChild(locTouchData.clone); targetItem.style.opacity = '0.3';
-    document.addEventListener('touchmove', locTouchMove, { passive: false }); document.addEventListener('touchend', locTouchEnd);
-  }
-  function locTouchMove(e) { if (!locTouchData) return; e.preventDefault(); const touch = e.touches[0]; locTouchData.clone.style.top = (touch.clientY - locTouchData.offsetY) + 'px'; locTouchData.clone.style.left = (touch.clientX - locTouchData.offsetX) + 'px'; }
-  function locTouchEnd(e) {
-    if (!locTouchData) return; const touch = e.changedTouches[0]; locTouchData.clone.remove(); locTouchData.targetItem.style.opacity = '1';
-    document.removeEventListener('touchmove', locTouchMove); document.removeEventListener('touchend', locTouchEnd);
-    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY); const dropItem = dropTarget ? dropTarget.closest('.loc-item') : null;
-    if (dropItem && dropItem !== locTouchData.targetItem) { const targetLoc = dropItem.getAttribute('data-loc'); if(targetLoc && targetLoc !== locTouchData.loc) reorderLocation(locTouchData.loc, targetLoc); }
-    locTouchData = null;
-  }
-
-  // ==========================================
-  // UTILS & AUTO-DRAW (UPDATED FOR PROFILES)
+  // UTILS & AUTO-DRAW
   // ==========================================
   function generateId() { return Date.now().toString() + Math.random().toString(36).substr(2, 5); }
   
@@ -632,20 +497,14 @@
   }
 
   function runAutoDraw(classId, planId) {
-    if (state.presets.length === 0) return;
+    if (!state.settings.autoDraw || state.presets.length === 0) return;
     const cls = state.classes.find(c => c.id === classId); 
-    
-    // Fetch appropriate profile for this class
-    const profId = cls.drawProfileId || (state.drawProfiles.length > 0 ? state.drawProfiles[0].id : null);
-    const profile = state.drawProfiles.find(p => p.id === profId);
-    if (!profile || !profile.autoDraw) return; // Exit if auto-draw is turned off for this profile
-
     if (!cls.plans) cls.plans = [];
     const plan = cls.plans.find(p => p.id === planId);
     if (!plan.activities) plan.activities = [];
 
     const planDate = new Date(plan.date + "T12:00:00");
-    const cutoffDate = new Date(planDate.getTime() - (profile.cooldown * 24 * 60 * 60 * 1000));
+    const cutoffDate = new Date(planDate.getTime() - (state.settings.cooldown * 24 * 60 * 60 * 1000));
     
     let recent = new Set();
     cls.plans.forEach(p => { 
@@ -662,11 +521,11 @@
 
     let selected = []; let tagCounts = {};
     for (let pr of available) {
-      if (selected.length >= profile.drawCount) break;
+      if (selected.length >= state.settings.drawCount) break;
       let canAdd = true;
       if (pr.tags) {
         for (let tag of pr.tags) {
-          let lim = parseInt(profile.tagLimits && profile.tagLimits[tag]);
+          let lim = parseInt(state.settings.tagLimits[tag]);
           if (!isNaN(lim) && (tagCounts[tag] || 0) >= lim) { canAdd = false; break; }
         }
       }
@@ -694,23 +553,37 @@
     if (!name) return alert("Please enter a class name.");
     if (!time) return alert("Please select a start time.");
 
-    state.classes.push({ id: generateId(), type, name, day, time, plans: [], drawProfileId: state.drawProfiles[0].id });
+    state.classes.push({ id: generateId(), type, name, day, time, plans: [] });
     saveData(); 
     document.getElementById('class-dialog').close(); 
-    if(state.currentView === 'day') document.getElementById('daySelect').value = day;
+    
+    if(state.currentView === 'day') {
+      document.getElementById('daySelect').value = day;
+    }
     renderApp();
   }
   
-  function deleteClass(classId) { if(!requireClicks('c_'+classId, 3)) return; state.classes = state.classes.filter(c => c.id !== classId); saveData(); renderApp(); }
+  function deleteClass(classId) { 
+    if(!requireClicks('c_'+classId, 3)) return;
+    state.classes = state.classes.filter(c => c.id !== classId); saveData(); renderApp(); 
+  }
 
   function addPlan(cid) {
-    const cls = state.classes.find(c => c.id === cid); if (!cls.plans) cls.plans = [];
+    const cls = state.classes.find(c => c.id === cid); 
+    if (!cls.plans) cls.plans = [];
     const newPlanId = generateId();
     cls.plans.push({ id: newPlanId, date: getNextPlanDate(cls), activities: [], isArchived: false, notes: "" });
-    runAutoDraw(cid, newPlanId); saveData(); renderApp();
+    if(state.settings.autoDraw) runAutoDraw(cid, newPlanId);
+    saveData(); renderApp();
   }
   
-  function deletePlan(cid, pid) { if(!requireClicks('p_'+pid, 2)) return; const cls = state.classes.find(c => c.id === cid); cls.plans = (cls.plans || []).filter(p => p.id !== pid); saveData(); renderApp(); }
+  function deletePlan(cid, pid) { 
+    if(!requireClicks('p_'+pid, 2)) return;
+    const cls = state.classes.find(c => c.id === cid); 
+    cls.plans = (cls.plans || []).filter(p => p.id !== pid); 
+    saveData(); renderApp(); 
+  }
+  
   function togglePlanCollapse(id) { const el = document.getElementById('p-' + id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
   function archivePlan(cid, pid) { const p = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); if(p && confirm("Archive?")) { p.isArchived = true; saveData(); renderApp(); } }
   function unarchivePlan(cid, pid) { const p = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); if(p && confirm("Unarchive?")) { p.isArchived = false; saveData(); renderApp(); } }
@@ -718,17 +591,29 @@
   function copyPlan(cid, pid) {
     const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid);
     if (!plan.activities || plan.activities.length === 0) return alert("Plan is empty.");
-    localStorage.setItem('wc_clipboard', JSON.stringify(plan.activities)); alert(plan.activities.length + " activities copied!");
+    localStorage.setItem('wc_clipboard', JSON.stringify(plan.activities));
+    alert(plan.activities.length + " activities copied!");
   }
+  
   function pastePlan(cid, pid) {
-    const clip = localStorage.getItem('wc_clipboard'); if (!clip) return alert("Clipboard is empty.");
-    const acts = JSON.parse(clip); const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid);
+    const clip = localStorage.getItem('wc_clipboard');
+    if (!clip) return alert("Clipboard is empty.");
+    const acts = JSON.parse(clip);
+    const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid);
     if (!plan.activities) plan.activities = [];
     acts.forEach(a => plan.activities.push({ id: generateId(), text: a.text, duration: a.duration, details: a.details, isDone: false, tags: a.tags || [] }));
     saveData(); renderApp();
   }
-  function toggleDetails(elementId) { const el = document.getElementById(elementId); if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
-  function savePlanNotes(cid, pid, val) { const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); if(plan) { plan.notes = val; saveData(); } }
+  
+  function toggleDetails(elementId) {
+    const el = document.getElementById(elementId);
+    if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
+  }
+  
+  function savePlanNotes(cid, pid, val) {
+    const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid);
+    if(plan) { plan.notes = val; saveData(); }
+  }
 
   // ==========================================
   // ACTIVITIES (PRESETS)
@@ -736,7 +621,13 @@
   function openPresetDialog(presetId = null) {
     document.getElementById('preset-id').value = presetId || "";
     document.getElementById('preset-dialog-title').innerText = presetId ? "Edit Activity" : "Add Activity";
-    document.getElementById('preset-tags-container').innerHTML = state.activityTags.map(tag => `<label style="font-size:0.85rem; font-weight:normal; display:flex; align-items:center; gap:3px;"><input type="checkbox" class="preset-tag-cb" value="${tag}"> ${tag}</label>`).join('');
+    
+    document.getElementById('preset-tags-container').innerHTML = state.activityTags.map(tag => `
+      <label style="font-size:0.85rem; font-weight:normal; display:flex; align-items:center; gap:3px;">
+        <input type="checkbox" class="preset-tag-cb" value="${tag}"> ${tag}
+      </label>
+    `).join('');
+
     document.getElementById('preset-class-assoc').innerHTML = '<option value="all">Appropriate for All Classes</option>' + state.classes.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
 
     if (presetId) {
@@ -744,7 +635,9 @@
       document.getElementById('preset-name').value = p.name; document.getElementById('preset-duration').value = p.duration;
       document.getElementById('preset-details').value = p.details || ""; document.getElementById('preset-class-assoc').value = p.classAssoc || 'all';
       document.querySelectorAll('.preset-tag-cb').forEach(cb => cb.checked = (p.tags || []).includes(cb.value));
-    } else { document.getElementById('preset-name').value = ""; document.getElementById('preset-duration').value = ""; document.getElementById('preset-details').value = ""; }
+    } else {
+      document.getElementById('preset-name').value = ""; document.getElementById('preset-duration').value = ""; document.getElementById('preset-details').value = "";
+    }
     document.getElementById('preset-dialog').showModal();
   }
 
@@ -754,20 +647,27 @@
     const tags = Array.from(document.querySelectorAll('.preset-tag-cb:checked')).map(cb => cb.value);
 
     if (id) {
-      const p = state.presets.find(x => x.id === id); p.name = name; p.duration = parseInt(document.getElementById('preset-duration').value); p.details = document.getElementById('preset-details').value; p.tags = tags; p.classAssoc = document.getElementById('preset-class-assoc').value;
+      const p = state.presets.find(x => x.id === id); 
+      p.name = name; p.duration = parseInt(document.getElementById('preset-duration').value); p.details = document.getElementById('preset-details').value; p.tags = tags; p.classAssoc = document.getElementById('preset-class-assoc').value;
     } else {
       state.presets.push({ id: generateId(), name, duration: parseInt(document.getElementById('preset-duration').value), details: document.getElementById('preset-details').value, tags, classAssoc: document.getElementById('preset-class-assoc').value });
     }
     saveData(); document.getElementById('preset-dialog').close(); renderApp();
   }
-  function deletePreset(id) { if(!requireClicks('pr_'+id, 1)) return; state.presets = state.presets.filter(p => p.id !== id); saveData(); renderApp(); }
+  
+  function deletePreset(id) { 
+    if(!requireClicks('pr_'+id, 1)) return;
+    state.presets = state.presets.filter(p => p.id !== id); saveData(); renderApp(); 
+  }
 
   // ==========================================
   // ADD ACTIVITY TO PLAN (NEW/LIST/RANDOM)
   // ==========================================
   function toggleActivity(cid, pid, aid) {
     const a = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid).activities.find(x => x.id === aid);
-    a.isDone = !a.isDone; saveData(); const item = document.getElementById(`act-item-${aid}`);
+    a.isDone = !a.isDone; 
+    saveData(); 
+    const item = document.getElementById(`act-item-${aid}`);
     if(item) { if(a.isDone) item.classList.add('is-done'); else item.classList.remove('is-done'); }
   }
 
@@ -779,56 +679,99 @@
   }
 
   function filterAddActPresets() {
-    const term = document.getElementById('add-act-search').value.toLowerCase(); const sel = document.getElementById('add-act-preset-select');
-    if (state.presets.length === 0) { sel.innerHTML = `<option value="">-- No inventory --</option>`; return; }
+    const term = document.getElementById('add-act-search').value.toLowerCase();
+    const sel = document.getElementById('add-act-preset-select');
+    if (state.presets.length === 0) {
+      sel.innerHTML = `<option value="">-- No inventory --</option>`;
+      return;
+    }
     const filtered = state.presets.filter(p => p.name.toLowerCase().includes(term));
     sel.innerHTML = filtered.map(p => `<option value="${p.id}">${p.name} (${p.duration}m)</option>`).join('');
   }
 
   function openAddActDialog(cid, pid) {
-    document.getElementById('add-act-class-id').value = cid; document.getElementById('add-act-plan-id').value = pid;
-    document.getElementById('add-act-search').value = ''; filterAddActPresets();
-    document.querySelector('input[name="actSource"][value="new"]').checked = true; toggleAddActMode();
+    document.getElementById('add-act-class-id').value = cid; 
+    document.getElementById('add-act-plan-id').value = pid;
+    document.getElementById('add-act-search').value = '';
+    
+    filterAddActPresets();
+    
+    document.querySelector('input[name="actSource"][value="new"]').checked = true;
+    toggleAddActMode();
     document.getElementById('add-act-dialog').showModal();
   }
 
   function saveNewActivity() {
-    const cid = document.getElementById('add-act-class-id').value; const pid = document.getElementById('add-act-plan-id').value;
-    const cls = state.classes.find(c => c.id === cid); const plan = cls.plans.find(p => p.id === pid);
+    const cid = document.getElementById('add-act-class-id').value; 
+    const pid = document.getElementById('add-act-plan-id').value;
+    const cls = state.classes.find(c => c.id === cid);
+    const plan = cls.plans.find(p => p.id === pid);
     if (!plan.activities) plan.activities = [];
+
     const mode = document.querySelector('input[name="actSource"]:checked').value;
     
     if (mode === 'new') {
-      const name = document.getElementById('add-act-name').value.trim(); const dur = document.getElementById('add-act-duration').value;
+      const name = document.getElementById('add-act-name').value.trim();
+      const dur = document.getElementById('add-act-duration').value;
       if (!name) return alert("Activity name required.");
       plan.activities.push({ id: generateId(), text: name, duration: dur || 10, isDone: false, tags: [] });
-    } else if (mode === 'preset') {
-      const pId = document.getElementById('add-act-preset-select').value; if (!pId) return alert("Select an activity from the list.");
-      const pr = state.presets.find(p => p.id === pId); if (pr) plan.activities.push({ id: generateId(), text: pr.name, duration: pr.duration, details: pr.details, isDone: false, tags: pr.tags || [] });
-    } else if (mode === 'random') {
+    } 
+    else if (mode === 'preset') {
+      const pId = document.getElementById('add-act-preset-select').value;
+      if (!pId) return alert("Select an activity from the list.");
+      const pr = state.presets.find(p => p.id === pId);
+      if (pr) plan.activities.push({ id: generateId(), text: pr.name, duration: pr.duration, details: pr.details, isDone: false, tags: pr.tags || [] });
+    } 
+    else if (mode === 'random') {
       let available = state.presets.filter(pr => !pr.classAssoc || pr.classAssoc === 'all' || pr.classAssoc === cls.name);
-      if (available.length === 0) available = state.presets; if (available.length === 0) return alert("Your inventory is empty!");
+      if (available.length === 0) available = state.presets; 
+      if (available.length === 0) return alert("Your inventory is empty!");
+      
       const pr = available[Math.floor(Math.random() * available.length)];
       plan.activities.push({ id: generateId(), text: pr.name, duration: pr.duration, details: pr.details, isDone: false, tags: pr.tags || [] });
     }
-    saveData(); document.getElementById('add-act-name').value = ''; document.getElementById('add-act-dialog').close(); renderApp();
+
+    saveData(); 
+    document.getElementById('add-act-name').value = '';
+    document.getElementById('add-act-dialog').close(); 
+    renderApp();
   }
 
+  // ==========================================
+  // EDIT SPECIFIC ACTIVITY (IN PLAN)
+  // ==========================================
   function openEditActDialog(cid, pid, aid) {
     const a = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid).activities.find(x => x.id === aid);
-    document.getElementById('edit-act-cid').value = cid; document.getElementById('edit-act-pid').value = pid; document.getElementById('edit-act-aid').value = aid;
-    document.getElementById('edit-act-name').value = a.text || ''; document.getElementById('edit-act-duration').value = a.duration || ''; document.getElementById('edit-act-details').value = a.details || '';
+    document.getElementById('edit-act-cid').value = cid;
+    document.getElementById('edit-act-pid').value = pid;
+    document.getElementById('edit-act-aid').value = aid;
+    document.getElementById('edit-act-name').value = a.text || '';
+    document.getElementById('edit-act-duration').value = a.duration || '';
+    document.getElementById('edit-act-details').value = a.details || '';
     document.getElementById('edit-act-dialog').showModal();
   }
 
   function saveEditActivity() {
-    const cid = document.getElementById('edit-act-cid').value; const pid = document.getElementById('edit-act-pid').value; const aid = document.getElementById('edit-act-aid').value;
+    const cid = document.getElementById('edit-act-cid').value;
+    const pid = document.getElementById('edit-act-pid').value;
+    const aid = document.getElementById('edit-act-aid').value;
+    
     const a = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid).activities.find(x => x.id === aid);
-    a.text = document.getElementById('edit-act-name').value.trim(); a.duration = document.getElementById('edit-act-duration').value || 0; a.details = document.getElementById('edit-act-details').value;
-    saveData(); document.getElementById('edit-act-dialog').close(); renderApp();
+    a.text = document.getElementById('edit-act-name').value.trim();
+    a.duration = document.getElementById('edit-act-duration').value || 0;
+    a.details = document.getElementById('edit-act-details').value;
+    
+    saveData();
+    document.getElementById('edit-act-dialog').close();
+    renderApp();
   }
 
-  function deleteActivity(cid, pid, aid) { if(!requireClicks('a_'+aid, 1)) return; const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); plan.activities = plan.activities.filter(a => a.id !== aid); saveData(); renderApp(); }
+  function deleteActivity(cid, pid, aid) { 
+    if(!requireClicks('a_'+aid, 1)) return;
+    const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); 
+    plan.activities = plan.activities.filter(a => a.id !== aid); 
+    saveData(); renderApp(); 
+  }
 
   // ==========================================
   // RENDERING 
@@ -836,6 +779,7 @@
   function renderApp() {
     if (state.currentView === 'presets') { renderPresets(); return; }
     if (state.currentView === 'settings') return;
+
     let filtered = state.classes;
     if (state.currentLoc !== 'all') filtered = filtered.filter(c => c.type === state.currentLoc);
 
@@ -844,7 +788,9 @@
       sel.innerHTML = filtered.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
       if (cur && filtered.some(c=>c.id===cur)) sel.value = cur;
       filtered = filtered.filter(c => c.id === sel.value);
-    } else if (state.currentView === 'day') { filtered = filtered.filter(c => c.day === document.getElementById('daySelect').value); }
+    } else if (state.currentView === 'day') {
+      filtered = filtered.filter(c => c.day === document.getElementById('daySelect').value);
+    }
 
     const curCont = document.getElementById('current-classes'); const histCont = document.getElementById('history-content');
     curCont.innerHTML = ''; histCont.innerHTML = '';
@@ -853,6 +799,7 @@
       const safePlans = cls.plans || [];
       const active = safePlans.filter(p => !p.isArchived && new Date(p.date + "T00:00:00") >= new Date(new Date().setHours(0,0,0,0) - 3*3600000));
       const history = safePlans.filter(p => !active.includes(p)).sort((a,b) => b.date.localeCompare(a.date));
+
       curCont.innerHTML += generateClassHTML(cls, active, false);
       if (history.length > 0) histCont.innerHTML += generateClassHTML(cls, history, true);
     });
@@ -894,9 +841,9 @@
         <div id="p-${p.id}" class="${empty ? 'plan-collapsed' : ''}">
           <div class="activity-list" style="margin-top:8px;">
             ${(p.activities||[]).map(a => `
-              <div id="act-item-${a.id}" class="activity-item ${a.isDone ? 'is-done' : ''}" draggable="true" ondragstart="actDragStart(event, '${cls.id}', '${p.id}', '${a.id}')" ondragover="actDragOver(event)" ondrop="actDrop(event, '${cls.id}', '${p.id}', '${a.id}')">
+              <div id="act-item-${a.id}" class="activity-item ${a.isDone ? 'is-done' : ''}" draggable="true" ondragstart="dragStart(event, '${cls.id}', '${p.id}', '${a.id}')" ondragover="dragOver(event)" ondrop="drop(event, '${cls.id}', '${p.id}', '${a.id}')">
                 <div class="activity-main">
-                  <span class="drag-handle" ontouchstart="actTouchStart(event, '${cls.id}', '${p.id}', '${a.id}')">☰</span>
+                  <span class="drag-handle" ontouchstart="touchStart(event, '${cls.id}', '${p.id}', '${a.id}')">☰</span>
                   <input type="checkbox" ${a.isDone ? 'checked' : ''} onchange="toggleActivity('${cls.id}', '${p.id}', '${a.id}')">
                   <span class="activity-text">${a.text}</span>
                   <span class="minutes-badge">${a.duration}m</span>
@@ -925,44 +872,45 @@
     `;
   }
 
-  // --- DRAG AND DROP (ACTIVITIES) ---
+  // --- DRAG AND DROP ---
   function reorderActivity(cid, pid, dId, tId) {
     const plan = state.classes.find(c=>c.id===cid).plans.find(p=>p.id===pid);
     const o = plan.activities.findIndex(a=>a.id===dId); const n = plan.activities.findIndex(a=>a.id===tId);
     const [rem] = plan.activities.splice(o, 1); plan.activities.splice(n, 0, rem); saveData(); renderApp();
   }
 
-  function actDragStart(e, cid, pid, aid) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', JSON.stringify({cid, pid, aid, type:'activity'})); setTimeout(() => e.target.style.opacity = '0.4', 0); }
-  function actDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
-  function actDrop(e, tCid, tPid, tAid) {
+  function dragStart(e, cid, pid, aid) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', JSON.stringify({cid, pid, aid})); setTimeout(() => e.target.style.opacity = '0.4', 0); }
+  function dragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+  function drop(e, tCid, tPid, tAid) {
     e.preventDefault(); e.target.closest('.activity-item').style.opacity = '1';
-    try { const data = JSON.parse(e.dataTransfer.getData('text/plain')); if (data.type === 'activity' && data.cid === tCid && data.pid === tPid && data.aid !== tAid) reorderActivity(data.cid, data.pid, data.aid, tAid); } catch(err) {}
+    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+    if (data.cid === tCid && data.pid === tPid && data.aid !== tAid) reorderActivity(data.cid, data.pid, data.aid, tAid);
   }
 
-  let actTouchData = null;
-  function actTouchStart(e, cid, pid, aid) {
+  let touchData = null;
+  function touchStart(e, cid, pid, aid) {
     const targetItem = e.target.closest('.activity-item'); if (!targetItem) return;
-    actTouchData = { cid, pid, aid, targetItem, clone: targetItem.cloneNode(true), offsetX: e.touches[0].clientX - targetItem.getBoundingClientRect().left, offsetY: e.touches[0].clientY - targetItem.getBoundingClientRect().top };
-    actTouchData.clone.style.position = 'fixed'; actTouchData.clone.style.width = targetItem.offsetWidth + 'px'; actTouchData.clone.style.zIndex = '9999'; actTouchData.clone.style.opacity = '0.9'; actTouchData.clone.style.pointerEvents = 'none'; actTouchData.clone.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
-    document.body.appendChild(actTouchData.clone); targetItem.style.opacity = '0.3';
-    document.addEventListener('touchmove', actTouchMove, { passive: false }); document.addEventListener('touchend', actTouchEnd);
+    touchData = { cid, pid, aid, targetItem, clone: targetItem.cloneNode(true), offsetX: e.touches[0].clientX - targetItem.getBoundingClientRect().left, offsetY: e.touches[0].clientY - targetItem.getBoundingClientRect().top };
+    touchData.clone.style.position = 'fixed'; touchData.clone.style.width = targetItem.offsetWidth + 'px'; touchData.clone.style.zIndex = '9999'; touchData.clone.style.opacity = '0.9'; touchData.clone.style.pointerEvents = 'none'; touchData.clone.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+    document.body.appendChild(touchData.clone); targetItem.style.opacity = '0.3';
+    document.addEventListener('touchmove', touchMove, { passive: false }); document.addEventListener('touchend', touchEnd);
   }
-  function actTouchMove(e) { if (!actTouchData) return; e.preventDefault(); const touch = e.touches[0]; actTouchData.clone.style.top = (touch.clientY - actTouchData.offsetY) + 'px'; actTouchData.clone.style.left = (touch.clientX - actTouchData.offsetX) + 'px'; }
-  function actTouchEnd(e) {
-    if (!actTouchData) return; const touch = e.changedTouches[0]; actTouchData.clone.remove(); actTouchData.targetItem.style.opacity = '1';
-    document.removeEventListener('touchmove', actTouchMove); document.removeEventListener('touchend', actTouchEnd);
+  function touchMove(e) { if (!touchData) return; e.preventDefault(); const touch = e.touches[0]; touchData.clone.style.top = (touch.clientY - touchData.offsetY) + 'px'; touchData.clone.style.left = (touch.clientX - touchData.offsetX) + 'px'; }
+  function touchEnd(e) {
+    if (!touchData) return; const touch = e.changedTouches[0]; touchData.clone.remove(); touchData.targetItem.style.opacity = '1';
+    document.removeEventListener('touchmove', touchMove); document.removeEventListener('touchend', touchEnd);
     const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY); const dropItem = dropTarget ? dropTarget.closest('.activity-item') : null;
-    if (dropItem && dropItem !== actTouchData.targetItem) {
+    if (dropItem && dropItem !== touchData.targetItem) {
         const dropHtml = dropItem.outerHTML; 
         const matchAct = dropHtml.match(/data-act-id="([^"]+)"/) || dropItem.innerHTML.match(/toggleActivity\('[^']+',\s*'[^']+',\s*'([^']+)'\)/);
         const matchPlan = dropHtml.match(/data-plan-id="([^"]+)"/) || dropItem.innerHTML.match(/toggleActivity\('[^']+',\s*'([^']+)',/);
         const matchClass = dropHtml.match(/data-class-id="([^"]+)"/) || dropItem.innerHTML.match(/toggleActivity\('([^']+)',/);
         if(matchAct && matchPlan && matchClass) {
            const tAid = matchAct[1]; const tPid = matchPlan[1]; const tCid = matchClass[1];
-           if (tPid === actTouchData.pid && tCid === actTouchData.cid) reorderActivity(actTouchData.cid, actTouchData.pid, actTouchData.aid, tAid);
+           if (tPid === touchData.pid && tCid === touchData.cid) reorderActivity(touchData.cid, touchData.pid, touchData.aid, tAid);
         }
     }
-    actTouchData = null;
+    touchData = null;
   }
 
   window.onload = loadLocal;

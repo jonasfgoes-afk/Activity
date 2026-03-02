@@ -146,8 +146,8 @@
     <div class="settings-group">
       <h3>💾 Backup & Restore</h3>
       <div style="display: flex; gap: 10px; margin-top: 10px;">
-        <button class="primary" style="flex: 1;" onclick="exportData()">📤 Export JSON</button>
-        <button class="warning" style="flex: 1; background: #eab308; color: #422006;" onclick="document.getElementById('import-file').click()">📥 Import JSON</button>
+        <button type="button" class="primary" style="flex: 1;" onclick="exportData()">📤 Export JSON</button>
+        <button type="button" class="warning" style="flex: 1; background: #eab308; color: #422006;" onclick="document.getElementById('import-file').click()">📥 Import JSON</button>
         <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
       </div>
       <p style="font-size: 0.8rem; color: #666; margin-top: 8px;">Export your data to a file, or import a backup. <strong>Warning:</strong> Importing will overwrite your current app data!</p>
@@ -164,7 +164,7 @@
       <div id="tag-mgmt-list" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;"></div>
       <div style="display:flex; gap:5px;">
         <input type="text" id="new-tag-name" placeholder="New tag name..." style="flex:1; padding:8px; border-radius:10px; border:1px solid #ccc;">
-        <button class="primary small" onclick="addActivityTag()">Add Tag</button>
+        <button type="button" class="primary small" onclick="addActivityTag()">Add Tag</button>
       </div>
     </div>
 
@@ -174,8 +174,8 @@
       
       <div class="settings-row">
         <select id="set-profile-select" style="flex:1; padding:8px; border-radius:10px; border:1px solid #ccc; margin-right: 5px; font-weight: bold; color: #1e3c72;" onchange="switchProfile()"></select>
-        <button class="primary small" onclick="createProfile()">+ New</button>
-        <button class="danger small" style="margin-left:5px;" onclick="deleteProfile()">✕</button>
+        <button type="button" class="primary small" onclick="createProfile()">+ New</button>
+        <button type="button" class="danger small" style="margin-left:5px;" onclick="deleteProfile()">✕</button>
       </div>
 
       <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-top: 10px;">
@@ -203,7 +203,13 @@
         <div id="auto-draw-tag-limits"></div>
       </div>
 
-      <h4 style="margin: 15px 0 5px 0; font-size:0.9rem; color:#1e3c72; border-top: 1px dashed #ccc; padding-top: 10px;">Apply this profile to classes:</h4>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 15px; margin-bottom: 8px;">
+        <h4 style="margin: 0; font-size:0.9rem; color:#1e3c72;">Apply to classes:</h4>
+        <div>
+          <button type="button" class="small primary" onclick="toggleAllProfileClasses(true)" style="padding: 3px 8px; font-size: 0.75rem;">All</button>
+          <button type="button" class="small danger" onclick="toggleAllProfileClasses(false)" style="padding: 3px 8px; font-size: 0.75rem;">None</button>
+        </div>
+      </div>
       <div id="profile-class-list" style="display:flex; flex-direction:column; gap:8px; background: #f0f4fa; padding: 10px; border-radius: 10px;"></div>
     </div>
   </div>
@@ -225,8 +231,8 @@
     </label>
     <label>Start Time:<input type="time" id="new-class-time" required></label>
     <div class="dialog-actions">
-      <button class="danger" onclick="document.getElementById('class-dialog').close()">Cancel</button>
-      <button class="primary" onclick="addClass()">Add Class</button>
+      <button type="button" class="danger" onclick="document.getElementById('class-dialog').close()">Cancel</button>
+      <button type="button" class="primary" onclick="addClass()">Add Class</button>
     </div>
   </div>
 </dialog>
@@ -247,8 +253,8 @@
     <label>Details:<textarea id="preset-details" rows="3"></textarea></label>
     
     <div class="dialog-actions">
-      <button class="danger" onclick="document.getElementById('preset-dialog').close()">Cancel</button>
-      <button class="primary" onclick="savePreset()">Save</button>
+      <button type="button" class="danger" onclick="document.getElementById('preset-dialog').close()">Cancel</button>
+      <button type="button" class="primary" onclick="savePreset()">Save</button>
     </div>
   </div>
 </dialog>
@@ -280,8 +286,8 @@
     </div>
     
     <div class="dialog-actions">
-      <button class="danger" onclick="document.getElementById('add-act-dialog').close()">Cancel</button>
-      <button class="primary" onclick="saveNewActivity()">Add</button>
+      <button type="button" class="danger" onclick="document.getElementById('add-act-dialog').close()">Cancel</button>
+      <button type="button" class="primary" onclick="saveNewActivity()">Add</button>
     </div>
   </div>
 </dialog>
@@ -296,8 +302,8 @@
     <label>Duration (min):<input type="number" id="edit-act-duration"></label>
     <label>Details:<textarea id="edit-act-details" rows="3"></textarea></label>
     <div class="dialog-actions">
-      <button class="danger" onclick="document.getElementById('edit-act-dialog').close()">Cancel</button>
-      <button class="primary" onclick="saveEditActivity()">Save</button>
+      <button type="button" class="danger" onclick="document.getElementById('edit-act-dialog').close()">Cancel</button>
+      <button type="button" class="primary" onclick="saveEditActivity()">Save</button>
     </div>
   </div>
 </dialog>
@@ -338,6 +344,13 @@
         cooldown: (data.settings && data.settings.cooldown) || 14,
         tagLimits: (data.settings && data.settings.tagLimits) || {}
       }];
+    }
+    // Migrate legacy classes so they are explicitly assigned to default rather than floating
+    if (data.classes && data.classes.length > 0) {
+      const defId = data.drawProfiles[0].id;
+      data.classes.forEach(c => {
+        if (c.drawProfileId === undefined) c.drawProfileId = defId;
+      });
     }
     return data;
   }
@@ -477,7 +490,8 @@
       }).join('');
 
       document.getElementById('profile-class-list').innerHTML = state.classes.length > 0 ? state.classes.map(c => {
-         const isAssigned = (c.drawProfileId === prof.id) || (!c.drawProfileId && prof.id === state.drawProfiles[0].id);
+         // Explicitly check if the class is assigned to THIS profile
+         const isAssigned = (c.drawProfileId === prof.id);
          return `<label style="display:flex; align-items:center; gap:8px; font-size:0.95rem; font-weight:500; cursor:pointer;">
                    <input type="checkbox" style="width:18px; height:18px; accent-color:#1e3c72;" ${isAssigned ? 'checked' : ''} onchange="toggleProfileClass('${c.id}', this.checked)"> ${c.name}
                  </label>`;
@@ -494,15 +508,28 @@
   }
 
   function deleteProfile() {
-    if (state.drawProfiles.length <= 1) return alert("You must have at least one profile.");
-    if (confirm("Delete this profile? Classes using it will revert to the default.")) {
+    // PROTECT DEFAULT PROFILE
+    // Check if it's the first profile in the array or named 'Default Setup'
+    const profToDelete = state.drawProfiles.find(p => p.id === currentProfileId);
+    
+    if (state.drawProfiles.length <= 1) {
+      return alert("You must have at least one profile.");
+    }
+    
+    if (profToDelete && (profToDelete.id === 'default' || state.drawProfiles.indexOf(profToDelete) === 0)) {
+      return alert("The Default Profile cannot be deleted as it serves as the master template for your app.");
+    }
+
+    if (confirm(`Delete the profile "${profToDelete.name}"? Classes using it will revert to no profile.`)) {
       state.drawProfiles = state.drawProfiles.filter(p => p.id !== currentProfileId);
-      state.classes.forEach(c => { if(c.drawProfileId === currentProfileId) c.drawProfileId = state.drawProfiles[0].id; });
+      state.classes.forEach(c => { 
+        if(c.drawProfileId === currentProfileId) c.drawProfileId = null; 
+      });
       currentProfileId = state.drawProfiles[0].id;
-      saveData(); renderSettings();
+      saveData(); 
+      renderSettings();
     }
   }
-
   function updateProfile() {
     const prof = state.drawProfiles.find(p => p.id === currentProfileId);
     if(!prof) return;
@@ -525,9 +552,30 @@
 
   function toggleProfileClass(classId, isChecked) {
     const cls = state.classes.find(c => c.id === classId);
-    if (isChecked) { cls.drawProfileId = currentProfileId; } 
-    else { cls.drawProfileId = state.drawProfiles[0].id; }
+    if (isChecked) { 
+      cls.drawProfileId = currentProfileId; 
+    } else { 
+      // If unchecked from the current profile, set to null (no auto-draw profile)
+      if (cls.drawProfileId === currentProfileId) {
+        cls.drawProfileId = null;
+      }
+    }
     saveData(); renderSettings(); 
+  }
+  
+  function toggleAllProfileClasses(selectAll) {
+    if (state.classes.length === 0) return;
+    state.classes.forEach(c => {
+      if (selectAll) {
+        c.drawProfileId = currentProfileId;
+      } else {
+        if (c.drawProfileId === currentProfileId) {
+          c.drawProfileId = null;
+        }
+      }
+    });
+    saveData();
+    renderSettings();
   }
 
   // EXPORT / IMPORT LOGIC
@@ -635,10 +683,12 @@
     if (state.presets.length === 0) return;
     const cls = state.classes.find(c => c.id === classId); 
     
-    // Fetch appropriate profile for this class
-    const profId = cls.drawProfileId || (state.drawProfiles.length > 0 ? state.drawProfiles[0].id : null);
+    // FETCH PROFILE - Abort if NO profile is assigned to this class!
+    const profId = cls.drawProfileId;
+    if (!profId) return; 
+    
     const profile = state.drawProfiles.find(p => p.id === profId);
-    if (!profile || !profile.autoDraw) return; // Exit if auto-draw is turned off for this profile
+    if (!profile || !profile.autoDraw) return; 
 
     if (!cls.plans) cls.plans = [];
     const plan = cls.plans.find(p => p.id === planId);

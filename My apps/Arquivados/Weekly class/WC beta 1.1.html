@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Weekly Classes">
+  <title>Weekly classes</title>
+  
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #f5f7fb; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; padding-bottom: 90px; }
+    #app { max-width: 600px; width: 100%; background: white; box-shadow: 0 0 30px rgba(0,0,0,0.05); padding: 1.5rem 1rem; min-height: 100vh; position: relative; }
+    h1 { font-size: 1.8rem; margin: 0 0 0.5rem; color: #1e3c72; text-align: center; }
+    
+    /* NAVIGATION HIERARCHY */
+    .nav-container { display: flex; flex-direction: column; gap: 0.6rem; margin: 1rem 0; background: #f0f4fa; padding: 0.8rem; border-radius: 20px; }
+    .nav-row { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
+    .nav-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: #718096; width: 100%; text-align: center; }
+    .nav-btn { background: white; border: 1px solid #e2e8f0; border-radius: 40px; padding: 0.45rem 0.9rem; font-size: 0.8rem; font-weight: 600; color: #4a5568; cursor: pointer; transition: 0.2s; }
+    .nav-btn.active { background: #1e3c72; color: white; border-color: #1e3c72; transform: scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    
+    /* CLASS & PLAN CARDS */
+    .class-card { background: #ffffff; border-left: 6px solid #2b6f9b; border-radius: 20px; padding: 1rem; margin: 1rem 0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; background: #e2e8f0; font-weight: bold; }
+    .plan-block { background: #f8fcff; border-radius: 15px; padding: 0.8rem; margin: 0.8rem 0; border: 1px solid #d4e0ec; }
+    .plan-header { font-weight: 600; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+    .plan-collapsed-content { display: none; }
+    .expand-btn { width: 100%; border: 1px dashed #b0c9e0; background: #f0f7fe; color: #1e3c72; font-weight: bold; margin-top: 5px; border-radius: 10px; padding: 8px; font-size: 0.8rem; cursor: pointer; }
+
+    /* ACTIVITY CARDS (PRESETS) */
+    .activity-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 15px; padding: 12px; margin-bottom: 10px; position: relative; border-left: 4px solid #1e3c72; }
+    .tag-pill { display: inline-block; font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; background: #edf2f7; color: #4a5568; margin-right: 4px; font-weight: bold; margin-top: 4px; }
+    .tag-jw { background: #ebf8ff; color: #2b6f9b; border: 1px solid #bee3f8; }
+    .tag-class { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+    button.primary { background: #1e3c72; color: white; border: none; padding: 0.6rem 1rem; border-radius: 20px; cursor: pointer; font-weight: 600; }
+    button.small { font-size: 0.75rem; padding: 4px 8px; border-radius: 10px; cursor: pointer; border: 1px solid #ccc; background: white; }
+    button.danger { background: #fde7e9; color: #a11f2b; border: none; }
+
+    .fab { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; border-radius: 50%; background: #1e3c72; color: white; border: none; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 100; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    
+    dialog { border: none; border-radius: 24px; padding: 24px; width: 90%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+    dialog::backdrop { background: rgba(0,0,0,0.4); backdrop-filter: blur(3px); }
+    .dialog-form { display: flex; flex-direction: column; gap: 12px; }
+    input, select, textarea { padding: 10px; border-radius: 10px; border: 1px solid #ddd; width: 100%; font-size: 1rem; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <h1>📚 Weekly classes</h1>
+
+  <div class="nav-container">
+    <div class="nav-label">1. Select Location</div>
+    <div class="nav-row" id="loc-nav"></div>
+    <div class="nav-label" style="margin-top:5px;">2. Select View Mode</div>
+    <div class="nav-row">
+      <button class="nav-btn active" id="btn-list" onclick="setViewType('list')">All Plans</button>
+      <button class="nav-btn" id="btn-class" onclick="setViewType('class')">By Class</button>
+      <button class="nav-btn" id="btn-day" onclick="setViewType('day')">By Day</button>
+      <button class="nav-btn" id="btn-activities" onclick="setViewType('activities')">Activities</button>
+      <button class="nav-btn" id="btn-settings" onclick="setViewType('settings')">⚙️ Settings</button>
+    </div>
+  </div>
+
+  <div id="main-view">
+    <div id="classPicker" class="nav-row" style="display:none; margin-bottom: 10px;">
+      <select id="classSelect" onchange="renderApp()"></select>
+    </div>
+    <div id="dayPicker" class="nav-row" style="display:none; margin-bottom: 10px;">
+      <select id="daySelect" onchange="renderApp()">
+        <option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option>
+        <option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="Sunday">Sunday</option>
+      </select>
+    </div>
+    
+    <div id="current-content"></div>
+    
+    <div id="history-section" style="margin-top: 2rem;">
+      <details>
+        <summary style="text-align:center; cursor:pointer; font-weight:bold; background:#e2e8f0; padding:12px; border-radius:15px;">📂 History (Most Recent First)</summary>
+        <div id="history-content" style="margin-top:10px;"></div>
+      </details>
+    </div>
+  </div>
+
+  <div id="activities-view" style="display:none;">
+    <h2 style="color: #1e3c72; text-align: center; margin-top: 0;">Activities Inventory</h2>
+    <button class="primary" style="width:100%; margin-bottom:15px;" onclick="document.getElementById('act-dialog').showModal()">+ Add New Activity</button>
+    <div id="activities-list"></div>
+  </div>
+
+  <div id="settings-view" style="display:none;">
+    <div class="settings-group">
+      <h3>📍 Teaching Locations</h3>
+      <div id="loc-mgmt-list"></div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <input type="text" id="new-loc-name" placeholder="e.g. Online, Company Name">
+        <button class="primary small" onclick="addLocation()">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="fab" id="main-fab" onclick="openAddClassDialog()">+</button>
+
+<dialog id="act-dialog">
+  <div class="dialog-form">
+    <h3>Activity Configuration</h3>
+    <label>Description:</label>
+    <input type="text" id="act-text" placeholder="e.g. Phonics game">
+    <label>Duration (minutes):</label>
+    <input type="number" id="act-dur" value="15">
+    
+    <div>
+      <label style="font-weight:bold; font-size: 0.9rem;">Type Tags:</label>
+      <div style="display:flex; gap:15px; margin-top:5px;">
+        <label style="font-size:0.85rem;"><input type="checkbox" id="tag-ice" style="width:auto;"> Ice breaker</label>
+        <label style="font-size:0.85rem;"><input type="checkbox" id="tag-jw" style="width:auto;"> JW (Jonas Way)</label>
+      </div>
+    </div>
+
+    <label>Assigned to Classes (Custom Association):</label>
+    <select id="act-class-assoc">
+      <option value="all">All Classes</option>
+      </select>
+
+    <label>Other Tags (comma separated):</label>
+    <input type="text" id="act-custom-tags" placeholder="grammar, fun, advanced...">
+    
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+      <button onclick="document.getElementById('act-dialog').close()">Cancel</button>
+      <button class="primary" onclick="addActivity()">Save Activity</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="class-dialog">
+  <div class="dialog-form">
+    <h3>Add New Class</h3>
+    <label>Location:</label>
+    <select id="add-cls-loc"></select>
+    <label>Class Name:</label>
+    <input type="text" id="add-cls-name" placeholder="e.g. 3T Group">
+    <label>Day of Week:</label>
+    <select id="add-cls-day">
+      <option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option>
+      <option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="Sunday">Sunday</option>
+    </select>
+    <label>Start Time:</label>
+    <input type="time" id="add-cls-time">
+    <div style="display:flex; justify-content:flex-end; gap:10px;">
+      <button onclick="document.getElementById('class-dialog').close()">Cancel</button>
+      <button class="primary" onclick="addClass()">Create Class</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  // ==========================================
+  // CONFIG & STATE
+  // ==========================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbGkc6D2CNYLib1j2VfZMj_Ac-iS0K4zk",
+    authDomain: "weeklyclassesapp.firebaseapp.com",
+    databaseURL: "https://weeklyclassesapp-default-rtdb.firebaseio.com", 
+    projectId: "weeklyclassesapp",
+    storageBucket: "weeklyclassesapp.firebasestorage.app",
+    messagingSenderId: "370576800213",
+    appId: "1:370576800213:web:37575ef143a03ce292655c"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const dbRef = firebase.database().ref('weekly_classes_data');
+
+  let state = {
+    classes: [],
+    presets: [], // Activities
+    locations: ['all', 'school', 'home'],
+    currentLoc: 'all',
+    currentView: 'list'
+  };
+
+  // ==========================================
+  // SYNC & LOAD
+  // ==========================================
+  function loadData() {
+    const saved = localStorage.getItem('weekly_classes_v2');
+    if (saved) {
+      state = {...state, ...JSON.parse(saved)};
+    } else {
+      const old = localStorage.getItem('weekly_classes_hybrid');
+      if (old) {
+        const oldData = JSON.parse(old);
+        state.classes = oldData.classes || [];
+        state.presets = oldData.presets || [];
+        saveData();
+      }
+    }
+    renderNav();
+    renderApp();
+  }
+
+  function saveData() {
+    localStorage.setItem('weekly_classes_v2', JSON.stringify(state));
+    dbRef.set({ classes: state.classes, presets: state.presets, locations: state.locations });
+  }
+
+  dbRef.on('value', (snap) => {
+    const data = snap.val();
+    if (data) {
+      state.classes = data.classes || [];
+      state.presets = data.presets || [];
+      state.locations = data.locations || ['all', 'school', 'home'];
+      renderNav();
+      renderApp();
+    }
+  });
+
+  // ==========================================
+  // NAVIGATION
+  // ==========================================
+  function setLocation(loc) {
+    state.currentLoc = loc;
+    renderNav();
+    renderApp();
+  }
+
+  function setViewType(type) {
+    state.currentView = type;
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + type).classList.add('active');
+    
+    document.getElementById('main-view').style.display = (type === 'activities' || type === 'settings') ? 'none' : 'block';
+    document.getElementById('activities-view').style.display = (type === 'activities') ? 'block' : 'none';
+    document.getElementById('settings-view').style.display = (type === 'settings') ? 'block' : 'none';
+    document.getElementById('main-fab').style.display = (type === 'settings' || type === 'activities') ? 'none' : 'flex';
+    
+    document.getElementById('classPicker').style.display = (type === 'class') ? 'flex' : 'none';
+    document.getElementById('dayPicker').style.display = (type === 'day') ? 'flex' : 'none';
+    
+    renderApp();
+  }
+
+  function renderNav() {
+    const cont = document.getElementById('loc-nav');
+    cont.innerHTML = state.locations.map(l => `
+      <button class="nav-btn ${state.currentLoc === l ? 'active' : ''}" onclick="setLocation('${l}')">
+        ${l.toUpperCase()}
+      </button>
+    `).join('');
+  }
+
+  // ==========================================
+  // DATE LOGIC (RE-FIXED)
+  // ==========================================
+  function getNextPlanDate(cls) {
+    const dayMap = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const targetIdx = dayMap.indexOf(cls.day);
+    
+    let baseDate = new Date();
+    // Neutralize hours to avoid timezone shifting
+    baseDate.setHours(12, 0, 0, 0);
+
+    if (cls.plans && cls.plans.length > 0) {
+      const latest = cls.plans.reduce((a, b) => a.date > b.date ? a : b).date;
+      baseDate = new Date(latest + "T12:00:00");
+      baseDate.setDate(baseDate.getDate() + 7);
+    } else {
+      let currentIdx = baseDate.getDay();
+      let diff = (targetIdx - currentIdx + 7) % 7;
+      baseDate.setDate(baseDate.getDate() + diff);
+    }
+    return baseDate.toISOString().split('T')[0];
+  }
+
+  // ==========================================
+  // ACTIVITIES (INVENTORY)
+  // ==========================================
+  function renderActivities() {
+    const cont = document.getElementById('activities-list');
+    cont.innerHTML = '';
+    
+    if (state.presets.length === 0) {
+      cont.innerHTML = '<p style="text-align:center; color:#999; margin-top:20px;">No activities available. Click "Add New" to begin.</p>';
+      return;
+    }
+
+    state.presets.forEach((act, index) => {
+      // FIX: Check for both 'text' and 'name' properties from migration
+      const displayName = act.text || act.name || "Untitled Activity";
+      const tags = act.tags || [];
+      const classAssoc = act.classAssoc || 'all';
+
+      cont.innerHTML += `
+        <div class="activity-card">
+          <div style="font-weight:bold; font-size:1.1rem; color:#1e3c72;">${displayName}</div>
+          <div style="font-size:0.85rem; color:#666; font-weight:600;">⏱️ ${act.duration} minutes</div>
+          <div style="margin-top:8px;">
+            ${tags.map(t => `<span class="tag-pill ${t==='JW'?'tag-jw':''}">${t}</span>`).join('')}
+            ${classAssoc !== 'all' ? `<span class="tag-pill tag-class">📍 Only: ${classAssoc}</span>` : ''}
+          </div>
+          <button class="small danger" style="position:absolute; top:12px; right:12px;" onclick="deleteActivity(${index})">✖</button>
+        </div>
+      `;
+    });
+
+    // Populate class association dropdown in the dialog
+    const assocSelect = document.getElementById('act-class-assoc');
+    assocSelect.innerHTML = '<option value="all">Appropriate for All Classes</option>' + 
+      state.classes.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+  }
+
+  function addActivity() {
+    const text = document.getElementById('act-text').value;
+    const dur = document.getElementById('act-dur').value;
+    if (!text) return alert("Please enter a description");
+
+    const tags = [];
+    if (document.getElementById('tag-ice').checked) tags.push('Ice breaker');
+    if (document.getElementById('tag-jw').checked) tags.push('JW');
+    
+    const custom = document.getElementById('act-custom-tags').value;
+    if (custom) custom.split(',').forEach(t => tags.push(t.trim()));
+
+    const classAssoc = document.getElementById('act-class-assoc').value;
+
+    state.presets.push({
+      id: Date.now().toString(),
+      text,
+      duration: parseInt(dur),
+      tags,
+      classAssoc
+    });
+
+    saveData();
+    document.getElementById('act-dialog').close();
+    // Reset form
+    document.getElementById('act-text').value = '';
+    document.getElementById('tag-ice').checked = false;
+    document.getElementById('tag-jw').checked = false;
+    document.getElementById('act-custom-tags').value = '';
+    renderActivities();
+  }
+
+  function deleteActivity(index) {
+    if (confirm("Permanently delete this activity from inventory?")) {
+      state.presets.splice(index, 1);
+      saveData();
+      renderActivities();
+    }
+  }
+
+  // ==========================================
+  // RENDERING ENGINE
+  // ==========================================
+  function renderApp() {
+    if (state.currentView === 'activities') { renderActivities(); return; }
+    if (state.currentView === 'settings') { renderSettings(); return; }
+
+    let filtered = state.classes;
+    // Location Filter
+    if (state.currentLoc !== 'all') filtered = filtered.filter(c => c.type === state.currentLoc);
+
+    // View Type Filter (Subordinated)
+    if (state.currentView === 'class') {
+      const sel = document.getElementById('classSelect');
+      const cur = sel.value;
+      sel.innerHTML = filtered.map(c => `<option value="${c.id}" ${c.id===cur?'selected':''}>${c.name}</option>`).join('');
+      filtered = filtered.filter(c => c.id === sel.value);
+    } else if (state.currentView === 'day') {
+      const day = document.getElementById('daySelect').value;
+      filtered = filtered.filter(c => c.day === day);
+    }
+
+    const currentCont = document.getElementById('current-content');
+    const historyCont = document.getElementById('history-content');
+    currentCont.innerHTML = '';
+    historyCont.innerHTML = '';
+
+    const today = new Date().toISOString().split('T')[0];
+
+    filtered.forEach(cls => {
+      const active = (cls.plans || []).filter(p => p.date >= today);
+      const history = (cls.plans || []).filter(p => p.date < today);
+      
+      // HISTORY SORTING: Newest at top
+      history.sort((a,b) => b.date.localeCompare(a.date));
+
+      currentCont.innerHTML += generateClassHTML(cls, active, false);
+      if (history.length > 0) historyCont.innerHTML += generateClassHTML(cls, history, true);
+    });
+  }
+
+  function generateClassHTML(cls, plans, isHist) {
+    let plansHTML = plans.map(p => {
+      const hasActs = p.activities && p.activities.length > 0;
+      return `
+        <div class="plan-block">
+          <div class="plan-header">
+            <span style="font-weight:700;">📅 ${p.date}</span>
+            <button class="small" onclick="deletePlan('${cls.id}','${p.id}')">✖</button>
+          </div>
+          ${!hasActs ? `<button class="expand-btn" onclick="togglePlanCollapse('${p.id}')">Expand Empty Plan Details</button>` : ''}
+          <div id="p-${p.id}" class="${!hasActs ? 'plan-collapsed-content' : ''}">
+            <div style="margin:8px 0;">
+              ${(p.activities || []).map(a => `<div style="padding:6px; border-bottom:1px solid #eee; font-size:0.9rem;">• ${a.text || a.name}</div>`).join('')}
+              ${!hasActs ? '<p style="color:#999; font-size:0.8rem; margin:10px 0;">No activities added yet.</p>' : ''}
+            </div>
+            <textarea style="width:100%; font-size:0.85rem; padding:8px; border-radius:10px; margin-top:5px;" placeholder="Notes for this class..." onchange="saveNotes('${cls.id}','${p.id}', this.value)">${p.notes || ''}</textarea>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="class-card">
+        <div class="class-header">
+          <span class="class-title" style="font-weight:bold; font-size:1.2rem;">${cls.name}</span>
+          <span class="badge">${cls.type}</span>
+        </div>
+        <div style="font-size:0.85rem; color:#516a82; margin-bottom:12px; font-weight:600;">${cls.day}s at ${cls.time}</div>
+        <div>${plansHTML}</div>
+        ${!isHist ? `<button class="primary small" style="width:100%; margin-top:5px;" onclick="addPlan('${cls.id}')">+ Add New Lesson Plan</button>` : ''}
+      </div>
+    `;
+  }
+
+  function togglePlanCollapse(id) {
+    const el = document.getElementById('p-' + id);
+    el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+  }
+
+  // ==========================================
+  // MANAGEMENT FUNCTIONS
+  // ==========================================
+  function openAddClassDialog() {
+    const sel = document.getElementById('add-cls-loc');
+    sel.innerHTML = state.locations.filter(l => l !== 'all').map(l => `<option value="${l}">${l.toUpperCase()}</option>`).join('');
+    document.getElementById('class-dialog').showModal();
+  }
+
+  function addClass() {
+    const name = document.getElementById('add-cls-name').value;
+    if (!name) return alert("Name is required");
+    state.classes.push({
+      id: Date.now().toString(),
+      name: name,
+      type: document.getElementById('add-cls-loc').value,
+      day: document.getElementById('add-cls-day').value,
+      time: document.getElementById('add-cls-time').value,
+      plans: []
+    });
+    saveData();
+    document.getElementById('class-dialog').close();
+    renderApp();
+  }
+
+  function addPlan(cid) {
+    const cls = state.classes.find(c => c.id === cid);
+    cls.plans.push({ id: 'p' + Date.now(), date: getNextPlanDate(cls), activities: [], notes: "" });
+    saveData();
+    renderApp();
+  }
+
+  function deletePlan(cid, pid) {
+    if(!confirm("Delete this plan?")) return;
+    const cls = state.classes.find(c => c.id === cid);
+    cls.plans = cls.plans.filter(p => p.id !== pid);
+    saveData();
+    renderApp();
+  }
+
+  function renderSettings() {
+    const cont = document.getElementById('loc-mgmt-list');
+    cont.innerHTML = state.locations.filter(l => l !== 'all').map(l => `
+      <div style="display:flex; justify-content:space-between; margin-bottom:8px; background:white; padding:10px; border-radius:12px; border:1px solid #eee;">
+        <span style="text-transform:capitalize; font-weight:700;">${l}</span>
+        <button class="small danger" onclick="removeLocation('${l}')">Delete</button>
+      </div>
+    `).join('');
+  }
+
+  function addLocation() {
+    const name = document.getElementById('new-loc-name').value.trim().toLowerCase();
+    if(name && !state.locations.includes(name)) {
+      state.locations.push(name);
+      saveData();
+      document.getElementById('new-loc-name').value = '';
+      renderNav();
+      renderSettings();
+    }
+  }
+
+  function saveNotes(cid, pid, val) {
+    const cls = state.classes.find(c => c.id === cid);
+    const plan = cls.plans.find(p => p.id === pid);
+    plan.notes = val;
+    saveData();
+  }
+
+  window.onload = loadData;
+</script>
+</body>
+</html>

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Weekly Classes">
+  <title>Weekly classes</title>
+  
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+
+  <style>
+    /* ... [Keeping your existing base styles] ... */
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { background: #f5f7fb; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; padding-bottom: 90px; overscroll-behavior-y: none; }
+    #app { max-width: 600px; width: 100%; background: white; box-shadow: 0 0 30px rgba(0,0,0,0.05); padding: 1.5rem 1rem; margin: 0; min-height: 100vh; position: relative; }
+    h1 { font-size: 2rem; margin: 0 0 0.5rem; display: flex; align-items: center; gap: 0.5rem; color: #1e3c72; }
+    
+    button { background: #edf2f7; border: none; border-radius: 40px; padding: 0.7rem 1.3rem; font-size: 0.95rem; font-weight: 500; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); touch-action: manipulation; transition: 0.2s; }
+    button:active { transform: scale(0.97); }
+    button.primary { background: #1e3c72; color: white; }
+    button.warning { background: #b91c1c; color: white; }
+    button.small { padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 30px; }
+    button.danger { background: #fde7e9; color: #a11f2b; }
+    
+    /* NEW: SUB-NAVIGATION STYLES */
+    .menu-bar { display: flex; flex-direction: column; gap: 0.6rem; margin: 1rem 0; background: #f0f4fa; padding: 0.8rem; border-radius: 20px; }
+    .nav-row { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
+    .nav-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #718096; width: 100%; text-align: center; margin-bottom: -2px; }
+    .menu-btn { background: white; border: 1px solid #e2e8f0; border-radius: 40px; padding: 0.5rem 0.9rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; }
+    .menu-btn.active { background: #1e3c72; color: white; border-color: #1e3c72; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    
+    .class-card { background: #ffffff; border-left: 6px solid #2b6f9b; border-radius: 24px; padding: 1rem; margin: 1.2rem 0; box-shadow: 0 8px 16px rgba(0,0,0,0.04); }
+    .class-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .class-title { font-weight: 700; font-size: 1.3rem; display: flex; gap: 0.7rem; align-items: center; }
+    
+    .badge { font-size: 0.75rem; background: #ccc; padding: 0.25rem 0.9rem; border-radius: 30px; text-transform: uppercase; font-weight: 600; }
+    /* Dynamic color for locations */
+    .badge.loc-school { background: #2b6f9b; color: white; }
+    .badge.loc-home { background: #c95d0e; color: white; }
+    
+    .plan-block { background: #f8fcff; border-radius: 18px; padding: 0.9rem; margin: 0.9rem 0; border: 1px solid #d4e0ec; }
+    .plan-header { font-weight: 600; font-size: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 0.5rem; gap: 5px; }
+    
+    .activity-item { display: flex; flex-direction: column; background: white; border: 1px solid #e0eaf2; border-radius: 12px; margin-bottom: 4px; overflow: hidden; }
+    .tag { display: inline-block; font-size: 0.65rem; padding: 1px 6px; border-radius: 4px; margin-right: 4px; background: #e2e8f0; color: #4a5568; font-weight: bold; }
+    
+    /* SETTINGS STYLES */
+    .settings-group { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 15px; padding: 1rem; margin-bottom: 1rem; }
+    .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+    
+    .fab { position: fixed; bottom: 25px; right: max(25px, calc(50vw - 280px)); width: 65px; height: 65px; border-radius: 50%; font-size: 32px; display: flex; align-items: center; justify-content: center; background: #1e3c72; color: white; box-shadow: 0 6px 16px rgba(30,60,114,0.4); z-index: 1000; }
+
+    /* For expansion logic */
+    .plan-collapsed { display: none; }
+    .expand-btn { width: 100%; border: 1px dashed #b0c9e0; background: #f0f7fe; color: #1e3c72; font-weight: bold; margin-top: 5px; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <h1>📚 Weekly classes</h1>
+
+  <div class="menu-bar">
+    <div class="nav-label">Step 1: Select Location</div>
+    <div class="nav-row" id="locationButtons">
+      <button class="menu-btn active" onclick="setLocationFilter('all')">All</button>
+      <button class="menu-btn" onclick="setLocationFilter('school')">School</button>
+      <button class="menu-btn" onclick="setLocationFilter('home')">Home</button>
+    </div>
+    <div class="nav-label">Step 2: Select View Type</div>
+    <div class="nav-row" id="viewButtons">
+      <button class="menu-btn active" onclick="setViewType('list')">All Plans</button>
+      <button class="menu-btn" onclick="setViewType('class')">By Class</button>
+      <button class="menu-btn" onclick="setViewType('day')">By Day</button>
+      <button class="menu-btn" onclick="setViewType('presets')">Presets</button>
+      <button class="menu-btn" onclick="setViewType('settings')">⚙️ Settings</button>
+    </div>
+  </div>
+
+  <div id="main-view">
+    <div id="classPicker" class="picker-row" style="display: none; padding: 10px; background: #eaf0f9; border-radius: 10px; margin-bottom: 10px;">
+      <span>👤 Select Class:</span>
+      <select id="classSelect" style="flex:1; padding: 5px;" onchange="renderApp()"></select>
+    </div>
+
+    <div id="dayPicker" class="picker-row" style="display: none; padding: 10px; background: #eaf0f9; border-radius: 10px; margin-bottom: 10px;">
+      <span>📅 Select Day:</span>
+      <select id="daySelect" style="flex:1; padding: 5px;" onchange="renderApp()">
+        <option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option>
+        <option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="Sunday">Sunday</option>
+      </select>
+    </div>
+
+    <div id="current-classes"></div>
+
+    <div class="history-section" style="margin-top: 2rem;">
+      <details id="history-details">
+        <summary style="background: #d9e2ef; padding: 10px; border-radius: 10px; text-align: center; cursor: pointer; font-weight: bold;">📂 History (Most recent first)</summary>
+        <div id="history-content" style="padding: 10px 0;"></div>
+      </details>
+    </div>
+  </div>
+
+  <div id="presets-view" style="display: none;">
+    <h2 style="color: #1e3c72; text-align: center;">Activity Presets</h2>
+    <button class="primary" style="width: 100%; margin-bottom: 15px;" onclick="openPresetDialog()">+ Add New Preset</button>
+    <div id="presets-container"></div>
+  </div>
+
+  <div id="settings-view" style="display: none;">
+    <h2 style="color: #1e3c72; text-align: center;">Application Settings</h2>
+    
+    <div class="settings-group">
+      <h3>📍 Manage Locations</h3>
+      <div id="location-list"></div>
+      <div style="display:flex; gap:5px; margin-top:10px;">
+        <input type="text" id="new-loc-input" placeholder="New location name..." style="flex:1; padding:8px; border-radius:10px; border:1px solid #ccc;">
+        <button class="primary small" onclick="addLocation()">Add</button>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>🎲 Automatic Draw</h3>
+      <div class="settings-row">
+        <span>Enable Auto-Draw:</span>
+        <input type="checkbox" id="setting-auto-draw" onchange="updateSettings()">
+      </div>
+      <div class="settings-row">
+        <span>Acts per draw:</span>
+        <input type="number" id="setting-draw-count" style="width:50px;" onchange="updateSettings()">
+      </div>
+      <div class="settings-row">
+        <span>Repeat cooldown (days):</span>
+        <select id="setting-repeat-days" onchange="updateSettings()">
+          <option value="7">7 Days</option>
+          <option value="14">14 Days</option>
+          <option value="21">21 Days</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="import-export">
+      <button onclick="exportData()">📥 Export Backup</button>
+      <button onclick="document.getElementById('import-file').click()">📤 Import Backup</button>
+      <input type="file" id="import-file" style="display:none;" accept=".json" onchange="importData(event)">
+    </div>
+  </div>
+</div>
+
+<button class="fab" id="main-fab" onclick="openClassDialog()">+</button>
+
+<dialog id="class-dialog">
+  <div class="dialog-form">
+    <h3>Add New Class</h3>
+    <label>Location:<select id="new-class-type"></select></label>
+    <label>Class Name:<input type="text" id="new-class-name"></label>
+    <label>Day:<select id="new-class-day">
+      <option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option>
+      <option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="Sunday">Sunday</option>
+    </select></label>
+    <label>Time:<input type="time" id="new-class-time"></label>
+    <div class="dialog-actions">
+      <button onclick="document.getElementById('class-dialog').close()">Cancel</button>
+      <button class="primary" onclick="addClass()">Add</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  // ==========================================
+  // CONFIG & STATE
+  // ==========================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbGkc6D2CNYLib1j2VfZMj_Ac-iS0K4zk",
+    authDomain: "weeklyclassesapp.firebaseapp.com",
+    databaseURL: "https://weeklyclassesapp-default-rtdb.firebaseio.com", 
+    projectId: "weeklyclassesapp",
+    storageBucket: "weeklyclassesapp.firebasestorage.app",
+    messagingSenderId: "370576800213",
+    appId: "1:370576800213:web:37575ef143a03ce292655c"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const dbRef = db.ref('weekly_classes_data');
+
+  let classes = [];
+  let presets = [];
+  let locations = ['school', 'home'];
+  let settings = { autoDraw: false, drawCount: 3, repeatDays: 7 };
+  
+  let currentLocFilter = 'all';
+  let currentViewType = 'list';
+
+  // ==========================================
+  // SYNC & LOAD
+  // ==========================================
+  const local = JSON.parse(localStorage.getItem('weekly_classes_v2')) || { classes: [], presets: [], locations: ['school', 'home'], settings: { autoDraw: false, drawCount: 3, repeatDays: 7 }};
+  classes = local.classes || [];
+  presets = local.presets || [];
+  locations = local.locations || ['school', 'home'];
+  settings = local.settings || { autoDraw: false, drawCount: 3, repeatDays: 7 };
+
+  dbRef.on('value', (snap) => {
+    const data = snap.val();
+    if (data) {
+      classes = data.classes || [];
+      presets = data.presets || [];
+      locations = data.locations || ['school', 'home'];
+      settings = data.settings || settings;
+      renderApp();
+    }
+  });
+
+  function saveData() {
+    const data = { classes, presets, locations, settings };
+    localStorage.setItem('weekly_classes_v2', JSON.stringify(data));
+    dbRef.set(data);
+  }
+
+  // ==========================================
+  // NAVIGATION LOGIC
+  // ==========================================
+  function setLocationFilter(loc) {
+    currentLocFilter = loc;
+    document.querySelectorAll('#locationButtons .menu-btn').forEach(b => {
+      b.classList.toggle('active', b.innerText.toLowerCase() === loc);
+    });
+    renderApp();
+  }
+
+  function setViewType(type) {
+    currentViewType = type;
+    document.querySelectorAll('#viewButtons .menu-btn').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('onclick').includes(type));
+    });
+    
+    document.getElementById('main-view').style.display = (type === 'presets' || type === 'settings') ? 'none' : 'block';
+    document.getElementById('presets-view').style.display = (type === 'presets') ? 'block' : 'none';
+    document.getElementById('settings-view').style.display = (type === 'settings') ? 'block' : 'none';
+    document.getElementById('main-fab').style.display = (type === 'settings') ? 'none' : 'flex';
+    
+    document.getElementById('classPicker').style.display = (type === 'class') ? 'flex' : 'none';
+    document.getElementById('dayPicker').style.display = (type === 'day') ? 'flex' : 'none';
+
+    renderApp();
+  }
+
+  // ==========================================
+  // DATE LOGIC (FIXED)
+  // ==========================================
+  function getNextPlanDate(cls) {
+    const dayMap = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const targetIdx = dayMap.indexOf(cls.day);
+    
+    let baseDate;
+    if (cls.plans && cls.plans.length > 0) {
+      // Find latest date in existing plans
+      const latest = cls.plans.reduce((a, b) => a.date > b.date ? a : b).date;
+      baseDate = new Date(latest + "T12:00:00");
+      baseDate.setDate(baseDate.getDate() + 7);
+    } else {
+      // Start from today
+      baseDate = new Date();
+      let currentIdx = baseDate.getDay();
+      let diff = (targetIdx - currentIdx + 7) % 7;
+      baseDate.setDate(baseDate.getDate() + diff);
+    }
+    return baseDate.toISOString().split('T')[0];
+  }
+
+  // ==========================================
+  // RENDERING
+  // ==========================================
+  function renderApp() {
+    if (currentViewType === 'presets') { renderPresets(); return; }
+    if (currentViewType === 'settings') { renderSettings(); return; }
+
+    // Filter classes by location
+    let filtered = classes;
+    if (currentLocFilter !== 'all') {
+      filtered = filtered.filter(c => c.type === currentLocFilter);
+    }
+
+    // Filter by View Mode
+    if (currentViewType === 'class') {
+      const sel = document.getElementById('classSelect');
+      const val = sel.value;
+      sel.innerHTML = filtered.map(c => `<option value="${c.id}" ${c.id===val?'selected':''}>${c.name}</option>`).join('');
+      filtered = filtered.filter(c => c.id === sel.value);
+    } else if (currentViewType === 'day') {
+      const day = document.getElementById('daySelect').value;
+      filtered = filtered.filter(c => c.day === day);
+    }
+
+    const currentCont = document.getElementById('current-classes');
+    const historyCont = document.getElementById('history-content');
+    currentCont.innerHTML = '';
+    historyCont.innerHTML = '';
+
+    filtered.forEach(cls => {
+      const activePlans = (cls.plans || []).filter(p => !isHistory(p));
+      const historyPlans = (cls.plans || []).filter(p => isHistory(p));
+
+      // Sort History: Most Recent First
+      historyPlans.sort((a,b) => b.date.localeCompare(a.date));
+
+      currentCont.innerHTML += generateClassHTML(cls, activePlans, false);
+      if (historyPlans.length > 0) {
+        historyCont.innerHTML += generateClassHTML(cls, historyPlans, true);
+      }
+    });
+  }
+
+  function generateClassHTML(cls, plans, isHist) {
+    let plansHTML = plans.map(plan => {
+      const hasActs = plan.activities && plan.activities.length > 0;
+      return `
+        <div class="plan-block">
+          <div class="plan-header">
+            <span>📅 ${plan.date}</span>
+            <div class="plan-actions">
+              <button class="small" onclick="deletePlan('${cls.id}','${plan.id}')">✖</button>
+              <button class="small primary" onclick="openAddActDialog('${cls.id}','${plan.id}')">+ act</button>
+            </div>
+          </div>
+          ${!hasActs ? `<button class="expand-btn" onclick="togglePlanCollapse('${plan.id}')">Expand Plan Details</button>` : ''}
+          <div id="plan-content-${plan.id}" class="${!hasActs ? 'plan-collapsed' : ''}">
+             ${(plan.activities || []).map(a => `<div class="activity-item" style="padding:5px;">${a.text} (${a.duration}m)</div>`).join('')}
+             <textarea style="width:100%; margin-top:5px;" placeholder="Notes..." onchange="saveNotes('${cls.id}','${plan.id}', this.value)">${plan.notes || ''}</textarea>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="class-card loc-${cls.type}">
+        <div class="class-header">
+          <div class="class-title">${cls.name} <span class="badge loc-${cls.type}">${cls.type}</span></div>
+          <div class="meta" style="font-size:0.8rem; color:#666;">${cls.day} at ${cls.time}</div>
+        </div>
+        <div>${plansHTML}</div>
+        ${!isHist ? `<button class="primary small" style="width:100%; margin-top:10px;" onclick="addPlan('${cls.id}')">+ Add Class Plan</button>` : ''}
+      </div>
+    `;
+  }
+
+  function togglePlanCollapse(id) {
+    const el = document.getElementById(`plan-content-${id}`);
+    el.classList.toggle('plan-collapsed');
+  }
+
+  function isHistory(plan) {
+    const today = new Date().toISOString().split('T')[0];
+    return plan.date < today;
+  }
+
+  // ==========================================
+  // SETTINGS & LOCATIONS
+  // ==========================================
+  function renderSettings() {
+    const cont = document.getElementById('location-list');
+    cont.innerHTML = locations.map(l => `
+      <div style="display:flex; justify-content:space-between; margin-bottom:5px; background:white; padding:8px; border-radius:8px; border:1px solid #eee;">
+        <span style="text-transform:capitalize; font-weight:bold;">${l}</span>
+        <button class="small danger" onclick="removeLocation('${l}')">Delete</button>
+      </div>
+    `).join('');
+    
+    document.getElementById('setting-auto-draw').checked = settings.autoDraw;
+    document.getElementById('setting-draw-count').value = settings.drawCount;
+    document.getElementById('setting-repeat-days').value = settings.repeatDays;
+  }
+
+  function addLocation() {
+    const val = document.getElementById('new-loc-input').value.trim().toLowerCase();
+    if (val && !locations.includes(val)) {
+      locations.push(val);
+      saveData();
+      document.getElementById('new-loc-input').value = '';
+      renderApp();
+    }
+  }
+
+  function removeLocation(loc) {
+    if (confirm(`Remove "${loc}" location? Classes assigned to it will remain but the filter will be gone.`)) {
+      locations = locations.filter(l => l !== loc);
+      saveData();
+      renderApp();
+    }
+  }
+
+  function updateSettings() {
+    settings.autoDraw = document.getElementById('setting-auto-draw').checked;
+    settings.drawCount = parseInt(document.getElementById('setting-draw-count').value);
+    settings.repeatDays = parseInt(document.getElementById('setting-repeat-days').value);
+    saveData();
+  }
+
+  // ==========================================
+  // CLASS MGMT
+  // ==========================================
+  function openClassDialog() {
+    const sel = document.getElementById('new-class-type');
+    sel.innerHTML = locations.map(l => `<option value="${l}">${l.toUpperCase()}</option>`).join('');
+    document.getElementById('class-dialog').showModal();
+  }
+
+  function addClass() {
+    const name = document.getElementById('new-class-name').value;
+    const type = document.getElementById('new-class-type').value;
+    const day = document.getElementById('new-class-day').value;
+    const time = document.getElementById('new-class-time').value;
+    if (!name || !time) return alert("Fill all fields");
+    
+    classes.push({ id: Date.now().toString(), name, type, day, time, plans: [] });
+    saveData();
+    document.getElementById('class-dialog').close();
+  }
+
+  function addPlan(classId) {
+    const cls = classes.find(c => c.id === classId);
+    const newDate = getNextPlanDate(cls);
+    cls.plans.push({ id: Date.now().toString(), date: newDate, activities: [], notes: "" });
+    saveData();
+  }
+
+  function deletePlan(clsId, planId) {
+    if (!confirm("Delete this plan?")) return;
+    const cls = classes.find(c => c.id === clsId);
+    cls.plans = cls.plans.filter(p => p.id !== planId);
+    saveData();
+  }
+
+  function generateId() { return Date.now().toString() + Math.random().toString(36).substr(2, 5); }
+
+  // [Include other helper functions from your original code like export/import/presets as needed]
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+Testar uma mudança por vêz. 
+
+Adicionar tags nas atividades
+Algumas atividade são apropriadas para algumas turmas mme não para outras. Quero criar tipos dois diferentes de tags, tags de associação atividade e turma e tag de tipo de atividade. As tags padrão de tipo de atidade devem ser: Ice breaker, JW (Jonas Way)
+Deve ser possível adicionar outras tags.
+Adicionar um menu de configuração que ofereça
+- Sorteio automático on/off
+Dentro de sorteio automático:
+* Número de atividades adicionadas no sorteio.
+* Atividades por tag (para cada tag, número de atividades que podem aparecer com a tag )
+* Não repetir atividades dos últimos 7 dias da turma
+* Não repetir atividades dos últimos 14 dias da turma
+* Não repetir atividades dos últimos 21 dias da turma
+
+Os planejamentos mais recentes movidos para o histórico devem permanecer no topo do histórico e os mais antigos no final da lista.
+No menu principal que contém 
+All
+School
+Home
+Individual
+By day
+Presets
+History ⬇
+
+School e home são dois lugares diferentes em que eu ministro as aulas. Eu quero que Individual e By day estejam subordinados a School, Home e All, de maneira que quando eu selecionar home, eu possa em seguida selecionar By day ou By class (Individual) e visualizar apenas as turmas e planejamentos home. de maneira que quando eu selecionar school, eu possa em seguida selecionar By day ou By class (Individual) e visualizar apenas as turmas e planejamentos school.
+
+Eu quero que seja possível adicionar novos lugares em que ministro aulas para que eu possa adicionar planejamentos posteriormente.
+
+Mude "individual" para "By class"
+
+Algumas datas estão apresentando erro, on class 3t, por exemplo, temos - 2026-02-25 when tuesday was actually 2026-02-24
+
+Eu quero que os planejamentos criados que não têm ainda atividades adicionadas fiquem retraídos e haja um botão para expandí-los
+
+===============================================================================================
+Test one change at a time.
+
+When adding activities to a plan, display search bar aong with the names of the activities.
+
+Add tags to activities.
+Some activities are appropriate for some classes but not for others. I want to create two different types of tags:
+
+activity–class association tags
+
+activity type tags
+
+
+
+The default activity type tags should be: Ice breaker, JW (Jonas Way).
+
+Add options to delete and add tags.
+
+Add a settings menu that offers:
+
+Automatic draw on/off
+
+Within automatic draw:
+
+Number of activities added to the draw
+
+Activities by tag (for each tag, the number of activities that can appear with that tag)
+
+Do not repeat activities from the last 7 days of the class
+
+Do not repeat activities from the last 14 days of the class
+
+Do not repeat activities from the last 21 days of the class
+
+The most recent plans moved to history should remain at the top of the history, and the oldest ones at the bottom of the list.
+
+In the main menu that contains:
+All
+School
+Home
+Individual
+By day
+Presets
+History ⬇
+
+School and Home are two different places where I teach classes. I want Individual and By day to be subordinate to School, Home, and All, so that when I select Home, I can then select By day or By class (Individual) and see only Home classes and plans. Likewise, when I select School, I can then select By day or By class (Individual) and see only School classes and plans.
+
+I want it to be possible to add new places where I teach classes so that I can add plans later.
+
+Change “Individual” to “By class.”
+
+Make "all" and "by day" the default tabs
+
+Some dates are showing errors. In class 3T, for example, we have 2026-02-25 when Tuesday was actually 2026-02-24.
+
+I want plans that have been created but do not yet have activities added to be collapsed, with a button to expand them.
+
+
+===================================================================================================================
+
+Removal of "Class Association": Removed the field from the activity inventory to simplify the bank and make all activities globally available.
+
+Auto-Draw Logic Clarification: Explained the behavior of the selection engine when untagged activities are missing and tag limits are reached (prioritizing limits over draw count).
+
+Instructional Info Sections: Added two "Info Notes" to the settings menu—one explaining the draw logic and another clarifying that classes can only be assigned to one profile at a time.
+
+Untagged Activity Behavior: Clarified the specific conditions under which untagged activities are selected (acting as fillers that bypass tag limits).
+
+Initial User Manual: Created a foundational guide for the app's core functions and navigation.
+
+Removal of "Expand Empty Plan": Removed the button and logic that hid empty plans, making all plans visible by default.
+
+Tag Limit Verification: Confirmed that setting a tag limit to "0" effectively bans those tagged activities from being drawn.
+
+Detailed User Manual: Produced a specific, in-depth manual covering all technical functions, including data synchronization and Auto-Draw selection logic.
+
+Enhanced Repeat Logic: Added an "Avoid repeats" on/off toggle and expanded the repeat cycle options to include 7, 14, 21, and 28 days.
