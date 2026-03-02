@@ -139,6 +139,7 @@
       <select id="preset-sort" onchange="renderPresets()" style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.9rem; background: #f0f4fa; color: #1e3c72; font-weight: bold; outline: none; cursor: pointer;">
         <option value="newest">Newest First</option>
         <option value="name">Name (A-Z)</option>
+        <option value="tag">Tags</option>
       </select>
     </div>
     
@@ -947,6 +948,15 @@
     
     if (sortType === 'name') {
       filtered.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortType === 'tag') {
+      filtered.sort((a, b) => {
+        const tagA = (a.tags && a.tags.length > 0) ? a.tags[0].toLowerCase() : '\\uFFFF';
+        const tagB = (b.tags && b.tags.length > 0) ? b.tags[0].toLowerCase() : '\\uFFFF';
+        if (tagA === tagB) {
+          return a.name.localeCompare(b.name);
+        }
+        return tagA.localeCompare(tagB);
+      });
     } else { 
       filtered = [...filtered].reverse(); 
     }
