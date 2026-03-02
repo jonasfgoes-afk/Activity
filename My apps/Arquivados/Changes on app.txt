@@ -1,0 +1,77 @@
+
+===============================================================================================
+Test one change at a time.
+
+When adding activities to a plan, display search bar aong with the names of the activities.
+
+Add tags to activities.
+Some activities are appropriate for some classes but not for others. I want to create two different types of tags:
+
+activity–class association tags
+
+activity type tags
+
+
+
+The default activity type tags should be: Ice breaker, JW (Jonas Way).
+
+Add options to delete and add tags.
+
+Add a settings menu that offers:
+
+Automatic draw on/off
+
+Within automatic draw:
+
+Number of activities added to the draw
+
+Activities by tag (for each tag, the number of activities that can appear with that tag)
+
+Do not repeat activities from the last 7 days of the class
+
+Do not repeat activities from the last 14 days of the class
+
+Do not repeat activities from the last 21 days of the class
+
+The most recent plans moved to history should remain at the top of the history, and the oldest ones at the bottom of the list.
+
+In the main menu that contains:
+All
+School
+Home
+Individual
+By day
+Presets
+History ⬇
+
+School and Home are two different places where I teach classes. I want Individual and By day to be subordinate to School, Home, and All, so that when I select Home, I can then select By day or By class (Individual) and see only Home classes and plans. Likewise, when I select School, I can then select By day or By class (Individual) and see only School classes and plans.
+
+I want it to be possible to add new places where I teach classes so that I can add plans later.
+
+Change “Individual” to “By class.”
+
+Make "all" and "by day" the default tabs
+
+Some dates are showing errors. In class 3T, for example, we have 2026-02-25 when Tuesday was actually 2026-02-24.
+
+I want plans that have been created but do not yet have activities added to be collapsed, with a button to expand them.
+
+
+===================================================================================================================
+
+On "Class Association" settings, inside "activity edit", make it possible to associate with multiple classes.
+
+Auto-Draw Logic Clarification: Add expandable info button to explain the behavior of the selection engine when untagged activities are missing and tag limits are reached (prioritizing limits over draw count).
+
+Instructional Info Sections: Add two expandable "Info buttons" into the settings menu explaining the draw logic and another clarifying that classes can only be assigned to one profile at a time. 
+
+In the "activity inventory, add a search bar that allows to search for specific activities
+
+Removal of "Expand Empty Plan": Remove the button and logic that hides empty plans,
+
+
+Enhanced Repeat Logic: Add an "Avoid repeats" on/off toggle and expanded the repeat cycle options to include 7, 14, 21, and 28 days.
+
+Right when I open the app, when I click on "Home" and the tab "By day" is selected, the plans are not displayed. If I click on activities and back on by day, the classes are displayed
+
+Detailed User Manual: Produce a specific, in-depth manual covering all technical functions, including data synchronization and Auto-Draw selection logic.

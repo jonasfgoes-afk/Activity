@@ -445,17 +445,10 @@
   // ==========================================
   // NAVIGATION
   // ==========================================
-  function setLocation(loc) { 
-    state.currentLoc = loc; 
-    localStorage.setItem('weekly_classes_v7', JSON.stringify(state)); // Save state passively
-    renderNav(); 
-    renderApp(); 
-  }
+  function setLocation(loc) { state.currentLoc = loc; renderNav(); renderApp(); }
 
   function setViewType(t) {
     state.currentView = t;
-    localStorage.setItem('weekly_classes_v7', JSON.stringify(state)); // Save state passively
-    
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     const btn = document.getElementById('btn-'+t);
     if(btn) btn.classList.add('active');
@@ -947,7 +940,8 @@
     
     if (sortType === 'name') {
       filtered.sort((a, b) => a.name.localeCompare(b.name));
-    } else { 
+    } else { // 'newest'
+      // Create a shallow copy and reverse to show newest (last added) first
       filtered = [...filtered].reverse(); 
     }
     
@@ -986,6 +980,7 @@
         <div id="p-${p.id}">
           <div class="activity-list" style="margin-top:8px;">
             ${(p.activities||[]).map(a => {
+              // Backward compatibility for tags: If the plan activity doesn't have tags saved, check the global inventory by name.
               const presetMatch = state.presets.find(pr => pr.name === a.text);
               const actualTags = (a.tags && a.tags.length > 0) ? a.tags : (presetMatch && presetMatch.tags ? presetMatch.tags : []);
               const hasDetailsOrTags = a.details || actualTags.length > 0;

@@ -133,15 +133,7 @@
   <div id="presets-view" style="display: none;">
     <h2 style="color: #1e3c72; text-align: center;">Activity Inventory</h2>
     <button class="primary" style="width: 100%; margin-bottom: 15px;" onclick="openPresetDialog()">+ Add New Activity</button>
-    
-    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-      <input type="text" id="preset-search" placeholder="🔍 Search activities..." onkeyup="renderPresets()" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
-      <select id="preset-sort" onchange="renderPresets()" style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.9rem; background: #f0f4fa; color: #1e3c72; font-weight: bold; outline: none; cursor: pointer;">
-        <option value="newest">Newest First</option>
-        <option value="name">Name (A-Z)</option>
-      </select>
-    </div>
-    
+    <input type="text" id="preset-search" placeholder="🔍 Search activities by name..." onkeyup="renderPresets()" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
     <div id="presets-container"></div>
   </div>
 
@@ -445,17 +437,10 @@
   // ==========================================
   // NAVIGATION
   // ==========================================
-  function setLocation(loc) { 
-    state.currentLoc = loc; 
-    localStorage.setItem('weekly_classes_v7', JSON.stringify(state)); // Save state passively
-    renderNav(); 
-    renderApp(); 
-  }
+  function setLocation(loc) { state.currentLoc = loc; renderNav(); renderApp(); }
 
   function setViewType(t) {
     state.currentView = t;
-    localStorage.setItem('weekly_classes_v7', JSON.stringify(state)); // Save state passively
-    
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     const btn = document.getElementById('btn-'+t);
     if(btn) btn.classList.add('active');
@@ -941,15 +926,7 @@
 
   function renderPresets() {
     const term = (document.getElementById('preset-search')?.value || '').toLowerCase();
-    const sortType = document.getElementById('preset-sort')?.value || 'newest';
-    
-    let filtered = state.presets.filter(p => p.name.toLowerCase().includes(term));
-    
-    if (sortType === 'name') {
-      filtered.sort((a, b) => a.name.localeCompare(b.name));
-    } else { 
-      filtered = [...filtered].reverse(); 
-    }
+    const filtered = state.presets.filter(p => p.name.toLowerCase().includes(term));
     
     document.getElementById('presets-container').innerHTML = filtered.map(p => `
       <div class="class-card">
@@ -986,10 +963,7 @@
         <div id="p-${p.id}">
           <div class="activity-list" style="margin-top:8px;">
             ${(p.activities||[]).map(a => {
-              const presetMatch = state.presets.find(pr => pr.name === a.text);
-              const actualTags = (a.tags && a.tags.length > 0) ? a.tags : (presetMatch && presetMatch.tags ? presetMatch.tags : []);
-              const hasDetailsOrTags = a.details || actualTags.length > 0;
-              
+              const hasDetailsOrTags = a.details || (a.tags && a.tags.length > 0);
               return `
               <div id="act-item-${a.id}" class="activity-item ${a.isDone ? 'is-done' : ''}" draggable="true" ondragstart="actDragStart(event, '${cls.id}', '${p.id}', '${a.id}')" ondragover="actDragOver(event)" ondrop="actDrop(event, '${cls.id}', '${p.id}', '${a.id}')">
                 <div class="activity-main">
@@ -1003,7 +977,7 @@
                 </div>
                 ${hasDetailsOrTags ? `
                 <div id="det-${a.id}" class="activity-details">
-                  ${actualTags.length > 0 ? `<div style="margin-bottom: 6px;">${actualTags.map(t => `<span class="tag-pill">${t}</span>`).join('')}</div>` : ''}
+                  ${a.tags && a.tags.length > 0 ? `<div style="margin-bottom: 6px;">${a.tags.map(t => `<span class="tag-pill">${t}</span>`).join('')}</div>` : ''}
                   ${a.details ? `<div>${a.details}</div>` : ''}
                 </div>` : ''}
               </div>
