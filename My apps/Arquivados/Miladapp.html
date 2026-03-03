@@ -17,6 +17,7 @@
     body { background: #f5f7fb; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; padding-bottom: 90px; overscroll-behavior-y: none; }
     #app { max-width: 600px; width: 100%; background: white; box-shadow: 0 0 30px rgba(0,0,0,0.05); padding: 1.5rem 1rem; margin: 0; min-height: 100vh; position: relative; }
     
+    /* Nova barra superior */
     .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
     .top-header h1 { font-size: 2rem; margin: 0; display: flex; align-items: center; gap: 0.5rem; color: #1e3c72; }
     .settings-btn { font-size: 1.6rem; background: none; border: none; padding: 5px; color: #1e3c72; cursor: pointer; border-radius: 50%; transition: background 0.2s; }
@@ -44,9 +45,8 @@
     .meta { color: #2c3e50; font-weight: 500; font-size: 0.95rem; margin: 0.5rem 0; }
     
     .plan-block { background: #f8fcff; border-radius: 18px; padding: 0.9rem; margin: 0.9rem 0; border: 1px solid #d4e0ec; }
-    .plan-header { font-weight: 600; font-size: 1rem; display: flex; flex-direction: column; gap: 8px; margin-bottom: 0.5rem; }
-    .plan-date-row { display: flex; justify-content: space-between; align-items: center; }
-    .plan-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+    .plan-header { font-weight: 600; font-size: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 0.5rem; gap: 5px; }
+    .plan-actions { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; flex: 1; }
     .delete-plan-btn { background: #f1b6b6; color: #9b1c1c; border: none; }
     
     .activity-list { display: flex; flex-direction: column; gap: 4px; }
@@ -58,7 +58,7 @@
     .activity-details { padding: 0.5rem 0.8rem; background: #f0f4fa; font-size: 0.85rem; color: #444; border-top: 1px solid #e0eaf2; white-space: pre-wrap; display: none; }
     
     .plan-notes-container { margin-top: 8px; border-top: 1px dashed #b0c9e0; padding-top: 8px; }
-    .plan-notes-textarea { width: 100%; border-radius: 8px; border: 1px solid #b0c9e0; padding: 8px; font-family: inherit; font-size: 0.9rem; background: #ffffff; resize: vertical; min-height: 60px;}
+    .plan-notes-textarea { width: 100%; border-radius: 8px; border: 1px solid #b0c9e0; padding: 8px; font-family: inherit; font-size: 0.9rem; background: #ffffff; resize: vertical; }
 
     .drag-handle { cursor: grab; padding: 0 5px; color: #a0aec0; font-size: 1.2rem; user-select: none; touch-action: none; }
     .drag-handle:active { cursor: grabbing; }
@@ -85,6 +85,7 @@
     .radio-group { display: flex; gap: 15px; background: #f0f4fa; padding: 10px; border-radius: 12px; flex-wrap: wrap; }
     .radio-group label { font-weight: normal; display: flex; align-items: center; gap: 5px; cursor: pointer; }
 
+    /* Estilos das Tags */
     .tags-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
     .tag-chip { background: #d9e2ed; color: #1e3c72; padding: 4px 10px; border-radius: 15px; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
     .tag-chip button { background: none; border: none; color: #b91c1c; padding: 0; margin: 0; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
@@ -133,7 +134,7 @@
 
   <div id="louvores-view" style="display: none;">
     <h2 style="color: #1e3c72; text-align: center;">Banco de Louvores</h2>
-    <p style="text-align: center; font-size: 0.9rem; color: #555;">Faça a gestão dos louvores e atribua as suas tags.</p>
+    <p style="text-align: center; font-size: 0.9rem; color: #555;">Cadastre os louvores e atribua suas tags.</p>
     <button class="primary" style="width: 100%; margin-bottom: 15px;" onclick="openLouvorDialog()">+ Adicionar Novo Louvor</button>
     <div id="louvores-container"></div>
   </div>
@@ -145,7 +146,7 @@
   </div>
 </div>
 
-<button class="fab" id="main-fab" onclick="abrirNovoCultoDialog()">+</button>
+<button class="fab" id="main-fab" onclick="document.getElementById('class-dialog').showModal()">+</button>
 
 <dialog id="settings-dialog">
   <div class="dialog-form" style="max-height: 85vh; overflow-y: auto;">
@@ -155,7 +156,7 @@
       <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: bold; color: #1e3c72;">
         <input type="checkbox" id="set-auto-draw" style="width: 20px; height: 20px; accent-color: #1e3c72;"> Ativar Sorteio Automático
       </label>
-      <p style="font-size: 0.8rem; color: #555; margin: 5px 0 0 28px;">Se ativado, ao adicionar uma nova data, os louvores serão sorteados automaticamente.</p>
+      <p style="font-size: 0.8rem; color: #555; margin: 5px 0 0 28px;">Se ativado, ao adicionar uma nova data a um culto, os louvores serão sorteados de acordo com o perfil.</p>
     </div>
 
     <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
@@ -173,7 +174,7 @@
 
     <hr style="border:0; border-top:1px solid #ccc;">
 
-    <h4>Gerir Tags</h4>
+    <h4>Gerenciar Tags</h4>
     <div id="tags-admin-list" class="tags-container"></div>
     <div style="display: flex; gap: 5px; margin-top: 10px;">
       <input type="text" id="new-tag-input" placeholder="Nova tag...">
@@ -294,7 +295,7 @@
 
 <script>
   // ==========================================
-  // FIREBASE CONFIGURATION
+  // FIREBASE CONFIGURATION 
   // ==========================================
   const firebaseConfig = {
     apiKey: "AIzaSyA5jxJvrT49rzDg4UOk3GYqWsaT1CX_3yY",
@@ -309,22 +310,17 @@
   if(firebaseConfig.apiKey !== "SUA_API_KEY_AQUI") {
       firebase.initializeApp(firebaseConfig);
   } else {
-      console.warn("Firebase não configurado. A executar localmente.");
+      console.warn("Firebase não configurado. Rodando localmente.");
   }
   const db = firebaseConfig.apiKey !== "SUA_API_KEY_AQUI" ? firebase.database() : null;
+  
+  // VOLTANDO PARA A REFERÊNCIA ORIGINAL DO SEU BANCO DE DADOS
   const dbRef = db ? db.ref('igreja_louvores_data') : null;
 
-  // ESTADO GLOBAL
+  // ESTADO GLOBAL (Voltando para a chave original do LocalStorage)
   let localData = JSON.parse(localStorage.getItem('igreja_louvores_hybrid')) || { cultos: [], bancoLouvores: [] };
   let cultos = localData.cultos || [];
-  
-  // ADAPTADOR LOCAL PARA BANCO DE LOUVORES (Tonalidade Antiga -> Nova)
-  let bancoLouvores = (localData.bancoLouvores || []).map(l => {
-      if (l.text && !l.name) l.name = l.text;
-      if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
-      return l;
-  });
-  
+  let bancoLouvores = localData.bancoLouvores || [];
   let currentView = 'all';
 
   // CONFIGURAÇÕES AVANÇADAS MILAD
@@ -338,17 +334,17 @@
     ]
   };
 
-  let tempProfileRules = {};
+  let tempProfileRules = {}; // Para edição de perfis no modal
 
   renderApp();
 
-  // CLOUD SYNC
+  // CLOUD SYNC COM TRATAMENTO PARA DADOS ANTIGOS
   let isFirstLoad = true;
   if(dbRef) {
       dbRef.on('value', (snapshot) => {
         const cloudData = snapshot.val();
         if (cloudData) {
-          // Garante a compatibilidade com dados antigos para CULTOS
+          // Garante que o formato antigo (text, tonalidade, isDone) funcione no novo código
           cultos = (cloudData.cultos || []).map(cls => {
              if(cls.plans) {
                  cls.plans.forEach(p => {
@@ -364,13 +360,7 @@
              return cls;
           });
           
-          // Garante a compatibilidade com dados antigos para o BANCO DE LOUVORES
-          bancoLouvores = (cloudData.bancoLouvores || []).map(l => {
-              if (l.text && !l.name) l.name = l.text;
-              if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
-              return l;
-          });
-
+          bancoLouvores = cloudData.bancoLouvores || [];
           if(cloudData.configSorteio) configSorteio = cloudData.configSorteio;
           
           localStorage.setItem('igreja_louvores_hybrid', JSON.stringify({ cultos, bancoLouvores }));
@@ -388,11 +378,11 @@
     localStorage.setItem('milad_settings', JSON.stringify(configSorteio));
     if(dbRef) dbRef.set({ cultos, bancoLouvores, configSorteio });
   }
-
+  
   function generateId() { return Date.now().toString() + Math.random().toString(36).substr(2, 5); }
 
   // ==========================================
-  // CONFIGURAÇÕES, TAGS E PERFIS
+  // LÓGICA DE CONFIGURAÇÕES, TAGS E PERFIS
   // ==========================================
   function abrirConfiguracoes() {
     document.getElementById('set-auto-draw').checked = configSorteio.autoDraw;
@@ -411,6 +401,7 @@
     document.getElementById('settings-dialog').close();
   }
 
+  // GERENCIAR TAGS
   function renderTagsAdmin() {
     const container = document.getElementById('tags-admin-list');
     container.innerHTML = '';
@@ -432,6 +423,7 @@
     renderTagsAdmin();
   }
 
+  // GERENCIAR PERFIS
   function renderProfilesAdmin() {
     const container = document.getElementById('profiles-admin-list');
     container.innerHTML = '';
@@ -551,12 +543,14 @@
     let selecionados = [];
     let tonsUsados = [];
 
+    // Processa cada regra do perfil (ex: 2x Celebração)
     for (const [tag, qtd] of Object.entries(perfil.regras)) {
       let candidatos = pool.filter(l => l.tags && l.tags.includes(tag));
       
       for (let i = 0; i < qtd; i++) {
         if (candidatos.length === 0) break;
         
+        // Embaralha para aleatoriedade
         candidatos = candidatos.sort(() => Math.random() - 0.5);
 
         let escolhido;
@@ -575,6 +569,7 @@
           completed: false
         });
         
+        // Remove do pool e marca o tom como usado
         pool = pool.filter(p => p.name !== escolhido.name);
         candidatos = candidatos.filter(c => c.name !== escolhido.name);
         tonsUsados.push(escolhido.duration);
@@ -585,83 +580,7 @@
   }
 
   // ==========================================
-  // FUNÇÕES DE BOTÕES DE PLANOS E LINKS
-  // ==========================================
-  function linkify(text) {
-    if (!text) return '';
-    const escapedText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return escapedText.replace(urlRegex, function(url) {
-        return `<a href="${url}" target="_blank" style="color: #1e3c72; text-decoration: underline; font-weight: bold;">${url}</a>`;
-    });
-  }
-
-  function archivePlan(classId, planId) {
-    if (confirm("Mover esta data para o histórico?")) {
-      const cls = cultos.find(c => c.id === classId);
-      const plan = cls.plans.find(p => p.id === planId);
-      plan.isArchived = true;
-      saveData();
-      renderApp();
-    }
-  }
-
-  function copyPlan(classId, planId) {
-    const cls = cultos.find(c => c.id === classId);
-    const plan = cls.plans.find(p => p.id === planId);
-    if (!plan.activities || plan.activities.length === 0) return alert("Não há louvores para copiar.");
-    localStorage.setItem('igreja_louvores_clipboard', JSON.stringify(plan.activities));
-    alert(plan.activities.length + " louvores copiados para a memória!");
-  }
-
-  function pastePlan(classId, planId) {
-    const clipboardData = localStorage.getItem('igreja_louvores_clipboard');
-    if (!clipboardData) return alert("A área de transferência está vazia! Copie um culto primeiro.");
-    const activitiesToPaste = JSON.parse(clipboardData);
-    
-    const cls = cultos.find(c => c.id === classId);
-    const plan = cls.plans.find(p => p.id === planId);
-    if (!plan.activities) plan.activities = [];
-    
-    activitiesToPaste.forEach(act => {
-      plan.activities.push({
-        id: generateId(),
-        name: act.name || act.text,
-        duration: act.duration || act.tonalidade, 
-        categoria: act.categoria || "ensaiados",
-        details: act.details || "",
-        completed: false
-      });
-    });
-    saveData();
-    renderApp();
-  }
-
-  function togglePlanNotes(planId) {
-    const el = document.getElementById(`notes-${planId}`);
-    if (el) {
-      el.style.display = el.style.display === 'block' ? 'none' : 'block';
-    }
-  }
-
-  function savePlanNotes(classId, planId, value) {
-    const cls = cultos.find(c => c.id === classId);
-    const plan = cls.plans.find(p => p.id === planId);
-    if (plan) {
-      plan.notes = value;
-      saveData();
-    }
-  }
-
-  function isPlanHistory(plan) {
-    if (plan.isArchived) return true;
-    const now = new Date();
-    const planDate = new Date(plan.date + "T23:59:59");
-    return planDate < now;
-  }
-
-  // ==========================================
-  // RENDERIZAÇÃO
+  // LÓGICA DE UI PADRÃO (CULTOS, PLANOS, LOUVORES)
   // ==========================================
   function setView(view) {
     currentView = view;
@@ -701,37 +620,27 @@
         let activitiesHTML = plan.activities ? plan.activities.map((act) => `
           <div class="activity-item" data-act-id="${act.id}" data-plan-id="${plan.id}" data-class-id="${cls.id}">
             <div class="activity-main">
-              <span class="drag-handle" onmousedown="initDrag(event)" ontouchstart="initTouch(event)">☰</span>
+              <span class="drag-handle">☰</span>
               <input type="checkbox" ${act.completed ? 'checked' : ''} onchange="toggleActivity('${cls.id}', '${plan.id}', '${act.id}')">
               <span class="activity-text" style="${act.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${act.name}</span>
               <span class="badge ${act.categoria === 'ensaiados' ? 'ensaiado' : 'novo'}">${act.categoria === 'ensaiados' ? 'E' : 'N'}</span>
               <span class="key-badge">${act.duration || '-'}</span>
               <button class="small" onclick="toggleDetails('${act.id}')">▼</button>
             </div>
-            <div id="details-${act.id}" class="activity-details">${linkify(act.details) || 'Sem detalhes.'}</div>
+            <div id="details-${act.id}" class="activity-details">${act.details || 'Sem detalhes.'}</div>
           </div>
         `).join('') : '<div style="font-size:0.85rem; color:#888; text-align:center;">Nenhum louvor.</div>';
 
         const planBlock = `
           <div class="plan-block">
             <div class="plan-header">
-              <div class="plan-date-row">
-                 <span>🗓️ Data: ${formatDateBR(plan.date)}</span>
-                 <button class="small delete-plan-btn" onclick="deletePlan('${cls.id}', '${plan.id}')">Excluir</button>
-              </div>
+              <span>🗓️ Data: ${formatDateBR(plan.date)}</span>
               <div class="plan-actions">
-                <button class="small" onclick="archivePlan('${cls.id}', '${plan.id}')" title="Arquivar">Arq</button>
-                <button class="small" onclick="copyPlan('${cls.id}', '${plan.id}')" title="Copiar Louvores">Copiar</button>
-                <button class="small" onclick="pastePlan('${cls.id}', '${plan.id}')" title="Colar Louvores">Colar</button>
-                <button class="small" onclick="togglePlanNotes('${plan.id}')" title="Observações Gerais">Obs</button>
                 <button class="small primary" onclick="openAddActDialog('${cls.id}', '${plan.id}')">+ Louvor</button>
+                <button class="small delete-plan-btn" onclick="deletePlan('${cls.id}', '${plan.id}')">Excluir</button>
               </div>
             </div>
             <div class="activity-list">${activitiesHTML}</div>
-            
-            <div id="notes-${plan.id}" class="plan-notes-container" style="${plan.notes ? 'display:block;' : 'display:none;'}">
-                <textarea class="plan-notes-textarea" placeholder="Observações e avisos gerais para este culto..." onchange="savePlanNotes('${cls.id}', '${plan.id}', this.value)">${plan.notes || ''}</textarea>
-            </div>
           </div>
         `;
 
@@ -743,14 +652,10 @@
         }
       });
 
-      // NOVO: Adicionado o botão para excluir o CULTO
       const classHeader = `
         <div class="class-header">
           <div class="class-title"><span>⛪</span> ${cls.name}</div>
-          <div style="display:flex; gap:5px;">
-             <button class="small primary" onclick="addPlan('${cls.id}')">+ Nova Data</button>
-             <button class="small danger" onclick="deleteClass('${cls.id}')" title="Excluir Culto Inteiro">🗑️</button>
-          </div>
+          <button class="small primary" onclick="addPlan('${cls.id}')">+ Nova Data</button>
         </div>
         <div class="meta">📍 Dia: ${cls.day} | ⏰ ${cls.time}</div>
       `;
@@ -768,12 +673,6 @@
     if (historyCount === 0) historyContainer.innerHTML = "<p style='text-align:center; color:#888;'>Nenhum histórico.</p>";
   }
 
-  function abrirNovoCultoDialog() {
-    const sel = document.getElementById('new-class-profile');
-    sel.innerHTML = configSorteio.perfisSorteio.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
-    document.getElementById('class-dialog').showModal();
-  }
-
   function addClass() {
     const name = document.getElementById('new-class-name').value;
     const day = document.getElementById('new-class-day').value;
@@ -788,28 +687,12 @@
     }
   }
 
-  // Função para excluir um Culto inteiro com verificação de 3 etapas
-  function deleteClass(classId) {
-    // Etapa 1: Primeira confirmação
-    const passo1 = confirm("PASSO 1/3: Tem a certeza que deseja excluir este culto inteiro?");
-    if (!passo1) return;
+  // Preenche Select de Perfis ao abrir dialog de novo culto
+  document.getElementById('main-fab').addEventListener('click', () => {
+    const sel = document.getElementById('new-class-profile');
+    sel.innerHTML = configSorteio.perfisSorteio.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+  });
 
-    // Etapa 2: Aviso de irreversibilidade
-    const passo2 = confirm("PASSO 2/3: ATENÇÃO! Esta ação é irreversível e apagará TODO o histórico deste culto. Deseja mesmo continuar?");
-    if (!passo2) return;
-
-    // Etapa 3: Confirmação por digitação
-    const passo3 = prompt("PASSO 3/3: Para confirmar a exclusão definitiva, digite a palavra EXCLUIR em maiúsculas:");
-    
-    if (passo3 === "EXCLUIR") {
-      cultos = cultos.filter(c => c.id !== classId);
-      saveData();
-      renderApp();
-      alert("Culto excluído com sucesso.");
-    } else {
-      alert("Palavra incorreta. A exclusão foi cancelada por segurança.");
-    }
-  }
   function addPlan(classId) {
     const cls = cultos.find(c => c.id === classId);
     let nextDate = getNextPlanDate(cls);
@@ -818,6 +701,7 @@
       const planId = generateId();
       cls.plans.push({ id: planId, date: userDate, activities: [], isArchived: false });
       
+      // GATILHO SORTEIO AUTOMATICO
       if(configSorteio.autoDraw) {
         sortearParaPlano(classId, planId);
       }
@@ -830,7 +714,13 @@
   function getNextPlanDate(cls) {
     const d = new Date(); 
     d.setDate(d.getDate() + 7);
-    return d.toISOString().split('T')[0];
+    return d.toISOString().split('T')[0]; // Simplificado
+  }
+
+  function isPlanHistory(plan) {
+    const now = new Date();
+    const planDate = new Date(plan.date + "T23:59:59");
+    return planDate < now;
   }
 
   function deletePlan(classId, planId) {
@@ -1002,12 +892,6 @@
     return `${d}/${m}/${y}`;
   }
 
-  function scrollToHistory() {
-    const hist = document.getElementById('history-details');
-    hist.open = true;
-    hist.scrollIntoView({ behavior: 'smooth' });
-  }
-
   function exportData() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({cultos, bancoLouvores, configSorteio}));
     const dlAnchorElem = document.createElement('a');
@@ -1029,130 +913,10 @@
           saveData();
           renderApp();
           alert("Backup importado com sucesso!");
-        } catch (err) { alert("Erro ao ler o ficheiro."); }
+        } catch (err) { alert("Erro ao ler o arquivo."); }
       };
       reader.readAsText(file);
     }
-  }
-
-  // ==========================================
-  // DRAG & DROP LOGIC
-  // ==========================================
-  let dragData = null;
-  let touchData = null;
-
-  function reorderActivity(classId, planId, fromId, toId) {
-    const cls = cultos.find(c => c.id === classId);
-    const plan = cls.plans.find(p => p.id === planId);
-    const fromIndex = plan.activities.findIndex(a => a.id === fromId);
-    const toIndex = plan.activities.findIndex(a => a.id === toId);
-    
-    const [moved] = plan.activities.splice(fromIndex, 1);
-    plan.activities.splice(toIndex, 0, moved);
-    
-    saveData();
-    renderApp();
-  }
-
-  function initDrag(e) {
-    const item = e.target.closest('.activity-item');
-    if (!item) return;
-    
-    item.setAttribute('draggable', true);
-    
-    item.ondragstart = (ev) => {
-        dragData = {
-            actId: item.getAttribute('data-act-id'),
-            planId: item.getAttribute('data-plan-id'),
-            classId: item.getAttribute('data-class-id')
-        };
-        ev.dataTransfer.effectAllowed = 'move';
-        item.style.opacity = '0.5';
-    };
-    
-    item.ondragover = (ev) => { ev.preventDefault(); };
-    
-    item.ondrop = (ev) => {
-        ev.preventDefault();
-        const dropItem = ev.target.closest('.activity-item');
-        if (dropItem && dragData) {
-            const targetActId = dropItem.getAttribute('data-act-id');
-            const targetPlanId = dropItem.getAttribute('data-plan-id');
-            const targetClassId = dropItem.getAttribute('data-class-id');
-            if (targetPlanId === dragData.planId && targetClassId === dragData.classId && dragData.actId !== targetActId) {
-                reorderActivity(dragData.classId, dragData.planId, dragData.actId, targetActId);
-            }
-        }
-    };
-    
-    item.ondragend = () => {
-        item.removeAttribute('draggable');
-        item.style.opacity = '1';
-        dragData = null;
-    };
-  }
-
-  function initTouch(e) {
-    const targetItem = e.target.closest('.activity-item');
-    if (!targetItem) return;
-    
-    const touch = e.touches[0];
-    const rect = targetItem.getBoundingClientRect();
-    
-    touchData = {
-      actId: targetItem.getAttribute('data-act-id'),
-      planId: targetItem.getAttribute('data-plan-id'),
-      classId: targetItem.getAttribute('data-class-id'),
-      targetItem: targetItem,
-      offsetX: touch.clientX - rect.left,
-      offsetY: touch.clientY - rect.top,
-      clone: targetItem.cloneNode(true)
-    };
-    
-    touchData.clone.style.position = 'fixed';
-    touchData.clone.style.top = rect.top + 'px';
-    touchData.clone.style.left = rect.left + 'px';
-    touchData.clone.style.width = rect.width + 'px';
-    touchData.clone.style.zIndex = '9999';
-    touchData.clone.style.opacity = '0.8';
-    touchData.clone.style.pointerEvents = 'none';
-    
-    document.body.appendChild(touchData.clone);
-    targetItem.style.opacity = '0.3';
-    
-    document.addEventListener('touchmove', touchMove, { passive: false });
-    document.addEventListener('touchend', touchEnd);
-  }
-
-  function touchMove(e) {
-    if (!touchData) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    touchData.clone.style.top = (touch.clientY - touchData.offsetY) + 'px';
-    touchData.clone.style.left = (touch.clientX - touchData.offsetX) + 'px';
-  }
-
-  function touchEnd(e) {
-    if (!touchData) return;
-    const touch = e.changedTouches[0];
-    touchData.clone.remove();
-    touchData.targetItem.style.opacity = '1';
-    
-    document.removeEventListener('touchmove', touchMove);
-    document.removeEventListener('touchend', touchEnd);
-    
-    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-    const dropItem = dropTarget ? dropTarget.closest('.activity-item') : null;
-    
-    if (dropItem && dropItem !== touchData.targetItem) {
-        const targetActId = dropItem.getAttribute('data-act-id');
-        const targetPlanId = dropItem.getAttribute('data-plan-id');
-        const targetClassId = dropItem.getAttribute('data-class-id');
-        if (targetPlanId === touchData.planId && targetClassId === touchData.classId) {
-             reorderActivity(touchData.classId, touchData.planId, touchData.actId, targetActId);
-        }
-    }
-    touchData = null;
   }
 </script>
 </body>

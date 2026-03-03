@@ -133,7 +133,7 @@
 
   <div id="louvores-view" style="display: none;">
     <h2 style="color: #1e3c72; text-align: center;">Banco de Louvores</h2>
-    <p style="text-align: center; font-size: 0.9rem; color: #555;">Faça a gestão dos louvores e atribua as suas tags.</p>
+    <p style="text-align: center; font-size: 0.9rem; color: #555;">Gira os louvores e atribui as suas tags.</p>
     <button class="primary" style="width: 100%; margin-bottom: 15px;" onclick="openLouvorDialog()">+ Adicionar Novo Louvor</button>
     <div id="louvores-container"></div>
   </div>
@@ -294,7 +294,7 @@
 
 <script>
   // ==========================================
-  // FIREBASE CONFIGURATION
+  // FIREBASE CONFIGURATION (Corrigida e Restaurada)
   // ==========================================
   const firebaseConfig = {
     apiKey: "AIzaSyA5jxJvrT49rzDg4UOk3GYqWsaT1CX_3yY",
@@ -317,14 +317,7 @@
   // ESTADO GLOBAL
   let localData = JSON.parse(localStorage.getItem('igreja_louvores_hybrid')) || { cultos: [], bancoLouvores: [] };
   let cultos = localData.cultos || [];
-  
-  // ADAPTADOR LOCAL PARA BANCO DE LOUVORES (Tonalidade Antiga -> Nova)
-  let bancoLouvores = (localData.bancoLouvores || []).map(l => {
-      if (l.text && !l.name) l.name = l.text;
-      if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
-      return l;
-  });
-  
+  let bancoLouvores = localData.bancoLouvores || [];
   let currentView = 'all';
 
   // CONFIGURAÇÕES AVANÇADAS MILAD
@@ -348,7 +341,7 @@
       dbRef.on('value', (snapshot) => {
         const cloudData = snapshot.val();
         if (cloudData) {
-          // Garante a compatibilidade com dados antigos para CULTOS
+          // Garante a compatibilidade com dados antigos
           cultos = (cloudData.cultos || []).map(cls => {
              if(cls.plans) {
                  cls.plans.forEach(p => {
@@ -364,13 +357,7 @@
              return cls;
           });
           
-          // Garante a compatibilidade com dados antigos para o BANCO DE LOUVORES
-          bancoLouvores = (cloudData.bancoLouvores || []).map(l => {
-              if (l.text && !l.name) l.name = l.text;
-              if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
-              return l;
-          });
-
+          bancoLouvores = cloudData.bancoLouvores || [];
           if(cloudData.configSorteio) configSorteio = cloudData.configSorteio;
           
           localStorage.setItem('igreja_louvores_hybrid', JSON.stringify({ cultos, bancoLouvores }));
@@ -743,14 +730,10 @@
         }
       });
 
-      // NOVO: Adicionado o botão para excluir o CULTO
       const classHeader = `
         <div class="class-header">
           <div class="class-title"><span>⛪</span> ${cls.name}</div>
-          <div style="display:flex; gap:5px;">
-             <button class="small primary" onclick="addPlan('${cls.id}')">+ Nova Data</button>
-             <button class="small danger" onclick="deleteClass('${cls.id}')" title="Excluir Culto Inteiro">🗑️</button>
-          </div>
+          <button class="small primary" onclick="addPlan('${cls.id}')">+ Nova Data</button>
         </div>
         <div class="meta">📍 Dia: ${cls.day} | ⏰ ${cls.time}</div>
       `;
@@ -788,28 +771,6 @@
     }
   }
 
-  // Função para excluir um Culto inteiro com verificação de 3 etapas
-  function deleteClass(classId) {
-    // Etapa 1: Primeira confirmação
-    const passo1 = confirm("PASSO 1/3: Tem a certeza que deseja excluir este culto inteiro?");
-    if (!passo1) return;
-
-    // Etapa 2: Aviso de irreversibilidade
-    const passo2 = confirm("PASSO 2/3: ATENÇÃO! Esta ação é irreversível e apagará TODO o histórico deste culto. Deseja mesmo continuar?");
-    if (!passo2) return;
-
-    // Etapa 3: Confirmação por digitação
-    const passo3 = prompt("PASSO 3/3: Para confirmar a exclusão definitiva, digite a palavra EXCLUIR em maiúsculas:");
-    
-    if (passo3 === "EXCLUIR") {
-      cultos = cultos.filter(c => c.id !== classId);
-      saveData();
-      renderApp();
-      alert("Culto excluído com sucesso.");
-    } else {
-      alert("Palavra incorreta. A exclusão foi cancelada por segurança.");
-    }
-  }
   function addPlan(classId) {
     const cls = cultos.find(c => c.id === classId);
     let nextDate = getNextPlanDate(cls);
@@ -1054,6 +1015,7 @@
     renderApp();
   }
 
+  // Desktop
   function initDrag(e) {
     const item = e.target.closest('.activity-item');
     if (!item) return;
@@ -1092,6 +1054,7 @@
     };
   }
 
+  // Mobile
   function initTouch(e) {
     const targetItem = e.target.closest('.activity-item');
     if (!targetItem) return;
