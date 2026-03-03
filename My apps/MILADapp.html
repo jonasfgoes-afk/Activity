@@ -337,6 +337,10 @@
       { id: 'p1', nome: 'Culto Padrão', regras: { "Celebração": 2, "Adoração": 2 } }
     ]
   };
+  
+  if (!configSorteio.perfisSorteio || configSorteio.perfisSorteio.length === 0) {
+    configSorteio.perfisSorteio = [{ id: 'p1', nome: 'Culto Padrão', regras: { "Celebração": 2, "Adoração": 2 } }];
+  }
 
   let tempProfileRules = {};
 
@@ -371,7 +375,14 @@
               return l;
           });
 
-          if(cloudData.configSorteio) configSorteio = cloudData.configSorteio;
+          if(cloudData.configSorteio) {
+              configSorteio = cloudData.configSorteio;
+              
+              // ⚠️ TRAVA DE SEGURANÇA NUVEM
+              if (!configSorteio.perfisSorteio || configSorteio.perfisSorteio.length === 0) {
+                  configSorteio.perfisSorteio = [{ id: 'p1', nome: 'Culto Padrão', regras: { "Celebração": 2, "Adoração": 2 } }];
+              }
+          }
           
           localStorage.setItem('igreja_louvores_hybrid', JSON.stringify({ cultos, bancoLouvores }));
           localStorage.setItem('milad_settings', JSON.stringify(configSorteio));
