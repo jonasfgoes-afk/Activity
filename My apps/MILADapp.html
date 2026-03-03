@@ -6,7 +6,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Gestão de Louvores">
+  <meta name="apple-mobile-web-app-title" content="MILAD">
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e3c72">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
   <title>Gestão de Louvores - MILAD</title>
   
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
@@ -318,7 +323,7 @@
   let localData = JSON.parse(localStorage.getItem('igreja_louvores_hybrid')) || { cultos: [], bancoLouvores: [] };
   let cultos = localData.cultos || [];
   
-  // ADAPTADOR LOCAL PARA BANCO DE LOUVORES (Tonalidade Antiga -> Nova)
+  // ADAPTADOR LOCAL PARA BANCO DE LOUVORES
   let bancoLouvores = (localData.bancoLouvores || []).map(l => {
       if (l.text && !l.name) l.name = l.text;
       if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
@@ -337,7 +342,8 @@
       { id: 'p1', nome: 'Culto Padrão', regras: { "Celebração": 2, "Adoração": 2 } }
     ]
   };
-  
+
+  // ⚠️ TRAVA DE SEGURANÇA LOCAL
   if (!configSorteio.perfisSorteio || configSorteio.perfisSorteio.length === 0) {
     configSorteio.perfisSorteio = [{ id: 'p1', nome: 'Culto Padrão', regras: { "Celebração": 2, "Adoração": 2 } }];
   }
@@ -352,7 +358,6 @@
       dbRef.on('value', (snapshot) => {
         const cloudData = snapshot.val();
         if (cloudData) {
-          // Garante a compatibilidade com dados antigos para CULTOS
           cultos = (cloudData.cultos || []).map(cls => {
              if(cls.plans) {
                  cls.plans.forEach(p => {
@@ -368,7 +373,6 @@
              return cls;
           });
           
-          // Garante a compatibilidade com dados antigos para o BANCO DE LOUVORES
           bancoLouvores = (cloudData.bancoLouvores || []).map(l => {
               if (l.text && !l.name) l.name = l.text;
               if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
@@ -754,20 +758,22 @@
         }
       });
 
-      // NOVO: Adicionado o botão para excluir o CULTO
+      // NOVO: Cabeçalho limpo sem o botão "Nova Data"
       const classHeader = `
         <div class="class-header">
           <div class="class-title"><span>⛪</span> ${cls.name}</div>
           <div style="display:flex; gap:5px;">
-             <button class="small primary" onclick="addPlan('${cls.id}')">+ Nova Data</button>
              <button class="small danger" onclick="deleteClass('${cls.id}')" title="Excluir Culto Inteiro">🗑️</button>
           </div>
         </div>
         <div class="meta">📍 Dia: ${cls.day} | ⏰ ${cls.time}</div>
       `;
 
+      // NOVO: Botão largo para adicionar plano em baixo
+      const addPlanBtn = `<button class="primary" style="width: 100%; margin-top: 10px; border-radius: 12px; padding: 12px;" onclick="addPlan('${cls.id}')">+ Adicionar plano de culto</button>`;
+
       if (hasActivePlans || (!hasActivePlans && historyPlansHTML === '')) {
-        container.innerHTML += `<div class="class-card">${classHeader}${activePlansHTML}</div>`;
+        container.innerHTML += `<div class="class-card">${classHeader}${activePlansHTML}${addPlanBtn}</div>`;
       }
 
       if (historyPlansHTML !== '') {
@@ -799,17 +805,13 @@
     }
   }
 
-  // Função para excluir um Culto inteiro com verificação de 3 etapas
   function deleteClass(classId) {
-    // Etapa 1: Primeira confirmação
     const passo1 = confirm("PASSO 1/3: Tem a certeza que deseja excluir este culto inteiro?");
     if (!passo1) return;
 
-    // Etapa 2: Aviso de irreversibilidade
     const passo2 = confirm("PASSO 2/3: ATENÇÃO! Esta ação é irreversível e apagará TODO o histórico deste culto. Deseja mesmo continuar?");
     if (!passo2) return;
 
-    // Etapa 3: Confirmação por digitação
     const passo3 = prompt("PASSO 3/3: Para confirmar a exclusão definitiva, digite a palavra EXCLUIR em maiúsculas:");
     
     if (passo3 === "EXCLUIR") {
@@ -821,27 +823,42 @@
       alert("Palavra incorreta. A exclusão foi cancelada por segurança.");
     }
   }
+
+  // NOVO: Função de adicionar plano sem prompt
   function addPlan(classId) {
     const cls = cultos.find(c => c.id === classId);
     let nextDate = getNextPlanDate(cls);
-    let userDate = prompt("Confirmar data do culto (YYYY-MM-DD):", nextDate);
-    if (userDate) {
-      const planId = generateId();
-      cls.plans.push({ id: planId, date: userDate, activities: [], isArchived: false });
-      
-      if(configSorteio.autoDraw) {
-        sortearParaPlano(classId, planId);
-      }
-
-      saveData();
-      renderApp();
+    
+    const planId = generateId();
+    cls.plans.push({ id: planId, date: nextDate, activities: [], isArchived: false, notes: "" });
+    
+    if(configSorteio.autoDraw) {
+      sortearParaPlano(classId, planId);
     }
+
+    saveData();
+    renderApp();
   }
 
+  // NOVO: Cálculo inteligente de data (semana seguinte ou próximo dia correspondente)
   function getNextPlanDate(cls) {
-    const d = new Date(); 
-    d.setDate(d.getDate() + 7);
-    return d.toISOString().split('T')[0];
+    if (cls.plans && cls.plans.length > 0) {
+      // Pega a data mais recente cadastrada neste culto
+      const dates = cls.plans.map(p => new Date(p.date + "T00:00:00"));
+      const latest = new Date(Math.max.apply(null, dates));
+      latest.setDate(latest.getDate() + 7); // Adiciona 7 dias
+      return latest.toISOString().split('T')[0];
+    } else {
+      // Se for o primeiro plano, procura a data do próximo dia da semana correspondente
+      const daysMap = {"Domingo":0, "Segunda-feira":1, "Terça-feira":2, "Quarta-feira":3, "Quinta-feira":4, "Sexta-feira":5, "Sábado":6};
+      const targetDay = daysMap[cls.day] !== undefined ? daysMap[cls.day] : 0;
+      const d = new Date();
+      let currentDay = d.getDay();
+      let diff = targetDay - currentDay;
+      if (diff <= 0) diff += 7; // Garante que será no futuro
+      d.setDate(d.getDate() + diff);
+      return d.toISOString().split('T')[0];
+    }
   }
 
   function deletePlan(classId, planId) {
@@ -1166,5 +1183,20 @@
     touchData = null;
   }
 </script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then((registration) => {
+          console.log('PWA: Service Worker registado com sucesso!', registration.scope);
+        })
+        .catch((error) => {
+          console.log('PWA: Falha ao registar o Service Worker.', error);
+        });
+    });
+  }
+</script>
+
 </body>
 </html>
