@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Weekly Classes">
+  <meta name="theme-color" content="#1e3c72">
+  <title>Weekly classes</title>
+
+  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Weekly%20Classes%22%2C%22short_name%22%3A%22Classes%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f5f7fb%22%2C%22theme_color%22%3A%22%231e3c72%22%7D">
+  
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231e3c72'/><text x='50' y='50' dominant-baseline='central' text-anchor='middle' font-size='50'>📚</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231e3c72'/><text x='50' y='50' dominant-baseline='central' text-anchor='middle' font-size='50'>📚</text></svg>">
+  
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #f5f7fb; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; padding-bottom: 90px; overscroll-behavior-y: none; }
+    #app { max-width: 600px; width: 100%; background: white; box-shadow: 0 0 30px rgba(0,0,0,0.05); padding: 1.5rem 1rem; margin: 0; min-height: 100vh; position: relative; }
+    h1 { font-size: 2rem; margin: 0 0 0.5rem; display: flex; align-items: center; gap: 0.5rem; color: #1e3c72; }
+    
+    button { background: #edf2f7; border: none; border-radius: 40px; padding: 0.7rem 1.3rem; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: 0.2s; }
+    button:active { transform: scale(0.97); }
+    button.primary { background: #1e3c72; color: white; }
+    button.warning { background: #b91c1c; color: white; }
+    button.small { padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 30px; }
+    button.danger { background: #fde7e9; color: #a11f2b; }
+    
+    /* NAVIGATION HIERARCHY */
+    .nav-container { display: flex; flex-direction: column; gap: 0.6rem; margin: 1rem 0; background: #f0f4fa; padding: 0.8rem; border-radius: 20px; }
+    .nav-row { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; align-items: center; }
+    .nav-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #718096; width: 100%; text-align: center; margin-bottom: -2px; }
+    .nav-btn { background: white; border: 1px solid #e2e8f0; border-radius: 40px; padding: 0.45rem 0.9rem; font-size: 0.85rem; font-weight: 600; color: #4a5568; }
+    .nav-btn.active { background: #1e3c72; color: white; border-color: #1e3c72; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .quick-add-btn { background: #d9e2ef; color: #1e3c72; border-radius: 50%; width: 32px; height: 32px; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; padding: 0; }
+    
+    .class-card { background: #ffffff; border-left: 6px solid #2b6f9b; border-radius: 24px; padding: 1rem; margin: 1.2rem 0; box-shadow: 0 8px 16px rgba(0,0,0,0.04); }
+    .class-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .class-title { font-weight: 700; font-size: 1.3rem; display: flex; gap: 0.7rem; align-items: center; }
+    .badge { font-size: 0.75rem; background: #e2e8f0; padding: 0.25rem 0.9rem; border-radius: 30px; text-transform: uppercase; font-weight: 600; color: #4a5568; }
+    .meta { color: #2c3e50; font-weight: 500; font-size: 0.95rem; margin: 0.5rem 0; }
+    
+    .plan-block { background: #f8fcff; border-radius: 18px; padding: 0.9rem; margin: 0.9rem 0; border: 1px solid #d4e0ec; }
+    .plan-header { font-weight: 600; font-size: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 0.5rem; gap: 5px; }
+    .plan-actions { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; flex: 1; }
+    
+    /* ACTIVITY ITEMS */
+    .activity-list { display: flex; flex-direction: column; gap: 4px; }
+    .activity-item { display: flex; flex-direction: column; background: white; border: 1px solid #e0eaf2; border-radius: 12px; overflow: hidden; transition: opacity 0.3s, background 0.3s; }
+    .activity-item.is-done { opacity: 0.65; background: #f8fafc; }
+    .activity-main { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem; width: 100%; flex-wrap: wrap; }
+    .activity-main input[type="checkbox"] { width: 1.3rem; height: 1.3rem; accent-color: #1e3c72; cursor: pointer; }
+    .activity-text { flex: 1; font-size: 0.95rem; min-width: 100px; font-weight: 500; transition: color 0.3s; }
+    .activity-item.is-done .activity-text { text-decoration: line-through; color: #a0aec0; }
+    .minutes-badge { background: #d9e2ed; border-radius: 30px; padding: 0.2rem 0.7rem; font-size: 0.8rem; font-weight: 600; }
+    .activity-details { padding: 0.5rem 0.8rem; background: #f0f4fa; font-size: 0.85rem; color: #444; border-top: 1px solid #e0eaf2; white-space: pre-wrap; display: none; }
+    
+    /* TAGS UI */
+    .tag-pill { display: inline-block; font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; background: #edf2f7; color: #4a5568; margin-right: 4px; font-weight: bold; margin-top: 4px; border: 1px solid #cbd5e0; }
+    .tag-class { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+    /* NOTES & DRAG */
+    .plan-notes-container { margin-top: 8px; border-top: 1px dashed #b0c9e0; padding-top: 8px; }
+    .plan-notes-textarea { width: 100%; border-radius: 8px; border: 1px solid #b0c9e0; padding: 8px; font-family: inherit; font-size: 0.9rem; resize: vertical; }
+    .drag-handle { cursor: grab; padding: 0 5px; color: #a0aec0; font-size: 1.2rem; user-select: none; touch-action: none; }
+    
+    /* HISTORY */
+    .history-section { margin-top: 2.5rem; border-top: 3px solid #9bb7d4; padding-top: 1.2rem; }
+    .history-header { background: #d9e2ef; padding: 0.8rem 1.5rem; border-radius: 60px; text-align: center; font-weight: 700; font-size: 1.1rem; cursor: pointer; user-select: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    
+    /* SETTINGS & INPUTS */
+    .settings-group { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 15px; padding: 1rem; margin-bottom: 1rem; }
+    .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; font-size: 0.95rem; font-weight: 500; }
+    .picker-row { display: flex; align-items: center; gap: 0.5rem; background: #eaf0f9; padding: 0.5rem 1rem; border-radius: 60px; margin: 0.5rem 0; font-weight: 600; color: #2c3e50; }
+    .picker-row select { flex: 1; padding: 0.6rem; border-radius: 40px; border: 1px solid #b0c4de; background: white; outline: none; }
+    
+    dialog { border: none; border-radius: 24px; padding: 20px; width: 90%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); background: white; }
+    dialog::backdrop { background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); }
+    .dialog-form { display: flex; flex-direction: column; gap: 12px; }
+    .dialog-form h3 { margin: 0 0 10px 0; color: #1e3c72; }
+    .dialog-form label { font-weight: bold; font-size: 0.9rem; color: #444; }
+    .dialog-form input[type="text"], .dialog-form input[type="number"], .dialog-form input[type="time"], .dialog-form select, .dialog-form textarea { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ccc; border-radius: 12px; font-size: 1rem; font-family: inherit; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+    
+    .fab { position: fixed; bottom: 25px; right: max(25px, calc(50vw - 280px)); width: 65px; height: 65px; border-radius: 50%; font-size: 32px; display: flex; align-items: center; justify-content: center; background: #1e3c72; color: white; box-shadow: 0 6px 16px rgba(30,60,114,0.4); z-index: 1000; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <h1>📚 Weekly classes</h1>
+
+  <div class="nav-container">
+    <div class="nav-label">1. Location</div>
+    <div class="nav-row">
+      <div id="loc-nav" style="display:flex; gap:0.4rem; flex-wrap:wrap;"></div>
+      <button class="quick-add-btn" onclick="quickAddLocation()" title="Add Location">+</button>
+    </div>
+    <div class="nav-label" style="margin-top:5px;">2. View Mode</div>
+    <div class="nav-row">
+      <button class="nav-btn" id="btn-list" onclick="setViewType('list')">All Plans</button>
+      <button class="nav-btn" id="btn-class" onclick="setViewType('class')">By Class</button>
+      <button class="nav-btn active" id="btn-day" onclick="setViewType('day')">By Day</button>
+      <button class="nav-btn" id="btn-presets" onclick="setViewType('presets')">Activities</button>
+      <button class="nav-btn" id="btn-settings" onclick="setViewType('settings')">⚙️ Settings</button>
+      <button class="nav-btn" id="btn-history" onclick="scrollToHistory()">History ⬇</button>
+    </div>
+  </div>
+
+  <div id="main-view">
+    <div id="classPicker" class="picker-row" style="display: none;">
+      <span>👤 Pick class:</span>
+      <select id="classSelect" onchange="renderApp()"></select>
+    </div>
+    <div id="dayPicker" class="picker-row">
+      <span>📅 Select day:</span>
+      <select id="daySelect" onchange="renderApp()">
+        <option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option>
+        <option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="Sunday">Sunday</option>
+      </select>
+    </div>
+
+    <div id="current-classes"></div>
+
+    <div class="history-section" id="history-section-div">
+      <details id="history-details">
+        <summary class="history-header">📂 History (Newest First)</summary>
+        <div id="history-content" style="margin-top: 10px;"></div>
+      </details>
+    </div>
+  </div>
+
+  <div id="presets-view" style="display: none;">
+    <h2 style="color: #1e3c72; text-align: center;">Activity Inventory</h2>
+    <button class="primary" style="width: 100%; margin-bottom: 15px;" onclick="openPresetDialog()">+ Add New Activity</button>
+    
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+      <input type="text" id="preset-search" placeholder="🔍 Search activities..." onkeyup="renderPresets()" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
+      <select id="preset-sort" onchange="renderPresets()" style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.9rem; background: #f0f4fa; color: #1e3c72; font-weight: bold; outline: none; cursor: pointer;">
+        <option value="newest">Newest First</option>
+        <option value="name">Name (A-Z)</option>
+        <option value="tag">Tags</option>
+      </select>
+    </div>
+    
+    <div id="presets-container"></div>
+  </div>
+
+  <div id="settings-view" style="display: none;">
+    <h2 style="color: #1e3c72; text-align: center;">Settings</h2>
+    
+    <div class="settings-group">
+      <h3>💾 Backup & Restore</h3>
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button class="primary" style="flex: 1;" onclick="exportData()">📤 Export JSON</button>
+        <button class="warning" style="flex: 1; background: #eab308; color: #422006;" onclick="document.getElementById('import-file').click()">📥 Import JSON</button>
+        <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+      </div>
+      <p style="font-size: 0.8rem; color: #666; margin-top: 8px;">Export your data to a file, or import a backup. <strong>Warning:</strong> Importing will overwrite your current app data!</p>
+    </div>
+
+    <div class="settings-group">
+      <h3>📍 Teaching Locations</h3>
+      <p style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">Drag the ☰ handle to reorder how they appear in the top menu.</p>
+      <div id="loc-mgmt-list"></div>
+    </div>
+
+    <div class="settings-group">
+      <h3>🏷️ Manage Activity Tags</h3>
+      <div id="tag-mgmt-list" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;"></div>
+      <div style="display:flex; gap:5px;">
+        <input type="text" id="new-tag-name" placeholder="New tag name..." style="flex:1; padding:8px; border-radius:10px; border:1px solid #ccc;">
+        <button class="primary small" onclick="addActivityTag()">Add Tag</button>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>🎲 Automatic Draw Profiles</h3>
+      <p style="font-size: 0.8rem; color: #666; margin-bottom: 12px;">Create different draw settings and assign them to specific classes.</p>
+      
+      <details class="info-note" style="background: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1; padding: 10px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 12px;">
+        <summary style="font-weight: bold; cursor: pointer; outline: none;">ℹ️ How Auto-Draw Works</summary>
+        <p style="margin-top: 8px;">The system prioritizes <b>Max limits per tag</b> over the <b>Acts per draw</b> setting. If your tag limits are reached and there are no untagged activities left in the bank, the draw will stop and provide fewer activities than requested. Untagged activities bypass limits and act as unrestricted fillers.</p>
+      </details>
+      
+      <div class="settings-row">
+        <select id="set-profile-select" style="flex:1; padding:8px; border-radius:10px; border:1px solid #ccc; margin-right: 5px; font-weight: bold; color: #1e3c72;" onchange="switchProfile()"></select>
+        <button class="primary small" onclick="createProfile()">+ New</button>
+        <button class="danger small" style="margin-left:5px;" onclick="deleteProfile()">✕</button>
+      </div>
+
+      <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-top: 10px;">
+        <div class="settings-row" style="margin-bottom: 15px;">
+          <span>Profile Name:</span>
+          <input type="text" id="set-profile-name" style="width:140px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()">
+        </div>
+        
+        <div class="settings-row">
+          <span>Enable Auto-Draw:</span>
+          <input type="checkbox" id="set-auto-draw" style="width:20px; height:20px;" onchange="updateProfile()">
+        </div>
+        <div class="settings-row">
+          <span>Acts per draw:</span>
+          <input type="number" id="set-draw-count" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()">
+        </div>
+        
+        <div class="settings-row">
+          <span>Avoid repeats:</span>
+          <input type="checkbox" id="set-cooldown-enabled" style="width:20px; height:20px;" onchange="updateProfile()">
+        </div>
+        <div class="settings-row">
+          <span>Repeat cycle (days):</span>
+          <select id="set-cooldown" style="width:100px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()">
+            <option value="7">7 Days</option>
+            <option value="14">14 Days</option>
+            <option value="21">21 Days</option>
+            <option value="28">28 Days</option>
+          </select>
+        </div>
+        
+        <h4 style="margin: 15px 0 5px 0; font-size:0.9rem; color:#555;">Max limits per tag (leave blank for unlimited)</h4>
+        <div id="auto-draw-tag-limits"></div>
+      </div>
+
+      <h4 style="margin: 15px 0 5px 0; font-size:0.9rem; color:#1e3c72; border-top: 1px dashed #ccc; padding-top: 10px;">Apply this profile to classes:</h4>
+      
+      <details class="info-note" style="background: #fef3c7; border: 1px solid #fde68a; color: #92400e; padding: 10px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 8px;">
+        <summary style="font-weight: bold; cursor: pointer; outline: none;">⚠️ Class Assignment Rule</summary>
+        <p style="margin-top: 8px;">A class can only be assigned to <b>one profile at a time</b>. Checking a class here automatically unchecks it from any other profile.</p>
+      </details>
+      
+      <div id="profile-class-list" style="display:flex; flex-direction:column; gap:8px; background: #f0f4fa; padding: 10px; border-radius: 10px;"></div>
+    </div>
+  </div>
+
+</div>
+
+<button class="fab" id="main-fab" onclick="openClassDialog()">+</button>
+
+<dialog id="class-dialog">
+  <div class="dialog-form">
+    <h3>Add New Class</h3>
+    <label>Location:<select id="new-class-type"></select></label>
+    <label>Class Name:<input type="text" id="new-class-name" placeholder="e.g. Mathematics"></label>
+    <label>Day of the Week:
+      <select id="new-class-day">
+        <option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option>
+        <option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="Sunday">Sunday</option>
+      </select>
+    </label>
+    <label>Start Time:<input type="time" id="new-class-time" required></label>
+    <div class="dialog-actions">
+      <button class="danger" onclick="document.getElementById('class-dialog').close()">Cancel</button>
+      <button class="primary" onclick="addClass()">Add Class</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="preset-dialog">
+  <div class="dialog-form">
+    <h3 id="preset-dialog-title">Add Activity</h3>
+    <input type="hidden" id="preset-id">
+    <label>Name:<input type="text" id="preset-name"></label>
+    <label>Duration (min):<input type="number" id="preset-duration"></label>
+    
+    <div>
+      <label style="font-size: 0.9rem;">Type Tags:</label>
+      <div id="preset-tags-container" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:5px;"></div>
+    </div>
+
+    <div>
+      <label style="font-size: 0.9rem;">Class Association:</label>
+      <div id="preset-class-assoc-container" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:5px;"></div>
+    </div>
+
+    <label>Details:<textarea id="preset-details" rows="3"></textarea></label>
+    
+    <div class="dialog-actions">
+      <button class="danger" onclick="document.getElementById('preset-dialog').close()">Cancel</button>
+      <button class="primary" onclick="savePreset()">Save</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="add-act-dialog">
+  <div class="dialog-form">
+    <h3>Add Activity to Plan</h3>
+    <input type="hidden" id="add-act-class-id"><input type="hidden" id="add-act-plan-id">
+    
+    <div style="display: flex; gap: 10px; background: #f0f4fa; padding: 10px; border-radius: 12px; flex-wrap: wrap; justify-content: center;">
+      <label style="font-weight:normal; cursor:pointer;"><input type="radio" name="actSource" value="new" checked onchange="toggleAddActMode()" style="width:auto;"> New</label>
+      <label style="font-weight:normal; cursor:pointer;"><input type="radio" name="actSource" value="preset" onchange="toggleAddActMode()" style="width:auto;"> List</label>
+      <label style="font-weight:normal; cursor:pointer;"><input type="radio" name="actSource" value="random" onchange="toggleAddActMode()" style="width:auto;"> Random</label>
+    </div>
+    
+    <div id="act-new-fields">
+      <label>Name:<input type="text" id="add-act-name" placeholder="Quick activity name"></label>
+      <label>Duration (min):<input type="number" id="add-act-duration" value="10"></label>
+    </div>
+    
+    <div id="act-preset-fields" style="display: none;">
+      <input type="text" id="add-act-search" placeholder="🔍 Search activities..." onkeyup="filterAddActPresets()" style="margin-bottom: 8px; padding: 8px;">
+      <select id="add-act-preset-select" size="5" style="width: 100%; height: 130px; border-radius: 8px; border: 1px solid #ccc; padding: 5px;"></select>
+    </div>
+
+    <div id="act-random-fields" style="display: none; text-align: center; padding: 10px;">
+      <p style="font-size: 0.9rem; color: #555;">A random activity will be drawn from your inventory (matching this class's tags).</p>
+      <div style="font-size: 2rem; margin-top: 10px;">🎲</div>
+    </div>
+    
+    <div class="dialog-actions">
+      <button class="danger" onclick="document.getElementById('add-act-dialog').close()">Cancel</button>
+      <button class="primary" onclick="saveNewActivity()">Add</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="edit-act-dialog">
+  <div class="dialog-form">
+    <h3>Edit Activity (In Plan)</h3>
+    <input type="hidden" id="edit-act-cid">
+    <input type="hidden" id="edit-act-pid">
+    <input type="hidden" id="edit-act-aid">
+    <label>Name:<input type="text" id="edit-act-name"></label>
+    <label>Duration (min):<input type="number" id="edit-act-duration"></label>
+    <label>Details:<textarea id="edit-act-details" rows="3"></textarea></label>
+    <div class="dialog-actions">
+      <button class="danger" onclick="document.getElementById('edit-act-dialog').close()">Cancel</button>
+      <button class="primary" onclick="saveEditActivity()">Save</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  // ==========================================
+  // FIREBASE & STATE
+  // ==========================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbGkc6D2CNYLib1j2VfZMj_Ac-iS0K4zk",
+    authDomain: "weeklyclassesapp.firebaseapp.com",
+    databaseURL: "https://weeklyclassesapp-default-rtdb.firebaseio.com", 
+    projectId: "weeklyclassesapp",
+    storageBucket: "weeklyclassesapp.firebasestorage.app"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const dbRef = firebase.database().ref('weekly_classes_data');
+
+  let state = {
+    classes: [],
+    presets: [],
+    locations: ['all', 'school', 'home'],
+    activityTags: ['Ice breaker', 'JW'], 
+    drawProfiles: [], 
+    currentLoc: 'all',
+    currentView: 'day'
+  };
+  
+  let currentProfileId = 'default';
+
+  function ensureDrawProfiles(data) {
+    if (!data.drawProfiles || data.drawProfiles.length === 0) {
+      data.drawProfiles = [{
+        id: 'default',
+        name: 'Default Setup',
+        autoDraw: (data.settings && data.settings.autoDraw) || false,
+        drawCount: (data.settings && data.settings.drawCount) || 3,
+        cooldown: (data.settings && data.settings.cooldown) || 14,
+        cooldownEnabled: true,
+        tagLimits: (data.settings && data.settings.tagLimits) || {}
+      }];
+    }
+    data.drawProfiles.forEach(p => {
+      if (typeof p.cooldownEnabled === 'undefined') p.cooldownEnabled = true;
+    });
+    return data;
+  }
+
+  function loadLocal() {
+    const saved = localStorage.getItem('weekly_classes_v7');
+    if (saved) {
+      state = ensureDrawProfiles({...state, ...JSON.parse(saved)});
+    } else {
+      const old = localStorage.getItem('weekly_classes_v6');
+      if (old) { state = ensureDrawProfiles({...state, ...JSON.parse(old)}); saveData(); }
+      else { state = ensureDrawProfiles(state); }
+    }
+    
+    currentProfileId = state.drawProfiles[0].id;
+    const todayStr = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()];
+    document.getElementById('daySelect').value = todayStr;
+    
+    renderNav(); 
+    setViewType(state.currentView || 'day'); 
+    renderSettings();
+  }
+
+  function saveData() {
+    localStorage.setItem('weekly_classes_v7', JSON.stringify(state));
+    dbRef.set({ classes: state.classes, presets: state.presets, locations: state.locations, activityTags: state.activityTags, drawProfiles: state.drawProfiles });
+  }
+
+  dbRef.on('value', (snapshot) => {
+    const cloud = snapshot.val();
+    if (cloud) {
+      state.classes = cloud.classes || [];
+      state.presets = cloud.presets || [];
+      state.locations = cloud.locations || ['all', 'school', 'home'];
+      state.activityTags = cloud.activityTags || ['Ice breaker', 'JW'];
+      
+      const migratedCloud = ensureDrawProfiles(cloud);
+      state.drawProfiles = migratedCloud.drawProfiles;
+      
+      renderNav(); renderApp(); renderSettings();
+    }
+  });
+
+  // ==========================================
+  // CONFIRMATION LOGIC
+  // ==========================================
+  let delTracker = {};
+  function requireClicks(id, totalClicks) {
+    if (totalClicks === 1) return confirm("Remove this item?");
+    let btn = window.event ? window.event.target.closest('button') : null; 
+    if (!delTracker[id]) delTracker[id] = { step: 1 };
+    let d = delTracker[id];
+    clearTimeout(d.timer);
+    
+    if (d.step === 1) { 
+      if (btn) { 
+        d.origHTML = btn.innerHTML; d.origBg = btn.style.background; 
+        if (totalClicks === 2) { btn.innerHTML = "Confirm!"; btn.style.background = "#dc2626"; btn.style.color = "white"; } 
+        else if (totalClicks === 3) { btn.innerHTML = "Sure?"; btn.style.background = "#fca5a5"; btn.style.color = "#7f1d1d"; }
+      }
+      d.step++; d.timer = setTimeout(() => resetDelete(id, btn), 3000); return false;
+    } else if (d.step === 2 && totalClicks === 3) { 
+      if (btn) { btn.innerHTML = "Confirm!"; btn.style.background = "#dc2626"; btn.style.color = "white"; }
+      d.step++; d.timer = setTimeout(() => resetDelete(id, btn), 3000); return false;
+    } else { resetDelete(id, btn); return true; }
+  }
+
+  function resetDelete(id, btn) {
+    if (btn && delTracker[id]) { btn.innerHTML = delTracker[id].origHTML || btn.innerHTML; btn.style.background = delTracker[id].origBg || ""; btn.style.color = ""; }
+    delete delTracker[id];
+  }
+
+  // ==========================================
+  // NAVIGATION
+  // ==========================================
+  function setLocation(loc) { 
+    state.currentLoc = loc; 
+    localStorage.setItem('weekly_classes_v7', JSON.stringify(state)); // Save state passively
+    renderNav(); 
+    renderApp(); 
+  }
+
+  function setViewType(t) {
+    state.currentView = t;
+    localStorage.setItem('weekly_classes_v7', JSON.stringify(state)); // Save state passively
+    
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById('btn-'+t);
+    if(btn) btn.classList.add('active');
+    
+    document.getElementById('main-view').style.display = (t==='presets'||t==='settings')?'none':'block';
+    document.getElementById('presets-view').style.display = (t==='presets')?'block':'none';
+    document.getElementById('settings-view').style.display = (t==='settings')?'block':'none';
+    
+    const cp = document.getElementById('classPicker'); if(cp) cp.style.display = (t==='class')?'flex':'none';
+    const dp = document.getElementById('dayPicker'); if(dp) dp.style.display = (t==='day')?'flex':'none';
+    
+    renderApp();
+  }
+
+  function renderNav() {
+    document.getElementById('loc-nav').innerHTML = state.locations.map(l => `
+      <button class="nav-btn ${state.currentLoc === l ? 'active' : ''}" onclick="setLocation('${l}')">${l.toUpperCase()}</button>
+    `).join('');
+  }
+  function scrollToHistory() {
+    if (state.currentView === 'presets' || state.currentView === 'settings') setViewType('list');
+    const hist = document.getElementById('history-details');
+    if (hist) { hist.open = true; hist.scrollIntoView({ behavior: 'smooth' }); }
+  }
+
+  // ==========================================
+  // SETTINGS
+  // ==========================================
+  function renderSettings() {
+    document.getElementById('loc-mgmt-list').innerHTML = state.locations.filter(l => l !== 'all').map(l => `
+      <div class="loc-item" data-loc="${l}" draggable="true" ondragstart="locDragStart(event, '${l}')" ondragover="locDragOver(event)" ondrop="locDrop(event, '${l}')"
+           style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; background:white; padding:8px; border-radius:8px; border:1px solid #eee; transition: opacity 0.2s;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="drag-handle" ontouchstart="locTouchStart(event, '${l}')">☰</span>
+          <span style="text-transform:capitalize; font-weight:bold;">${l}</span>
+        </div>
+        <button class="small danger" onclick="removeLocation('${l}')">Delete</button>
+      </div>
+    `).join('');
+    
+    document.getElementById('tag-mgmt-list').innerHTML = state.activityTags.map(t => `
+      <span class="tag-pill" style="font-size:0.8rem; padding:4px 10px; background:white;">${t} <span style="color:red; cursor:pointer; margin-left:5px;" onclick="deleteActivityTag('${t}')">✕</span></span>
+    `).join('');
+
+    const profSelect = document.getElementById('set-profile-select');
+    profSelect.innerHTML = state.drawProfiles.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    profSelect.value = currentProfileId;
+
+    const prof = state.drawProfiles.find(p => p.id === currentProfileId) || state.drawProfiles[0];
+    if(prof) {
+      document.getElementById('set-profile-name').value = prof.name;
+      document.getElementById('set-auto-draw').checked = prof.autoDraw;
+      document.getElementById('set-draw-count').value = prof.drawCount;
+      document.getElementById('set-cooldown-enabled').checked = prof.cooldownEnabled !== false;
+      document.getElementById('set-cooldown').value = prof.cooldown || 14;
+
+      document.getElementById('auto-draw-tag-limits').innerHTML = state.activityTags.map(tag => {
+        const safeId = tag.replace(/\s+/g, '-');
+        return `<div class="settings-row"><span>${tag} max:</span><input type="number" id="set-limit-${safeId}" value="${prof.tagLimits[tag] || ''}" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()"></div>`;
+      }).join('');
+
+      document.getElementById('profile-class-list').innerHTML = state.classes.length > 0 ? state.classes.map(c => {
+         const isAssigned = (c.drawProfileId === prof.id) || (!c.drawProfileId && prof.id === state.drawProfiles[0].id);
+         return `<label style="display:flex; align-items:center; gap:8px; font-size:0.95rem; font-weight:500; cursor:pointer;">
+                   <input type="checkbox" style="width:18px; height:18px; accent-color:#1e3c72;" ${isAssigned ? 'checked' : ''} onchange="toggleProfileClass('${c.id}', this.checked)"> ${c.name}
+                 </label>`;
+      }).join('') : '<span style="font-size:0.85rem; color:#666;">No classes added yet.</span>';
+    }
+  }
+
+  function switchProfile() { currentProfileId = document.getElementById('set-profile-select').value; renderSettings(); }
+
+  function createProfile() {
+    const newId = generateId();
+    state.drawProfiles.push({ id: newId, name: 'New Profile', autoDraw: false, drawCount: 3, cooldown: 14, cooldownEnabled: true, tagLimits: {} });
+    currentProfileId = newId; saveData(); renderSettings();
+  }
+
+  function deleteProfile() {
+    if (state.drawProfiles.length <= 1) return alert("You must have at least one profile.");
+    if (confirm("Delete this profile? Classes using it will revert to the default.")) {
+      state.drawProfiles = state.drawProfiles.filter(p => p.id !== currentProfileId);
+      state.classes.forEach(c => { if(c.drawProfileId === currentProfileId) c.drawProfileId = state.drawProfiles[0].id; });
+      currentProfileId = state.drawProfiles[0].id;
+      saveData(); renderSettings();
+    }
+  }
+
+  function updateProfile() {
+    const prof = state.drawProfiles.find(p => p.id === currentProfileId);
+    if(!prof) return;
+    prof.name = document.getElementById('set-profile-name').value || 'Unnamed Profile';
+    prof.autoDraw = document.getElementById('set-auto-draw').checked;
+    prof.drawCount = parseInt(document.getElementById('set-draw-count').value) || 3;
+    prof.cooldownEnabled = document.getElementById('set-cooldown-enabled').checked;
+    prof.cooldown = parseInt(document.getElementById('set-cooldown').value) || 14;
+    
+    state.activityTags.forEach(tag => {
+      const val = document.getElementById(`set-limit-${tag.replace(/\s+/g, '-')}`).value;
+      if (!prof.tagLimits) prof.tagLimits = {};
+      prof.tagLimits[tag] = val;
+    });
+    
+    const sel = document.getElementById('set-profile-select');
+    const opt = sel.querySelector(`option[value="${prof.id}"]`);
+    if(opt) opt.innerText = prof.name;
+    saveData();
+  }
+
+  function toggleProfileClass(classId, isChecked) {
+    const cls = state.classes.find(c => c.id === classId);
+    if (isChecked) { cls.drawProfileId = currentProfileId; } 
+    else { cls.drawProfileId = state.drawProfiles[0].id; }
+    saveData(); renderSettings(); 
+  }
+
+  function exportData() {
+    const dataStr = JSON.stringify(state, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    const dateStr = new Date().toISOString().split('T')[0];
+    a.download = `weekly_classes_backup_${dateStr}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const importedState = JSON.parse(e.target.result);
+        if (confirm("This will replace all your current classes, plans, and settings with the imported file. Are you sure you want to proceed?")) {
+          state = ensureDrawProfiles({
+            classes: importedState.classes || [], presets: importedState.presets || [], locations: importedState.locations || ['all', 'school', 'home'], activityTags: importedState.activityTags || ['Ice breaker', 'JW'], drawProfiles: importedState.drawProfiles || [], currentLoc: 'all', currentView: 'day'
+          });
+          currentProfileId = state.drawProfiles[0].id;
+          saveData(); renderNav(); renderSettings(); renderApp(); alert("Data imported successfully!");
+        }
+      } catch (err) { alert("Error: The selected file is not a valid JSON backup."); }
+      event.target.value = ''; 
+    };
+    reader.readAsText(file);
+  }
+
+  function quickAddLocation() {
+    const name = prompt("Enter new location name:");
+    if (name && name.trim()) {
+      const clean = name.trim().toLowerCase();
+      if (!state.locations.includes(clean)) { state.locations.push(clean); saveData(); renderNav(); renderSettings(); }
+    }
+  }
+  function removeLocation(loc) {
+    if(confirm(`Remove "${loc}"?`)) { state.locations = state.locations.filter(l => l !== loc); if(state.currentLoc === loc) state.currentLoc = 'all'; saveData(); renderNav(); renderSettings(); renderApp(); }
+  }
+
+  function addActivityTag() {
+    const input = document.getElementById('new-tag-name'); const val = input.value.trim();
+    if (val && !state.activityTags.includes(val)) { state.activityTags.push(val); saveData(); input.value = ''; renderSettings(); }
+  }
+  function deleteActivityTag(tag) {
+    if(confirm(`Delete tag "${tag}"?`)) { state.activityTags = state.activityTags.filter(t => t !== tag); state.drawProfiles.forEach(p => { if(p.tagLimits) delete p.tagLimits[tag]; }); saveData(); renderSettings(); }
+  }
+
+  // ==========================================
+  // DRAG & DROP REORDERING FOR LOCATIONS
+  // ==========================================
+  function reorderLocation(draggedLoc, targetLoc) {
+    const arr = state.locations.filter(l => l !== 'all');
+    const fromIdx = arr.indexOf(draggedLoc); const toIdx = arr.indexOf(targetLoc);
+    arr.splice(fromIdx, 1); arr.splice(toIdx, 0, draggedLoc);
+    state.locations = ['all', ...arr]; saveData(); renderSettings(); renderNav();
+  }
+  function locDragStart(e, loc) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', JSON.stringify({type: 'location', loc: loc})); setTimeout(() => e.target.style.opacity = '0.4', 0); }
+  function locDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+  function locDrop(e, targetLoc) {
+    e.preventDefault(); const targetEl = e.target.closest('.loc-item'); if(targetEl) targetEl.style.opacity = '1';
+    try { const data = JSON.parse(e.dataTransfer.getData('text/plain')); if (data.type === 'location' && data.loc !== targetLoc) reorderLocation(data.loc, targetLoc); } catch(err) {}
+  }
+  let locTouchData = null;
+  function locTouchStart(e, loc) {
+    const targetItem = e.target.closest('.loc-item'); if (!targetItem) return;
+    locTouchData = { loc, targetItem, clone: targetItem.cloneNode(true), offsetX: e.touches[0].clientX - targetItem.getBoundingClientRect().left, offsetY: e.touches[0].clientY - targetItem.getBoundingClientRect().top };
+    locTouchData.clone.style.position = 'fixed'; locTouchData.clone.style.width = targetItem.offsetWidth + 'px'; locTouchData.clone.style.zIndex = '9999'; locTouchData.clone.style.opacity = '0.9'; locTouchData.clone.style.pointerEvents = 'none'; locTouchData.clone.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+    document.body.appendChild(locTouchData.clone); targetItem.style.opacity = '0.3';
+    document.addEventListener('touchmove', locTouchMove, { passive: false }); document.addEventListener('touchend', locTouchEnd);
+  }
+  function locTouchMove(e) { if (!locTouchData) return; e.preventDefault(); const touch = e.touches[0]; locTouchData.clone.style.top = (touch.clientY - locTouchData.offsetY) + 'px'; locTouchData.clone.style.left = (touch.clientX - locTouchData.offsetX) + 'px'; }
+  function locTouchEnd(e) {
+    if (!locTouchData) return; const touch = e.changedTouches[0]; locTouchData.clone.remove(); locTouchData.targetItem.style.opacity = '1';
+    document.removeEventListener('touchmove', locTouchMove); document.removeEventListener('touchend', locTouchEnd);
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY); const dropItem = dropTarget ? dropTarget.closest('.loc-item') : null;
+    if (dropItem && dropItem !== locTouchData.targetItem) { const targetLoc = dropItem.getAttribute('data-loc'); if(targetLoc && targetLoc !== locTouchData.loc) reorderLocation(locTouchData.loc, targetLoc); }
+    locTouchData = null;
+  }
+
+  // ==========================================
+  // UTILS & AUTO-DRAW
+  // ==========================================
+  function generateId() { return Date.now().toString() + Math.random().toString(36).substr(2, 5); }
+  
+  function getNextPlanDate(cls) {
+    const dayMap = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    let baseDate = new Date(); baseDate.setHours(12, 0, 0, 0);
+    const safePlans = cls.plans || [];
+    if (safePlans.length > 0) {
+      const latest = safePlans.reduce((a, b) => a.date > b.date ? a : b).date;
+      baseDate = new Date(latest + "T12:00:00"); baseDate.setDate(baseDate.getDate() + 7);
+    } else {
+      let diff = (dayMap.indexOf(cls.day) - baseDate.getDay() + 7) % 7;
+      baseDate.setDate(baseDate.getDate() + diff);
+    }
+    return baseDate.toISOString().split('T')[0];
+  }
+
+  function runAutoDraw(cid, pid) {
+    const c = state.classes.find(x => x.id === cid);
+    const p = c.plans.find(x => x.id === pid);
+    const prof = state.drawProfiles.find(x => x.id === c.drawProfileId) || state.drawProfiles[0];
+    if (!prof || !prof.autoDraw) return;
+
+    let recent = new Set();
+    if (prof.cooldownEnabled !== false) {
+      const planDate = new Date(p.date + "T12:00:00");
+      const cutoff = new Date(planDate.getTime() - ((prof.cooldown || 14) * 24 * 60 * 60 * 1000));
+      c.plans.forEach(plan => {
+        const pd = new Date(plan.date + "T12:00:00");
+        if (pd >= cutoff && pd < planDate) {
+          (plan.activities || []).forEach(a => recent.add(a.text));
+        }
+      });
+    }
+
+    let pool = state.presets.filter(pr => {
+      if (pr.classAssoc) {
+        if (Array.isArray(pr.classAssoc) && !pr.classAssoc.includes('all') && !pr.classAssoc.includes(c.id)) return false;
+        if (typeof pr.classAssoc === 'string' && pr.classAssoc !== 'all' && pr.classAssoc !== c.id && pr.classAssoc !== c.name) return false;
+      }
+      if (prof.cooldownEnabled !== false && recent.has(pr.name)) return false;
+      return true;
+    }).sort(() => Math.random() - 0.5);
+
+    let selected = [];
+    let tagCounts = {};
+    
+    for (let pr of pool) {
+      if (selected.length >= prof.drawCount) break;
+      let canAdd = true;
+      
+      if (pr.tags && prof.tagLimits) {
+        for (let tag of pr.tags) {
+          let lim = parseInt(prof.tagLimits[tag]);
+          if (!isNaN(lim) && (tagCounts[tag] || 0) >= lim) {
+            canAdd = false; break;
+          }
+        }
+      }
+      
+      if (canAdd) {
+        selected.push(pr);
+        if (pr.tags) pr.tags.forEach(t => tagCounts[t] = (tagCounts[t] || 0) + 1);
+      }
+    }
+
+    selected.forEach(pr => p.activities.push({
+      id: generateId(), 
+      text: pr.name, 
+      duration: pr.duration, 
+      details: pr.details, 
+      isDone: false, 
+      tags: pr.tags || []
+    }));
+  }
+
+  // ==========================================
+  // CLASS & PLAN CRUD
+  // ==========================================
+  function openClassDialog() {
+    document.getElementById('new-class-type').innerHTML = state.locations.filter(l => l !== 'all').map(l => `<option value="${l}">${l.toUpperCase()}</option>`).join('');
+    document.getElementById('new-class-name').value = '';
+    document.getElementById('new-class-time').value = '';
+    document.getElementById('class-dialog').showModal();
+  }
+
+  function addClass() {
+    const type = document.getElementById('new-class-type').value; 
+    const name = document.getElementById('new-class-name').value.trim();
+    const day = document.getElementById('new-class-day').value;
+    const time = document.getElementById('new-class-time').value;
+    
+    if (!name) return alert("Please enter a class name.");
+    if (!time) return alert("Please select a start time.");
+
+    state.classes.push({ id: generateId(), type, name, day, time, plans: [], drawProfileId: state.drawProfiles[0].id });
+    saveData(); 
+    document.getElementById('class-dialog').close(); 
+    if(state.currentView === 'day') document.getElementById('daySelect').value = day;
+    renderApp();
+  }
+  
+  function deleteClass(classId) { if(!requireClicks('c_'+classId, 3)) return; state.classes = state.classes.filter(c => c.id !== classId); saveData(); renderApp(); }
+
+  function addPlan(cid) {
+    const cls = state.classes.find(c => c.id === cid); if (!cls.plans) cls.plans = [];
+    const newPlanId = generateId();
+    cls.plans.push({ id: newPlanId, date: getNextPlanDate(cls), activities: [], isArchived: false, notes: "" });
+    runAutoDraw(cid, newPlanId); saveData(); renderApp();
+  }
+  
+  function deletePlan(cid, pid) { if(!requireClicks('p_'+pid, 2)) return; const cls = state.classes.find(c => c.id === cid); cls.plans = (cls.plans || []).filter(p => p.id !== pid); saveData(); renderApp(); }
+  function archivePlan(cid, pid) { const p = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); if(p && confirm("Archive?")) { p.isArchived = true; saveData(); renderApp(); } }
+  function unarchivePlan(cid, pid) { const p = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); if(p && confirm("Unarchive?")) { p.isArchived = false; saveData(); renderApp(); } }
+
+  function copyPlan(cid, pid) {
+    const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid);
+    if (!plan.activities || plan.activities.length === 0) return alert("Plan is empty.");
+    localStorage.setItem('wc_clipboard', JSON.stringify(plan.activities)); alert(plan.activities.length + " activities copied!");
+  }
+  
+  function pastePlan(cid, pid) {
+    const clip = localStorage.getItem('wc_clipboard'); if (!clip) return alert("Clipboard is empty.");
+    const acts = JSON.parse(clip); const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid);
+    if (!plan.activities) plan.activities = [];
+    acts.forEach(a => plan.activities.push({ id: generateId(), text: a.text, duration: a.duration, details: a.details, isDone: false, tags: a.tags || [] }));
+    saveData(); renderApp();
+  }
+  
+  function toggleDetails(elementId) { const el = document.getElementById(elementId); if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
+  function savePlanNotes(cid, pid, val) { const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); if(plan) { plan.notes = val; saveData(); } }
+
+  // ==========================================
+  // ACTIVITIES (PRESETS)
+  // ==========================================
+  function openPresetDialog(presetId = null) {
+    document.getElementById('preset-id').value = presetId || "";
+    document.getElementById('preset-dialog-title').innerText = presetId ? "Edit Activity" : "Add Activity";
+    
+    document.getElementById('preset-tags-container').innerHTML = state.activityTags.map(tag => `<label style="font-size:0.85rem; font-weight:normal; display:flex; align-items:center; gap:3px;"><input type="checkbox" class="preset-tag-cb" value="${tag}"> ${tag}</label>`).join('');
+    
+    document.getElementById('preset-class-assoc-container').innerHTML = `<label style="font-size:0.85rem; font-weight:normal; display:flex; align-items:center; gap:3px;"><input type="checkbox" class="preset-class-cb" value="all"> All Classes</label>` + state.classes.map(c => `<label style="font-size:0.85rem; font-weight:normal; display:flex; align-items:center; gap:3px;"><input type="checkbox" class="preset-class-cb" value="${c.id}"> ${c.name}</label>`).join('');
+
+    if (presetId) {
+      const p = state.presets.find(x => x.id === presetId);
+      document.getElementById('preset-name').value = p.name || "";
+      document.getElementById('preset-duration').value = p.duration || "";
+      document.getElementById('preset-details').value = p.details || "";
+      
+      document.querySelectorAll('.preset-tag-cb').forEach(cb => cb.checked = (p.tags || []).includes(cb.value));
+      const assoc = p.classAssoc || ['all'];
+      document.querySelectorAll('.preset-class-cb').forEach(cb => cb.checked = assoc.includes(cb.value) || (assoc === 'all' && cb.value === 'all') || (typeof assoc === 'string' && assoc === cb.value));
+    } else {
+      document.getElementById('preset-name').value = "";
+      document.getElementById('preset-duration').value = "";
+      document.getElementById('preset-details').value = "";
+      document.querySelectorAll('.preset-class-cb').forEach(cb => cb.checked = cb.value === 'all');
+    }
+    document.getElementById('preset-dialog').showModal();
+  }
+
+  function savePreset() {
+    const id = document.getElementById('preset-id').value; 
+    const name = document.getElementById('preset-name').value.trim();
+    if (!name) return alert("Name required.");
+    
+    const tags = Array.from(document.querySelectorAll('.preset-tag-cb:checked')).map(cb => cb.value);
+    const classAssoc = Array.from(document.querySelectorAll('.preset-class-cb:checked')).map(cb => cb.value);
+
+    if (id) {
+      const p = state.presets.find(x => x.id === id); 
+      p.name = name; 
+      p.duration = parseInt(document.getElementById('preset-duration').value); 
+      p.details = document.getElementById('preset-details').value; 
+      p.tags = tags;
+      p.classAssoc = classAssoc;
+    } else {
+      state.presets.push({ 
+        id: generateId(), 
+        name, 
+        duration: parseInt(document.getElementById('preset-duration').value), 
+        details: document.getElementById('preset-details').value, 
+        tags,
+        classAssoc
+      });
+    }
+    saveData(); 
+    document.getElementById('preset-dialog').close(); 
+    if (state.currentView === 'presets') renderPresets();
+  }
+  
+  function deletePreset(id) { 
+    if(requireClicks('pr_'+id, 1)) { 
+      state.presets = state.presets.filter(p => p.id !== id); 
+      saveData(); 
+      if (state.currentView === 'presets') renderPresets(); 
+    } 
+  }
+
+  function toggleAddActMode() {
+    const mode = document.querySelector('input[name="actSource"]:checked').value;
+    document.getElementById('act-new-fields').style.display = mode === 'new' ? 'block' : 'none';
+    document.getElementById('act-preset-fields').style.display = mode === 'preset' ? 'block' : 'none';
+    document.getElementById('act-random-fields').style.display = mode === 'random' ? 'block' : 'none';
+  }
+
+  function filterAddActPresets() {
+    const term = document.getElementById('add-act-search').value.toLowerCase(); const sel = document.getElementById('add-act-preset-select');
+    if (state.presets.length === 0) { sel.innerHTML = `<option value="">-- No inventory --</option>`; return; }
+    const filtered = state.presets.filter(p => p.name.toLowerCase().includes(term));
+    sel.innerHTML = filtered.map(p => `<option value="${p.id}">${p.name} (${p.duration}m)</option>`).join('');
+  }
+
+  function openAddActDialog(cid, pid) {
+    document.getElementById('add-act-class-id').value = cid; document.getElementById('add-act-plan-id').value = pid;
+    document.getElementById('add-act-search').value = ''; filterAddActPresets();
+    document.querySelector('input[name="actSource"][value="new"]').checked = true; toggleAddActMode();
+    document.getElementById('add-act-dialog').showModal();
+  }
+
+  function saveNewActivity() {
+    const cid = document.getElementById('add-act-class-id').value; const pid = document.getElementById('add-act-plan-id').value;
+    const cls = state.classes.find(c => c.id === cid); const plan = cls.plans.find(p => p.id === pid);
+    if (!plan.activities) plan.activities = [];
+    const mode = document.querySelector('input[name="actSource"]:checked').value;
+    
+    if (mode === 'new') {
+      const name = document.getElementById('add-act-name').value.trim(); const dur = document.getElementById('add-act-duration').value;
+      if (!name) return alert("Activity name required.");
+      plan.activities.push({ id: generateId(), text: name, duration: dur || 10, isDone: false, tags: [] });
+    } else if (mode === 'preset') {
+      const pId = document.getElementById('add-act-preset-select').value; if (!pId) return alert("Select an activity from the list.");
+      const pr = state.presets.find(p => p.id === pId); if (pr) plan.activities.push({ id: generateId(), text: pr.name, duration: pr.duration, details: pr.details, isDone: false, tags: pr.tags || [] });
+    } else if (mode === 'random') {
+      let available = state.presets;
+      if (available.length === 0) return alert("Your inventory is empty!");
+      const pr = available[Math.floor(Math.random() * available.length)];
+      plan.activities.push({ id: generateId(), text: pr.name, duration: pr.duration, details: pr.details, isDone: false, tags: pr.tags || [] });
+    }
+    saveData(); document.getElementById('add-act-name').value = ''; document.getElementById('add-act-dialog').close(); renderApp();
+  }
+
+  function openEditActDialog(cid, pid, aid) {
+    const a = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid).activities.find(x => x.id === aid);
+    document.getElementById('edit-act-cid').value = cid; document.getElementById('edit-act-pid').value = pid; document.getElementById('edit-act-aid').value = aid;
+    document.getElementById('edit-act-name').value = a.text || ''; document.getElementById('edit-act-duration').value = a.duration || ''; document.getElementById('edit-act-details').value = a.details || '';
+    document.getElementById('edit-act-dialog').showModal();
+  }
+
+  function saveEditActivity() {
+    const cid = document.getElementById('edit-act-cid').value; const pid = document.getElementById('edit-act-pid').value; const aid = document.getElementById('edit-act-aid').value;
+    const a = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid).activities.find(x => x.id === aid);
+    a.text = document.getElementById('edit-act-name').value.trim(); a.duration = document.getElementById('edit-act-duration').value || 0; a.details = document.getElementById('edit-act-details').value;
+    saveData(); document.getElementById('edit-act-dialog').close(); renderApp();
+  }
+
+  // ==========================================
+  // RENDERING
+  // ==========================================
+  function renderApp() {
+    if (state.currentView === 'presets') { renderPresets(); return; }
+    if (state.currentView === 'settings') return;
+    let filtered = state.classes;
+    if (state.currentLoc !== 'all') filtered = filtered.filter(c => c.type === state.currentLoc);
+
+    if (state.currentView === 'class') {
+      const sel = document.getElementById('classSelect'); const cur = sel.value;
+      sel.innerHTML = filtered.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      if (cur && filtered.some(c=>c.id===cur)) sel.value = cur;
+      filtered = filtered.filter(c => c.id === sel.value);
+    } else if (state.currentView === 'day') { filtered = filtered.filter(c => c.day === document.getElementById('daySelect').value); }
+
+    const curCont = document.getElementById('current-classes'); const histCont = document.getElementById('history-content');
+    curCont.innerHTML = ''; histCont.innerHTML = '';
+
+    filtered.forEach(cls => {
+      const safePlans = cls.plans || [];
+      const active = safePlans.filter(p => !p.isArchived && new Date(p.date + "T00:00:00") >= new Date(new Date().setHours(0,0,0,0) - 3*3600000));
+      const history = safePlans.filter(p => !active.includes(p)).sort((a,b) => b.date.localeCompare(a.date));
+      curCont.innerHTML += generateClassHTML(cls, active, false);
+      if (history.length > 0) histCont.innerHTML += generateClassHTML(cls, history, true);
+    });
+  }
+
+  function renderPresets() {
+    const term = (document.getElementById('preset-search')?.value || '').toLowerCase();
+    const sortType = document.getElementById('preset-sort')?.value || 'newest';
+    
+    let filtered = state.presets.filter(p => p.name.toLowerCase().includes(term));
+    
+    if (sortType === 'name') {
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortType === 'tag') {
+      filtered.sort((a, b) => {
+        const tagA = (a.tags && a.tags.length > 0) ? a.tags[0].toLowerCase() : '\\uFFFF';
+        const tagB = (b.tags && b.tags.length > 0) ? b.tags[0].toLowerCase() : '\\uFFFF';
+        if (tagA === tagB) {
+          return a.name.localeCompare(b.name);
+        }
+        return tagA.localeCompare(tagB);
+      });
+    } else { 
+      filtered = [...filtered].reverse(); 
+    }
+    
+    document.getElementById('presets-container').innerHTML = filtered.map(p => `
+      <div class="class-card">
+        <div class="class-header">
+          <div class="class-title">${p.name} <span class="badge" style="background:#e2e8f0;">${p.duration}m</span></div>
+          <div>
+            <button class="small" onclick="openPresetDialog('${p.id}')">✎ Edit</button>
+            <button class="small danger" onclick="deletePreset('${p.id}')">✕</button>
+          </div>
+        </div>
+        <div style="margin-top:5px;">
+          ${(p.tags||[]).map(t => `<span class="tag-pill">${t}</span>`).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function generateClassHTML(cls, plans, isHist) {
+    if (isHist && plans.length === 0) return '';
+    let pHTML = plans.map(p => {
+      return `
+      <div class="plan-block">
+        <div class="plan-header">
+          <span style="font-weight:700;">📅 ${p.date} ${isHist ? '<span class="badge" style="background:#b9d1e9;">Archived</span>' : ''}</span>
+          <div class="plan-actions">
+            ${!isHist ? `<button class="small" onclick="archivePlan('${cls.id}','${p.id}')">📥 arch</button>` : `<button class="small" onclick="unarchivePlan('${cls.id}','${p.id}')">📤 unarch</button>`}
+            <button class="small" onclick="copyPlan('${cls.id}','${p.id}')">📄 copy</button>
+            <button class="small" onclick="pastePlan('${cls.id}','${p.id}')">📋 paste</button>
+            <button class="small" onclick="toggleDetails('notes-${p.id}')">📝 notes</button>
+            <button class="small danger" onclick="deletePlan('${cls.id}','${p.id}')">✖ del</button>
+            <button class="small primary" onclick="openAddActDialog('${cls.id}','${p.id}')">+ act</button>
+          </div>
+        </div>
+        <div id="p-${p.id}">
+          <div class="activity-list" style="margin-top:8px;">
+            ${(p.activities||[]).map(a => {
+              const presetMatch = state.presets.find(pr => pr.name === a.text);
+              const actualTags = (a.tags && a.tags.length > 0) ? a.tags : (presetMatch && presetMatch.tags ? presetMatch.tags : []);
+              const hasDetailsOrTags = a.details || actualTags.length > 0;
+              
+              return `
+              <div id="act-item-${a.id}" class="activity-item ${a.isDone ? 'is-done' : ''}" draggable="true" ondragstart="actDragStart(event, '${cls.id}', '${p.id}', '${a.id}')" ondragover="actDragOver(event)" ondrop="actDrop(event, '${cls.id}', '${p.id}', '${a.id}')">
+                <div class="activity-main">
+                  <span class="drag-handle" ontouchstart="actTouchStart(event, '${cls.id}', '${p.id}', '${a.id}')">☰</span>
+                  <input type="checkbox" ${a.isDone ? 'checked' : ''} onchange="toggleActivity('${cls.id}', '${p.id}', '${a.id}')">
+                  <span class="activity-text">${a.text}</span>
+                  <span class="minutes-badge">${a.duration}m</span>
+                  ${hasDetailsOrTags ? `<button class="small" onclick="toggleDetails('det-${a.id}')">⌄</button>` : ''}
+                  <button class="small" onclick="openEditActDialog('${cls.id}', '${p.id}', '${a.id}')">✎</button>
+                  <button class="small danger" onclick="deleteActivity('${cls.id}', '${p.id}', '${a.id}')">✕</button>
+                </div>
+                ${hasDetailsOrTags ? `
+                <div id="det-${a.id}" class="activity-details">
+                  ${actualTags.length > 0 ? `<div style="margin-bottom: 6px;">${actualTags.map(t => `<span class="tag-pill">${t}</span>`).join('')}</div>` : ''}
+                  ${a.details ? `<div>${a.details}</div>` : ''}
+                </div>` : ''}
+              </div>
+            `}).join('')}
+          </div>
+          <div id="notes-${p.id}" class="plan-notes-container" style="display:none;">
+            <textarea class="plan-notes-textarea" rows="2" placeholder="Notes..." onchange="savePlanNotes('${cls.id}','${p.id}',this.value)">${p.notes || ''}</textarea>
+          </div>
+        </div>
+      </div>
+    `}).join('');
+
+    return `
+      <div class="class-card">
+        <div class="class-header"><div class="class-title"><span>${cls.name}</span><span class="badge">${cls.type}</span></div>${!isHist?`<button class="small warning" onclick="deleteClass('${cls.id}')">🗑</button>`:''}</div>
+        <div class="meta">${cls.day} · ${cls.time}</div>
+        <div>${pHTML}</div>
+        ${!isHist ? `<button class="small primary" style="width:100%; margin-top:0.5rem;" onclick="addPlan('${cls.id}')">➕ add plan</button>` : ''}
+      </div>
+    `;
+  }
+  
+  function toggleActivity(cid, pid, aid) {
+    const a = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid).activities.find(x => x.id === aid);
+    a.isDone = !a.isDone; saveData(); renderApp();
+  }
+  function deleteActivity(cid, pid, aid) { 
+    if(!requireClicks('a_'+aid, 1)) return; 
+    const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); 
+    plan.activities = plan.activities.filter(a => a.id !== aid); saveData(); renderApp(); 
+  }
+
+  // --- DRAG AND DROP (ACTIVITIES) ---
+  function reorderActivity(cid, pid, dId, tId) {
+    const plan = state.classes.find(c=>c.id===cid).plans.find(p=>p.id===pid);
+    const o = plan.activities.findIndex(a=>a.id===dId); const n = plan.activities.findIndex(a=>a.id===tId);
+    const [rem] = plan.activities.splice(o, 1); plan.activities.splice(n, 0, rem); saveData(); renderApp();
+  }
+
+  function actDragStart(e, cid, pid, aid) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', JSON.stringify({cid, pid, aid, type:'activity'})); setTimeout(() => e.target.style.opacity = '0.4', 0); }
+  function actDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+  function actDrop(e, tCid, tPid, tAid) {
+    e.preventDefault(); e.target.closest('.activity-item').style.opacity = '1';
+    try { const data = JSON.parse(e.dataTransfer.getData('text/plain')); if (data.type === 'activity' && data.cid === tCid && data.pid === tPid && data.aid !== tAid) reorderActivity(data.cid, data.pid, data.aid, tAid); } catch(err) {}
+  }
+
+  let actTouchData = null;
+  function actTouchStart(e, cid, pid, aid) {
+    const targetItem = e.target.closest('.activity-item'); if (!targetItem) return;
+    actTouchData = { cid, pid, aid, targetItem, clone: targetItem.cloneNode(true), offsetX: e.touches[0].clientX - targetItem.getBoundingClientRect().left, offsetY: e.touches[0].clientY - targetItem.getBoundingClientRect().top };
+    actTouchData.clone.style.position = 'fixed'; actTouchData.clone.style.width = targetItem.offsetWidth + 'px'; actTouchData.clone.style.zIndex = '9999'; actTouchData.clone.style.opacity = '0.9'; actTouchData.clone.style.pointerEvents = 'none'; actTouchData.clone.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+    document.body.appendChild(actTouchData.clone); targetItem.style.opacity = '0.3';
+    document.addEventListener('touchmove', actTouchMove, { passive: false }); document.addEventListener('touchend', actTouchEnd);
+  }
+  function actTouchMove(e) { if (!actTouchData) return; e.preventDefault(); const touch = e.touches[0]; actTouchData.clone.style.top = (touch.clientY - actTouchData.offsetY) + 'px'; actTouchData.clone.style.left = (touch.clientX - actTouchData.offsetX) + 'px'; }
+  function actTouchEnd(e) {
+    if (!actTouchData) return; const touch = e.changedTouches[0]; actTouchData.clone.remove(); actTouchData.targetItem.style.opacity = '1';
+    document.removeEventListener('touchmove', actTouchMove); document.removeEventListener('touchend', actTouchEnd);
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY); const dropItem = dropTarget ? dropTarget.closest('.activity-item') : null;
+    if (dropItem && dropItem !== actTouchData.targetItem) {
+        const dropHtml = dropItem.outerHTML; 
+        const matchAct = dropHtml.match(/data-act-id="([^"]+)"/) || dropItem.innerHTML.match(/toggleActivity\('[^']+',\s*'[^']+',\s*'([^']+)'\)/);
+        const matchPlan = dropHtml.match(/data-plan-id="([^"]+)"/) || dropItem.innerHTML.match(/toggleActivity\('[^']+',\s*'([^']+)',/);
+        const matchClass = dropHtml.match(/data-class-id="([^"]+)"/) || dropItem.innerHTML.match(/toggleActivity\('([^']+)',/);
+        if(matchAct && matchPlan && matchClass) {
+           const tAid = matchAct[1]; const tPid = matchPlan[1]; const tCid = matchClass[1];
+           if (tPid === actTouchData.pid && tCid === actTouchData.cid) reorderActivity(actTouchData.cid, actTouchData.pid, actTouchData.aid, tAid);
+        }
+    }
+    actTouchData = null;
+  }
+
+  window.onload = loadLocal;
+</script>
+</body>
+</html>
