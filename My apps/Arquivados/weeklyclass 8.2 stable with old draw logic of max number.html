@@ -186,7 +186,7 @@
       
       <details class="info-note" style="background: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1; padding: 10px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 12px;">
         <summary style="font-weight: bold; cursor: pointer; outline: none;">ℹ️ How Auto-Draw Works</summary>
-        <p style="margin-top: 8px;">The engine will attempt to pull the <b>exact number</b> of activities you specify for each tag, as well as for activities with "No Tag". If your inventory doesn't have enough matching activities available (or if they are on cooldown), the draw will stop and provide fewer activities than requested.</p>
+        <p style="margin-top: 8px;">The system prioritizes <b>Max limits per tag</b> over the <b>Acts per draw</b> setting. If your tag limits are reached and there are no untagged activities left in the bank, the draw will stop and provide fewer activities than requested. Untagged activities bypass limits and act as unrestricted fillers.</p>
       </details>
       
       <div class="settings-row">
@@ -205,6 +205,10 @@
           <span>Enable Auto-Draw:</span>
           <input type="checkbox" id="set-auto-draw" style="width:20px; height:20px;" onchange="updateProfile()">
         </div>
+        <div class="settings-row">
+          <span>Acts per draw:</span>
+          <input type="number" id="set-draw-count" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()">
+        </div>
         
         <div class="settings-row">
           <span>Avoid repeats:</span>
@@ -220,7 +224,7 @@
           </select>
         </div>
         
-        <h4 style="margin: 15px 0 5px 0; font-size:0.9rem; color:#555;">Exact number to draw (leave blank for 0)</h4>
+        <h4 style="margin: 15px 0 5px 0; font-size:0.9rem; color:#555;">Max limits per tag (leave blank for unlimited)</h4>
         <div id="auto-draw-tag-limits"></div>
       </div>
 
@@ -365,15 +369,14 @@
         id: 'default',
         name: 'Default Setup',
         autoDraw: (data.settings && data.settings.autoDraw) || false,
+        drawCount: (data.settings && data.settings.drawCount) || 3,
         cooldown: (data.settings && data.settings.cooldown) || 14,
         cooldownEnabled: true,
-        tagLimits: (data.settings && data.settings.tagLimits) || {},
-        untaggedCount: ''
+        tagLimits: (data.settings && data.settings.tagLimits) || {}
       }];
     }
     data.drawProfiles.forEach(p => {
       if (typeof p.cooldownEnabled === 'undefined') p.cooldownEnabled = true;
-      if (typeof p.untaggedCount === 'undefined') p.untaggedCount = '';
     });
     return data;
   }
@@ -512,13 +515,14 @@
     if(prof) {
       document.getElementById('set-profile-name').value = prof.name;
       document.getElementById('set-auto-draw').checked = prof.autoDraw;
+      document.getElementById('set-draw-count').value = prof.drawCount;
       document.getElementById('set-cooldown-enabled').checked = prof.cooldownEnabled !== false;
       document.getElementById('set-cooldown').value = prof.cooldown || 14;
 
       document.getElementById('auto-draw-tag-limits').innerHTML = state.activityTags.map(tag => {
         const safeId = tag.replace(/\s+/g, '-');
-        return `<div class="settings-row"><span>${tag}:</span><input type="number" id="set-limit-${safeId}" value="${prof.tagLimits[tag] || ''}" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()"></div>`;
-      }).join('') + `<div class="settings-row"><span>No Tag:</span><input type="number" id="set-limit-notag" value="${prof.untaggedCount || ''}" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()"></div>`;
+        return `<div class="settings-row"><span>${tag} max:</span><input type="number" id="set-limit-${safeId}" value="${prof.tagLimits[tag] || ''}" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()"></div>`;
+      }).join('');
 
       document.getElementById('profile-class-list').innerHTML = state.classes.length > 0 ? state.classes.map(c => {
          const isAssigned = (c.drawProfileId === prof.id) || (!c.drawProfileId && prof.id === state.drawProfiles[0].id);
@@ -533,7 +537,7 @@
 
   function createProfile() {
     const newId = generateId();
-    state.drawProfiles.push({ id: newId, name: 'New Profile', autoDraw: false, cooldown: 14, cooldownEnabled: true, tagLimits: {}, untaggedCount: '' });
+    state.drawProfiles.push({ id: newId, name: 'New Profile', autoDraw: false, drawCount: 3, cooldown: 14, cooldownEnabled: true, tagLimits: {} });
     currentProfileId = newId; saveData(); renderSettings();
   }
 
@@ -552,17 +556,15 @@
     if(!prof) return;
     prof.name = document.getElementById('set-profile-name').value || 'Unnamed Profile';
     prof.autoDraw = document.getElementById('set-auto-draw').checked;
+    prof.drawCount = parseInt(document.getElementById('set-draw-count').value) || 3;
     prof.cooldownEnabled = document.getElementById('set-cooldown-enabled').checked;
     prof.cooldown = parseInt(document.getElementById('set-cooldown').value) || 14;
     
-    if (!prof.tagLimits) prof.tagLimits = {};
     state.activityTags.forEach(tag => {
-      const el = document.getElementById(`set-limit-${tag.replace(/\s+/g, '-')}`);
-      if(el) prof.tagLimits[tag] = el.value;
+      const val = document.getElementById(`set-limit-${tag.replace(/\s+/g, '-')}`).value;
+      if (!prof.tagLimits) prof.tagLimits = {};
+      prof.tagLimits[tag] = val;
     });
-    
-    const noTagEl = document.getElementById('set-limit-notag');
-    if(noTagEl) prof.untaggedCount = noTagEl.value;
     
     const sel = document.getElementById('set-profile-select');
     const opt = sel.querySelector(`option[value="${prof.id}"]`);
@@ -718,52 +720,25 @@
     }).sort(() => Math.random() - 0.5);
 
     let selected = [];
+    let tagCounts = {};
     
-    // Draw exact count for each defined tag
-    if (prof.tagLimits) {
-      for (let tag of state.activityTags) {
-        let count = parseInt(prof.tagLimits[tag]);
-        if (!isNaN(count) && count > 0) {
-          let found = 0;
-          for (let i = 0; i < pool.length && found < count; i++) {
-            if (pool[i].tags && pool[i].tags.includes(tag)) {
-              selected.push(pool[i]);
-              pool.splice(i, 1);
-              i--;
-              found++;
-            }
+    for (let pr of pool) {
+      if (selected.length >= prof.drawCount) break;
+      let canAdd = true;
+      
+      if (pr.tags && prof.tagLimits) {
+        for (let tag of pr.tags) {
+          let lim = parseInt(prof.tagLimits[tag]);
+          if (!isNaN(lim) && (tagCounts[tag] || 0) >= lim) {
+            canAdd = false; break;
           }
         }
       }
-    }
-
-    // Draw exact count for "No Tag"
-    let untaggedCount = parseInt(prof.untaggedCount);
-    if (!isNaN(untaggedCount) && untaggedCount > 0) {
-      let found = 0;
-      for (let i = 0; i < pool.length && found < untaggedCount; i++) {
-        if (!pool[i].tags || pool[i].tags.length === 0) {
-          selected.push(pool[i]);
-          pool.splice(i, 1);
-          i--;
-          found++;
-        }
+      
+      if (canAdd) {
+        selected.push(pr);
+        if (pr.tags) pr.tags.forEach(t => tagCounts[t] = (tagCounts[t] || 0) + 1);
       }
-    }
-    
-    // Fallback for older profiles that might still have drawCount but no explicit tag limits
-    let hasAnyLimit = false;
-    if (prof.tagLimits) {
-       for (let k in prof.tagLimits) {
-          if (parseInt(prof.tagLimits[k]) > 0) hasAnyLimit = true;
-       }
-    }
-    if (untaggedCount > 0) hasAnyLimit = true;
-    
-    if (!hasAnyLimit && prof.drawCount) {
-       for(let i=0; i < prof.drawCount && pool.length > 0; i++){
-          selected.push(pool.shift());
-       }
     }
 
     selected.forEach(pr => p.activities.push({
