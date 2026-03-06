@@ -1,0 +1,217 @@
+Behaviorapp
+
+Crie um app qeu sirva como ferramenta para incentivar os comportamentos apropriado e desencorajar os comportamentos inapropriados em sala de aula.
+
+O nome do aplicativo é Behavior app
+A interface deve apresentar um botão que me permita inserir e exluir as instituições onde trabalho.
+Para excluir a instituição, deve haver uma confirmação de 3 etapas. 
+Antes de excluir uma instituição, deve haver um prompt que sugira criar um backup json antes de excluir.
+Se o usuário optar por "sim" o arquivo deve ser criado.
+Dentro de cada instituição, deve ser possível inserir e excluir diferentes turmas.
+Para excluir, deve ser necessário confirmação de duas etapas
+Para inserir a turma, deve ser necessário associá-la a um ou mais dias da semana.
+Cada turma deve conter um botão que leve a uma seção onde é possível inserir os nomes dos estudantes.
+Os nomes dos estudantes devem ser importáveis no formato "nomes em coluna" como se houvessem sido copiados do excel.
+Dentro de cada turma, deve haver um botão nomeado "Criar aula".
+Ao clicar no botão "criar aula" o app deve criar uma aula com a data baseada no dia ou nos dias da semana informados.
+A seção da aulas deve atuar como uma janela individual que contém:
+O nome da turma e a data da aula, uma coluna contendo os nomes dos estudantes cadastrados naquela turma, uma coluna contendo os campos vazios para registros de comportamento.
+Ao clicar em um dos campos, o app deve exibir duas opções: um "happy smile" e um "sad smile"
+Ao clicar em happy smile, o app deve exibir a lista de comportamentos apropriados e permitir seleção.
+Ao clicar em sad smile, o app deve exibir a lista de comportamentos inapropriados e permitir seleção.
+Após a seleção, a descrição do comportamento deve ser adicionada em um campo em uma tercira coluna próxima à dos smiles.
+Esse campo deve conter um botão expansível para exibir todos os comportamentos atribuídos ao estudante naquela aula
+O app deve conter uma quarta e uma quinta coluna que registrem os números de comportamentoss inapropriados e apropriados  respectivamente, apresentados naquela aula.
+Quando um mesmo o número de comportamentos inapropriados de um estudante chegar ao limite, o app deve apresentar um prompt que instrua o usuário a se dirigir na altura do estudante, fazer contato visual, informar as regras que foram infrigidas e a consequência
+Ao selecionar selecionar "happy smile" o coportamento apropriado, o app deve apresentar um prompt instruíndo o usuário a elogiar o comportamento apropriado daiante da turma.
+praise
+Ao selecionar o comportamento da lista de comportamentos apropriados, o campo
+
+O app deve ter uma seção onde seja possível adicionar comportamentos apropriados e comportamentos inapropriados.
+Deve haver um campo onde seja possível informar o numero total de vezes de comportamentos inapropriados para que haja uma consequência.
+O app deve oferecer 3, por padrão.
+Deve haver um campo para informar a consequência.
+O app deve oferecer, "perder o direito de ficar na sala por 5 minutos", por padrão.
+O app deve ter integração com o firebase para acesso em fierentes dispositivos.
+O app deve possuir uma opção de exportar todos os comportamentos de um estudante.
+Deve possuir opção de exportar arquivo json de backup.
+
+==================================================
+
+BehaviorApp
+
+Create an app that serves as a tool to encourage appropriate behaviors and discourage inappropriate behaviors in the classroom.
+
+The app's name is BehaviorApp.
+It should be mobile friendly and PWA ready
+The interface must feature a button that allows me to add and remove the institutions where I work.
+To delete an institution, there must be a 3-step confirmation.
+Before deleting an institution, there should be a prompt suggesting to create a JSON backup before deletion.
+If the user chooses "yes," the file should be created.
+Within each institution, it must be possible to add and remove different classes (Meaning, group of students).
+For deletion, a two-step confirmation is required.
+When adding a class, it must be associated with one or more days of the week.
+Each class must contain a button that leads to a section where student names can be added.
+Student names should be importable in a "column format," as if they had been copied from Excel.
+Within each class, there must be a button named "Create Lesson."
+When clicking the "Create Lesson" button, the app should create a class day with a date based on the specified day(s) of the week.
+The lesson section should act as an individual window containing:
+The class name and the class day date, a column with the names of the students registered in that class, and a column with empty fields for behavior records.
+When clicking on one of the fields, the app should display two options: a "happy smile" and a "sad smile."
+When clicking on the happy smile, the app should display the list of appropriate behaviors and allow selection.
+When clicking on the sad smile, the app should display the list of inappropriate behaviors and allow selection.
+After selection, the description of the behavior should be added to a field in a third column next to the smiles column.
+This field should contain an expandable button to display all behaviors assigned to that student during that lesson.
+The app must contain a fourth and a fifth column that record the numbers of inappropriate and appropriate behaviors, respectively, presented in that lesson.
+When a student's number of inappropriate behaviors reaches the limit, the app must display a prompt instructing the user to go to the student's level, make eye contact, state the rules that were broken, and the consequence.
+When selecting "happy smile" (the appropriate behavior), the app must display a prompt instructing the user to praise the appropriate behavior in front of the class.
+
+The app must have a section where it is possible to add appropriate behaviors and inappropriate behaviors.
+There must be a field where you can enter the total number of times for inappropriate behaviors that will trigger a consequence.
+The app should offer 3 by default.
+There must be a field to enter the consequence.
+The app should offer "lose the right to stay in the room for 5 minutes" by default.
+The app must have integration with Firebase for access on different devices.
+The app must have an option to export all behaviors of a student.
+It must have an option to export a JSON backup file.
+
+===============================================================
+===============================================================
+
+Suggested prompt
+
+You are an expert front-end developer. Create a complete, production-ready web application called BehaviorApp in a single HTML file (including inline CSS and JavaScript). The app must run entirely in the browser, use Firebase Firestore for data persistence, and be built with vanilla JavaScript (no frameworks like React, Vue, or Angular). Use the Firebase SDK via CDN.
+
+The app should be a tool for teachers to encourage appropriate behaviors and discourage inappropriate behaviors in the classroom. Below are the detailed functional and UI requirements.
+
+Core Features
+1. Institution Management
+On the main screen, display a list of institutions where the user works.
+
+Provide a button "Add Institution" that prompts for the institution name and adds it to the list (and Firebase).
+
+Next to each institution, include an "Edit" and "Delete" button.
+
+Delete institution must be a 3‑step confirmation:
+
+Click Delete → show a popup/modal: "Are you sure you want to delete this institution? This action cannot be undone."
+After confirming, show a second prompt: "Type the institution name to confirm deletion."
+After correct name entry, show a third prompt: "Do you want to create a JSON backup before deleting? (Yes/No)"
+If user selects "Yes", generate a JSON file containing all data of that institution (classes, students, behaviors) and trigger a download, then delete the institution from Firebase.
+If "No", delete immediately.
+2. Class Management (inside each institution)
+After selecting an institution, show a list of classes belonging to it.
+
+Button "Add Class" – opens a form/modal to input:
+
+Class name
+
+Days of the week (checkboxes: Monday, Tuesday, etc.) – at least one day must be selected.
+
+Each class in the list has Edit and Delete buttons.
+
+Delete class requires a 2‑step confirmation:
+
+"Are you sure you want to delete this class?"
+"Type the class name to confirm."
+3. Student Management (inside each class)
+Inside a class view, show the list of students.
+
+Button "Add Students" that allows:
+
+Manual entry (input field + "Add").
+
+Import from column format: a textarea where the user can paste a list of names (one per line, as copied from Excel). The app parses the lines and adds each as a student.
+
+Each student can be deleted individually with a simple confirmation prompt.
+
+4. Class day Creation
+In the class view, a button "Create Class day".
+
+When clicked, the app creates a new Class day with the current date, but only if the current day matches one of the days associated with the class. If it does not match, show an error message.
+
+The Class day should be stored in Firebase and displayed in a list of lessons for that class.
+
+5. Lesson View (Behavior Tracking)
+Clicking on a lesson opens a table/grid view with:
+
+Column 1: Student names (from the class).
+
+Column 2: Empty clickable cells (one per student) that open a popup with two smiley icons: 😊 (happy smile) and 😞 (sad smile).
+
+Clicking 😊 opens a list of appropriate behaviors (predefined – see section 6). Selecting one adds the behavior description to Column 3 for that student.
+
+Clicking 😞 opens a list of inappropriate behaviors. Selecting one adds the description to Column 3.
+
+Column 3: Displays the selected behavior(s) for the student. If multiple behaviors have been recorded, show a "+" button that expands to show all (e.g., a small popup or an inline list).
+
+Column 4: A counter of inappropriate behaviors for that student in this lesson.
+
+Column 5: A counter of appropriate behaviors for that student in this lesson.
+
+The counters must update in real time as behaviors are added.
+
+6. Behavior Lists Management
+Provide a separate section (e.g., a settings tab) where the user can:
+
+Add/Edit/Delete appropriate behaviors (e.g., "Helped a peer", "Raised hand").
+
+Add/Edit/Delete inappropriate behaviors (e.g., "Disruptive", "Out of seat").
+
+These lists should be stored per institution (or globally per app – decide: store under the institution for simplicity).
+
+7. Behavior Limits and Consequences
+In the settings section, provide fields to configure:
+
+Limit of inappropriate behaviors (default = 3) – the number of inappropriate behaviors that triggers a consequence.
+
+Consequence (default = "Lose the right to stay in the room for 5 minutes").
+
+During a lesson, when a student's inappropriate behavior count reaches the limit, immediately display a prompt (or a modal) instructing the teacher:
+
+"Go to the student's level, make eye contact, state the rules that were broken, and explain the consequence: [consequence]."
+
+When the teacher clicks 😊 (appropriate behavior), display a prompt:
+
+"Praise the appropriate behavior in front of the class."
+
+8. Firebase Integration
+Use Firebase Firestore to store all data (institutions, classes, students, lessons, behaviors, settings).
+
+Include a placeholder firebaseConfig object in the JavaScript. Add comments on how to replace it with the user's own Firebase project credentials.
+
+Ensure real‑time updates: when data changes on one device, it should reflect in the app (optional but nice).
+
+9. Export Options
+From the student list or from a student’s detail view, provide an "Export Student Data" button that generates a JSON file containing all behavior records for that student.
+
+Also provide a "Export Backup" button (maybe in settings) that exports all data (institutions, classes, students, behaviors) as a JSON file – this is the backup option used in the 3‑step deletion.
+
+UI/UX Requirements
+Use a clean, intuitive layout (responsive, mobile‑friendly).
+
+Use CSS Grid or Flexbox for the lesson table.
+
+All modals/prompts can be done with window.confirm, window.prompt, or custom modal divs – whichever is simpler, but custom modals are preferred for a polished feel.
+
+Use icons (like Font Awesome or simple emojis) for smiles and buttons.
+
+Ensure the app is a single HTML file – include all CSS and JavaScript inline within <style> and <script> tags.
+
+Technical Constraints
+No external libraries except Firebase SDK and possibly Font Awesome (via CDN).
+
+Must work in modern browsers (Chrome, Firefox, Safari).
+
+Use localStorage or session management only if needed for temporary UI state; primary persistence is Firebase.
+
+Deliverable
+Provide the complete HTML code for the app. Include comments to explain the structure and any placeholder for Firebase configuration. The code should be ready to run – just save as an .html file and open in a browser after setting up Firebase.
+
+Make sure to implement all the described features; if any requirement is ambiguous, use your best judgment to create a functional and user‑friendly solution.
+
+Now, generate the HTML file.
+
+============================================================
+
+

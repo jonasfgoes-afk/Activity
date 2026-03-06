@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>BehaviorApp · final with auto‑next & correct prompts</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* === STYLES (unchanged, keep as before) === */
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #eef2f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 1rem;
+        }
+        #app {
+            max-width: 1300px;
+            width: 100%;
+            background: white;
+            border-radius: 2rem 2rem 1.5rem 1.5rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        header {
+            background: #1e2b37;
+            color: white;
+            padding: 1.2rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        header h1 {
+            font-weight: 500;
+            font-size: 1.9rem;
+            letter-spacing: -0.5px;
+        }
+        header h1 i {
+            margin-right: 10px;
+            color: #f1c40f;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 0.8rem;
+        }
+        .nav-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 0.5rem 1.4rem;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        .nav-btn.active {
+            background: white;
+            color: #1e2b37;
+            font-weight: 600;
+        }
+        main {
+            padding: 2rem;
+            background: #ffffff;
+        }
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            color: #1e2b37;
+        }
+        .btn {
+            background: #f0f3f7;
+            border: none;
+            padding: 0.6rem 1.4rem;
+            border-radius: 40px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            transition: 0.15s;
+            border: 1px solid transparent;
+        }
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        .btn-sm {
+            padding: 0.3rem 1rem;
+            font-size: 0.85rem;
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .card {
+            background: #f9fafc;
+            border-radius: 24px;
+            padding: 1.3rem 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            border: 1px solid #e2e8f0;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        .card-actions {
+            display: flex;
+            gap: 0.4rem;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            color: #5f6b7a;
+            padding: 0.2rem 0.4rem;
+            border-radius: 30px;
+        }
+        .icon-btn:hover {
+            background: #e2e6ea;
+            color: #2c3e50;
+        }
+        .student-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid #eaeef2;
+        }
+        .student-name {
+            font-weight: 500;
+        }
+        .lesson-table {
+            display: grid;
+            grid-template-columns: 1.5fr 0.8fr 2fr 0.7fr 0.7fr 0.5fr;
+            background: #f2f5f9;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 1.5rem;
+            border: 1px solid #d0dbe8;
+        }
+        .table-header {
+            background: #2c3e50;
+            color: white;
+            padding: 0.9rem 0.5rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .table-cell {
+            padding: 0.8rem 0.3rem;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-break: break-word;
+        }
+        .student-name-cell {
+            justify-content: flex-start;
+            padding-left: 1rem;
+            font-weight: 500;
+        }
+        .clickable-smile {
+            font-size: 2rem;
+            cursor: pointer;
+            transition: 0.1s;
+            padding: 0 5px;
+        }
+        .clickable-smile:hover {
+            transform: scale(1.2);
+        }
+        .behavior-badge {
+            background: #dee5ed;
+            border-radius: 40px;
+            padding: 0.2rem 0.8rem;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .counter-badge {
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            max-width: 480px;
+            width: 90%;
+            border-radius: 32px;
+            padding: 2rem;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+        }
+        .modal-content h3 {
+            margin-bottom: 1.2rem;
+            color: #1e2b37;
+        }
+        .modal-content input, .modal-content textarea, .modal-content select {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            border: 1px solid #cfd9e6;
+            border-radius: 50px;
+            font-size: 1rem;
+            margin: 0.6rem 0;
+        }
+        .modal-content textarea {
+            border-radius: 24px;
+            resize: vertical;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem 1.8rem;
+            margin: 1rem 0;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.8rem;
+            margin-top: 2rem;
+        }
+        hr {
+            margin: 1.5rem 0;
+            border: 1px solid #edf2f7;
+        }
+        .hidden { display: none; }
+        .flex { display: flex; gap: 0.5rem; align-items: center; }
+        .mt-2 { margin-top: 0.8rem; }
+        .warning { color: #c0392b; font-weight: 500; }
+        .settings-group {
+            background: #f8fafd;
+            padding: 1.5rem;
+            border-radius: 28px;
+            margin-bottom: 1.5rem;
+        }
+        .behavior-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin: 1rem 0;
+        }
+        .behavior-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 40px;
+            border: 1px solid #dce3ec;
+        }
+        .lesson-header {
+            background: #e6edf5;
+            padding: 1rem 1.5rem;
+            border-radius: 40px;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .undo-btn {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: #e67e22;
+            padding: 0 5px;
+        }
+        .undo-btn:hover {
+            color: #d35400;
+        }
+        .archive-section {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 2px dashed #b0c4de;
+        }
+        .archive-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+        @media (max-width: 700px) {
+            main { padding: 1rem; }
+            .lesson-table { font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <header>
+        <h1><i class="fas fa-smile-wink"></i> BehaviorApp (final)</h1>
+        <div class="nav-buttons">
+            <button class="nav-btn" data-view="institutions"><i class="fas fa-building"></i> Institutions</button>
+            <button class="nav-btn" data-view="settings"><i class="fas fa-cog"></i> Settings</button>
+        </div>
+    </header>
+    <main id="main-content">
+        <div style="text-align: center; padding: 3rem;">Loading...</div>
+    </main>
+</div>
+
+<!-- custom modal -->
+<div id="customModal" class="modal">
+    <div class="modal-content" id="modalContent">
+        <h3 id="modalTitle"></h3>
+        <div id="modalBody"></div>
+        <div class="modal-actions" id="modalActions"></div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- DATA STORAGE ----------
+        const STORAGE_KEY = 'behaviorApp_data';
+
+        const defaultData = {
+            institutions: [],
+            classes: [],
+            students: [],
+            lessons: [],         // each lesson: id, classId, date (YYYY-MM-DD), archived (boolean)
+            behaviorEvents: [],
+            behaviors: []
+        };
+
+        function loadData() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            let data;
+            if (!stored) {
+                data = JSON.parse(JSON.stringify(defaultData));
+            } else {
+                try {
+                    data = JSON.parse(stored);
+                } catch (e) {
+                    data = JSON.parse(JSON.stringify(defaultData));
+                }
+            }
+            // Ensure archived field exists
+            data.lessons = data.lessons.map(l => ({ ...l, archived: l.archived === true }));
+            return data;
+        }
+
+        function saveData(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data, null, 2));
+        }
+
+        function generateId() {
+            return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // ---------- AUTO-ARCHIVE AND ENSURE NEXT ACTIVE LESSON ----------
+        function autoArchiveAndCreateNext(data) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            let changed = false;
+
+            data.lessons.forEach(lesson => {
+                if (!lesson.archived && lesson.date < todayStr) {
+                    lesson.archived = true;
+                    changed = true;
+                }
+            });
+
+            // For each class, ensure at least one upcoming active lesson (the next available)
+            const classIds = [...new Set(data.classes.map(c => c.id))];
+            classIds.forEach(classId => {
+                const classObj = data.classes.find(c => c.id === classId);
+                if (!classObj || !classObj.days || classObj.days.length === 0) return;
+                const nextDate = findNextAvailableClassDate(classObj, data);
+                if (nextDate) {
+                    const exists = data.lessons.some(l => l.classId === classId && l.date === nextDate && !l.archived);
+                    if (!exists) {
+                        data.lessons.push({
+                            id: generateId(),
+                            classId,
+                            date: nextDate,
+                            archived: false
+                        });
+                        changed = true;
+                    }
+                }
+            });
+
+            if (changed) saveData(data);
+            return data;
+        }
+
+        // Helper: find next class date (from today) that does NOT have an active lesson
+        function findNextAvailableClassDate(classObj, data) {
+            if (!classObj || !classObj.days || classObj.days.length === 0) return null;
+            const dayMap = { 'Sunday':0,'Monday':1,'Tuesday':2,'Wednesday':3,'Thursday':4,'Friday':5,'Saturday':6 };
+            const targetDays = classObj.days.map(d => dayMap[d]).filter(d => d !== undefined);
+            if (targetDays.length === 0) return null;
+
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            let checkDate = new Date(today);
+            for (let i = 0; i <= 60; i++) { // look ahead up to 60 days
+                if (targetDays.includes(checkDate.getDay())) {
+                    const year = checkDate.getFullYear();
+                    const month = String(checkDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(checkDate.getDate()).padStart(2, '0');
+                    const dateStr = `${year}-${month}-${day}`;
+                    const existingActive = data.lessons.some(l => l.classId === classObj.id && l.date === dateStr && !l.archived);
+                    if (!existingActive) {
+                        return dateStr;
+                    }
+                }
+                checkDate.setDate(checkDate.getDate() + 1);
+            }
+            return null;
+        }
+
+        // Legacy function for backward compatibility (used in auto-archive)
+        function getNextClassDate(classDays, startDateStr = null) {
+            if (!classDays || classDays.length === 0) return null;
+            const dayMap = { 'Sunday':0,'Monday':1,'Tuesday':2,'Wednesday':3,'Thursday':4,'Friday':5,'Saturday':6 };
+            const targetDays = classDays.map(d => dayMap[d]).filter(d => d !== undefined);
+            if (targetDays.length === 0) return null;
+
+            const startDate = startDateStr ? new Date(startDateStr + 'T00:00:00') : new Date();
+            startDate.setHours(0,0,0,0);
+            let checkDate = new Date(startDate);
+            for (let i = 0; i <= 14; i++) {
+                if (targetDays.includes(checkDate.getDay())) {
+                    const year = checkDate.getFullYear();
+                    const month = String(checkDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(checkDate.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                }
+                checkDate.setDate(checkDate.getDate() + 1);
+            }
+            return null;
+        }
+
+        function ensureNextLessonForClass(data, classId) {
+            const classObj = data.classes.find(c => c.id === classId);
+            if (!classObj || !classObj.days || classObj.days.length === 0) return data;
+            const nextDate = findNextAvailableClassDate(classObj, data);
+            if (nextDate) {
+                const exists = data.lessons.some(l => l.classId === classId && l.date === nextDate && !l.archived);
+                if (!exists) {
+                    data.lessons.push({
+                        id: generateId(),
+                        classId,
+                        date: nextDate,
+                        archived: false
+                    });
+                }
+            }
+            return data;
+        }
+
+        // ---------- STATE ----------
+        let state = {
+            currentView: 'institutions',
+            institutionId: null,
+            institutionName: '',
+            classId: null,
+            className: '',
+            lessonId: null,
+            lessonDate: null
+        };
+
+        let modalResolve = null;
+
+        // ---------- MODAL HELPERS ----------
+        function showModal({ title, bodyHtml, showCancel = true, confirmText = 'OK', cancelText = 'Cancel', input = false, inputValue = '' }) {
+            return new Promise((resolve) => {
+                modalResolve = resolve;
+                document.getElementById('modalTitle').innerText = title;
+                document.getElementById('modalBody').innerHTML = bodyHtml;
+                const actionsDiv = document.getElementById('modalActions');
+                actionsDiv.innerHTML = '';
+                if (showCancel) {
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.className = 'btn';
+                    cancelBtn.innerText = cancelText;
+                    cancelBtn.onclick = () => { closeModal(); resolve(null); };
+                    actionsDiv.appendChild(cancelBtn);
+                }
+                const okBtn = document.createElement('button');
+                okBtn.className = 'btn btn-primary';
+                okBtn.innerText = confirmText;
+                okBtn.onclick = () => {
+                    if (input) {
+                        const inputEl = document.getElementById('modalInput');
+                        resolve(inputEl.value);
+                    } else {
+                        resolve(true);
+                    }
+                    closeModal();
+                };
+                actionsDiv.appendChild(okBtn);
+                document.getElementById('customModal').classList.add('active');
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.remove('active');
+            modalResolve = null;
+        }
+
+        function showAlert(message) {
+            return showModal({ title: 'Notice', bodyHtml: `<p>${message}</p>`, showCancel: false, confirmText: 'OK' });
+        }
+
+        // ---------- ROUTING ----------
+        function setView(view, params = {}) {
+            if (params.institutionId !== undefined) state.institutionId = params.institutionId;
+            if (params.institutionName !== undefined) state.institutionName = params.institutionName;
+            if (params.classId !== undefined) state.classId = params.classId;
+            if (params.className !== undefined) state.className = params.className;
+            if (params.lessonId !== undefined) state.lessonId = params.lessonId;
+            state.currentView = view;
+            render();
+        }
+
+        // ---------- RENDER ----------
+        function render() {
+            let data = loadData();
+            data = autoArchiveAndCreateNext(data);
+            data = loadData(); // reload after potential saves
+
+            const container = document.getElementById('main-content');
+            if (state.currentView === 'institutions') renderInstitutions(container, data);
+            else if (state.currentView === 'classes') renderClasses(container, data);
+            else if (state.currentView === 'students') renderStudents(container, data);
+            else if (state.currentView === 'lessons') renderLessons(container, data);
+            else if (state.currentView === 'lessonDetail') renderLessonDetail(container, data);
+            else if (state.currentView === 'settings') renderSettings(container, data);
+            else container.innerHTML = '<div>Unknown view</div>';
+        }
+
+        // ---------- INSTITUTIONS (unchanged) ----------
+        function renderInstitutions(container, data) {
+            let html = `<div class="section-title"><span>🏫 Your institutions</span><button class="btn btn-primary" id="addInstitutionBtn"><i class="fas fa-plus"></i> Add institution</button></div>`;
+            html += '<div class="card-grid">';
+            data.institutions.forEach(inst => {
+                const classCount = data.classes.filter(c => c.institutionId === inst.id).length;
+                html += `<div class="card">
+                    <div class="card-header">
+                        <span>${inst.name}</span>
+                        <div class="card-actions">
+                            <button class="icon-btn" data-id="${inst.id}" data-name="${inst.name}" data-action="editInst"><i class="fas fa-edit"></i></button>
+                            <button class="icon-btn" data-id="${inst.id}" data-name="${inst.name}" data-action="deleteInst"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <p><i class="fas fa-users"></i> classes: ${classCount}</p>
+                    <button class="btn btn-sm" data-id="${inst.id}" data-name="${inst.name}" data-action="selectInst"><i class="fas fa-arrow-right"></i> open</button>
+                </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+
+            document.getElementById('addInstitutionBtn')?.addEventListener('click', async () => {
+                const name = await showModal({ title: 'New institution', bodyHtml: '<input id="modalInput" placeholder="e.g., Lincoln High" class="modal-input">', input: true });
+                if (name) {
+                    data.institutions.push({ id: generateId(), name, limit: 3, consequence: 'Lose the right to stay in the room for 5 minutes' });
+                    saveData(data); render();
+                }
+            });
+
+            document.querySelectorAll('[data-action="editInst"]').forEach(b => b.addEventListener('click', async (e) => {
+                const id = e.target.closest('button').dataset.id;
+                const old = e.target.closest('button').dataset.name;
+                const neu = await showModal({ title: 'Edit name', bodyHtml: `<input id="modalInput" value="${old}">`, input: true });
+                if (neu) {
+                    const inst = data.institutions.find(i => i.id === id);
+                    if (inst) inst.name = neu;
+                    saveData(data); render();
+                }
+            }));
+
+            document.querySelectorAll('[data-action="deleteInst"]').forEach(b => b.addEventListener('click', async (e) => {
+                const id = e.target.closest('button').dataset.id;
+                const name = e.target.closest('button').dataset.name;
+                if (!await showModal({ title: 'Delete institution?', bodyHtml: '<p>Are you sure? This cannot be undone.</p>' })) return;
+                const typed = await showModal({ title: 'Confirm name', bodyHtml: `<p>Type "<strong>${name}</strong>" to confirm:</p><input id="modalInput">`, input: true });
+                if (typed !== name) { showAlert('Incorrect name'); return; }
+                const backup = await showModal({ title: 'Backup?', bodyHtml: '<p>Create JSON backup before deleting?</p>', confirmText: 'Yes', cancelText: 'No' });
+                if (backup) {
+                    const instClasses = data.classes.filter(c => c.institutionId === id);
+                    const classIds = instClasses.map(c => c.id);
+                    const instStudents = data.students.filter(s => classIds.includes(s.classId));
+                    const instLessons = data.lessons.filter(l => classIds.includes(l.classId));
+                    const lessonIds = instLessons.map(l => l.id);
+                    const instBehaviorEvents = data.behaviorEvents.filter(be => lessonIds.includes(be.lessonId));
+                    const instBehaviors = data.behaviors.filter(b => b.institutionId === id);
+                    const backupData = { institution: data.institutions.find(i => i.id === id), classes: instClasses, students: instStudents, lessons: instLessons, behaviorEvents: instBehaviorEvents, behaviors: instBehaviors };
+                    const blob = new Blob([JSON.stringify(backupData)], { type: 'application/json' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `institution_${name}_backup.json`; a.click();
+                }
+                data.institutions = data.institutions.filter(i => i.id !== id);
+                data.classes = data.classes.filter(c => c.institutionId !== id);
+                data.students = data.students.filter(s => !classIds.includes(s.classId));
+                data.lessons = data.lessons.filter(l => !classIds.includes(l.classId));
+                data.behaviorEvents = data.behaviorEvents.filter(be => !lessonIds.includes(be.lessonId));
+                data.behaviors = data.behaviors.filter(b => b.institutionId !== id);
+                saveData(data); render();
+            }));
+
+            document.querySelectorAll('[data-action="selectInst"]').forEach(b => b.addEventListener('click', (e) => {
+                const id = e.target.closest('button').dataset.id;
+                const name = e.target.closest('button').dataset.name;
+                state.institutionId = id; state.institutionName = name;
+                setView('classes');
+            }));
+        }
+
+        // ---------- CLASSES (unchanged) ----------
+        function renderClasses(container, data) {
+            container.innerHTML = `
+                <div class="section-title">
+                    <button class="btn" id="backToInstitutions"><i class="fas fa-arrow-left"></i> Institutions</button>
+                    <span>📚 ${state.institutionName} / Class names</span>
+                    <button class="btn btn-primary" id="addClassBtn"><i class="fas fa-plus"></i> Add class name</button>
+                </div>
+                <div class="card-grid" id="classGrid"></div>
+            `;
+            const grid = document.getElementById('classGrid');
+            data.classes.filter(c => c.institutionId === state.institutionId).forEach(cls => {
+                const days = cls.days ? cls.days.join(', ') : '';
+                const card = document.createElement('div'); card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span>${cls.name}</span>
+                        <div class="card-actions">
+                            <button class="icon-btn" data-id="${cls.id}" data-name="${cls.name}" data-action="editClass"><i class="fas fa-edit"></i></button>
+                            <button class="icon-btn" data-id="${cls.id}" data-name="${cls.name}" data-action="deleteClass"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <p><i class="far fa-calendar-alt"></i> ${days || 'No days'}</p>
+                    <button class="btn btn-sm" data-id="${cls.id}" data-name="${cls.name}" data-action="selectClass"><i class="fas fa-arrow-right"></i> open</button>
+                `;
+                grid.appendChild(card);
+            });
+
+            document.getElementById('backToInstitutions').addEventListener('click', () => setView('institutions'));
+            document.getElementById('addClassBtn').addEventListener('click', async () => {
+                const name = await showModal({ title: 'New class name', bodyHtml: '<input id="modalInput" placeholder="e.g., Math 101">', input: true });
+                if (!name) return;
+                const daysHtml = `<div class="checkbox-group" id="dayCheckboxes">${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d => `<label><input type="checkbox" value="${d}"> ${d}</label>`).join('')}</div>`;
+                const selectedDays = await showModal({ title: 'Select class days', bodyHtml: daysHtml, confirmText: 'Save', input: false });
+                if (!selectedDays) return;
+                const checkboxes = document.querySelectorAll('#dayCheckboxes input:checked');
+                const days = Array.from(checkboxes).map(cb => cb.value);
+                if (days.length === 0) { showAlert('Select at least one day'); return; }
+                data.classes.push({ id: generateId(), institutionId: state.institutionId, name, days });
+                saveData(data); render();
+            });
+
+            document.querySelectorAll('[data-action="editClass"]').forEach(b => b.addEventListener('click', async (e) => {
+                const id = e.target.closest('button').dataset.id; const oldName = e.target.closest('button').dataset.name;
+                const newName = await showModal({ title: 'Edit class name', bodyHtml: `<input id="modalInput" value="${oldName}">`, input: true });
+                if (newName) { data.classes.find(c => c.id === id).name = newName; saveData(data); render(); }
+            }));
+
+            document.querySelectorAll('[data-action="deleteClass"]').forEach(b => b.addEventListener('click', async (e) => {
+                const id = e.target.closest('button').dataset.id; const name = e.target.closest('button').dataset.name;
+                if (!await showModal({ title: 'Delete class name?', bodyHtml: '<p>Are you sure?</p>' })) return;
+                const typed = await showModal({ title: 'Confirm', bodyHtml: `<p>Type "${name}"</p><input id="modalInput">`, input: true });
+                if (typed !== name) { showAlert('Incorrect'); return; }
+                const classIds = [id]; const lessonIds = data.lessons.filter(l => l.classId === id).map(l => l.id);
+                data.classes = data.classes.filter(c => c.id !== id);
+                data.students = data.students.filter(s => s.classId !== id);
+                data.lessons = data.lessons.filter(l => l.classId !== id);
+                data.behaviorEvents = data.behaviorEvents.filter(be => !lessonIds.includes(be.lessonId));
+                saveData(data); render();
+            }));
+
+            document.querySelectorAll('[data-action="selectClass"]').forEach(b => b.addEventListener('click', (e) => {
+                state.classId = e.target.closest('button').dataset.id; state.className = e.target.closest('button').dataset.name;
+                setView('students');
+            }));
+        }
+
+        // ---------- STUDENTS (unchanged) ----------
+        function renderStudents(container, data) {
+            container.innerHTML = `
+                <div class="section-title">
+                    <button class="btn" id="backToClasses"><i class="fas fa-arrow-left"></i> Class names</button>
+                    <span>👥 ${state.className}</span>
+                    <button class="btn btn-primary" id="addStudentBtn"><i class="fas fa-user-plus"></i> Add students</button>
+                    <button class="btn" id="viewLessonsBtn"><i class="fas fa-calendar-check"></i> Class days</button>
+                </div>
+                <div id="studentList"></div>
+            `;
+            const listDiv = document.getElementById('studentList');
+            data.students.filter(s => s.classId === state.classId).forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'student-row';
+                div.innerHTML = `
+                    <span class="student-name">${s.name}</span>
+                    <div>
+                        <button class="icon-btn" data-id="${s.id}" data-action="editStudent"><i class="fas fa-edit"></i></button>
+                        <button class="icon-btn" data-id="${s.id}" data-action="deleteStudent"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                listDiv.appendChild(div);
+            });
+
+            document.getElementById('backToClasses').addEventListener('click', () => setView('classes'));
+            document.getElementById('viewLessonsBtn').addEventListener('click', () => setView('lessons'));
+
+            document.getElementById('addStudentBtn').addEventListener('click', async () => {
+                const choice = await new Promise((resolve) => {
+                    const modalDiv = document.getElementById('customModal');
+                    document.getElementById('modalTitle').innerText = 'Add students';
+                    document.getElementById('modalBody').innerHTML = `
+                        <button class="btn" id="chooseManual" style="width:100%; margin-bottom:10px;">➕ Manual entry</button>
+                        <button class="btn" id="chooseImport" style="width:100%;">📋 Import from column</button>
+                    `;
+                    const actionsDiv = document.getElementById('modalActions');
+                    actionsDiv.innerHTML = '<button class="btn" id="cancelAdd">Cancel</button>';
+                    document.getElementById('cancelAdd').onclick = () => { closeModal(); resolve(null); };
+                    document.getElementById('chooseManual').onclick = () => { closeModal(); resolve('manual'); };
+                    document.getElementById('chooseImport').onclick = () => { closeModal(); resolve('import'); };
+                    modalDiv.classList.add('active');
+                });
+                if (!choice) return;
+                if (choice === 'manual') {
+                    const name = await showModal({ title: 'Manual entry', bodyHtml: '<input id="modalInput" placeholder="Student name">', input: true });
+                    if (name && name.trim()) {
+                        data.students.push({ id: generateId(), classId: state.classId, name: name.trim() });
+                        saveData(data); render();
+                    }
+                } else {
+                    const text = await showModal({ title: 'Import names', bodyHtml: '<textarea id="modalInput" rows="6" placeholder="One name per line"></textarea>', input: true });
+                    if (text) {
+                        const names = text.split('\n').map(s => s.trim()).filter(s => s);
+                        names.forEach(n => data.students.push({ id: generateId(), classId: state.classId, name: n }));
+                        saveData(data); render();
+                        showAlert(`Added ${names.length} student(s).`);
+                    }
+                }
+            });
+
+            document.querySelectorAll('[data-action="editStudent"]').forEach(b => b.addEventListener('click', async (e) => {
+                const id = e.target.closest('button').dataset.id;
+                const student = data.students.find(s => s.id === id);
+                if (!student) return;
+                const newName = await showModal({ title: 'Edit student name', bodyHtml: `<input id="modalInput" value="${student.name}">`, input: true });
+                if (newName && newName.trim()) {
+                    student.name = newName.trim();
+                    saveData(data); render();
+                }
+            }));
+
+            document.querySelectorAll('[data-action="deleteStudent"]').forEach(b => b.addEventListener('click', async (e) => {
+                const id = e.target.closest('button').dataset.id;
+                if (await showModal({ title: 'Delete student', bodyHtml: '<p>Remove this student?</p>' })) {
+                    data.students = data.students.filter(s => s.id !== id);
+                    data.behaviorEvents = data.behaviorEvents.filter(be => be.studentId !== id);
+                    saveData(data); render();
+                }
+            }));
+        }
+
+        // ---------- LESSONS (with fixed create button) ----------
+        function renderLessons(container, data) {
+            const classLessons = data.lessons.filter(l => l.classId === state.classId);
+            const activeLessons = classLessons.filter(l => !l.archived);
+            const archivedLessons = classLessons.filter(l => l.archived);
+
+            container.innerHTML = `
+                <div class="section-title">
+                    <button class="btn" id="backToStudents"><i class="fas fa-arrow-left"></i> Students</button>
+                    <span>📅 Class days · ${state.className}</span>
+                    <button class="btn btn-primary" id="createLessonBtn"><i class="fas fa-plus"></i> Create class day</button>
+                </div>
+                <h3>Active class days</h3>
+                <div class="card-grid" id="activeLessonGrid"></div>
+                ${archivedLessons.length > 0 ? `
+                    <div class="archive-section">
+                        <div class="archive-title"><i class="fas fa-archive"></i> Archived class days</div>
+                        <div class="card-grid" id="archivedLessonGrid"></div>
+                    </div>
+                ` : ''}
+            `;
+
+            const activeGrid = document.getElementById('activeLessonGrid');
+            activeLessons.forEach(lesson => {
+                const card = document.createElement('div'); card.className = 'card';
+                const dateStr = lesson.date ? new Date(lesson.date).toLocaleDateString() : 'No date';
+                card.innerHTML = `
+                    <div>${dateStr}</div>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem;">
+                        <button class="btn btn-sm" data-id="${lesson.id}" data-action="openLesson">open</button>
+                        <button class="btn btn-sm" data-id="${lesson.id}" data-action="archiveLesson"><i class="fas fa-archive"></i> Archive</button>
+                        <button class="btn btn-sm btn-danger" data-id="${lesson.id}" data-action="deleteLesson"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                activeGrid.appendChild(card);
+            });
+
+            if (archivedLessons.length > 0) {
+                const archivedGrid = document.getElementById('archivedLessonGrid');
+                archivedLessons.forEach(lesson => {
+                    const card = document.createElement('div'); card.className = 'card';
+                    const dateStr = lesson.date ? new Date(lesson.date).toLocaleDateString() : 'No date';
+                    card.innerHTML = `
+                        <div>${dateStr}</div>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem;">
+                            <button class="btn btn-sm" data-id="${lesson.id}" data-action="openLesson">open</button>
+                            <button class="btn btn-sm btn-danger" data-id="${lesson.id}" data-action="deleteLesson"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                    archivedGrid.appendChild(card);
+                });
+            }
+
+            document.getElementById('backToStudents').addEventListener('click', () => setView('students'));
+
+            // ----- FIXED CREATE LESSON: always create the next available date (skip dates with active lessons) -----
+            document.getElementById('createLessonBtn').addEventListener('click', async () => {
+                const classObj = data.classes.find(c => c.id === state.classId);
+                if (!classObj || !classObj.days || classObj.days.length === 0) {
+                    showAlert('This class has no days selected. Please edit the class and add days.'); return;
+                }
+
+                const nextDate = findNextAvailableClassDate(classObj, data);
+                if (!nextDate) {
+                    showAlert('No available class days found in the next 60 days. All upcoming days may already have active lessons.');
+                    return;
+                }
+
+                // Create the lesson
+                data.lessons.push({
+                    id: generateId(),
+                    classId: state.classId,
+                    date: nextDate,
+                    archived: false
+                });
+                saveData(data);
+                render();
+                showAlert(`Created class day for ${new Date(nextDate).toLocaleDateString()}`);
+            });
+
+            // Archive lesson
+            document.querySelectorAll('[data-action="archiveLesson"]').forEach(b => b.addEventListener('click', async (e) => {
+                const lessonId = e.target.closest('button').dataset.id;
+                const lesson = data.lessons.find(l => l.id === lessonId);
+                if (!lesson) return;
+                const confirmArchive = await showModal({ title: 'Archive class day?', bodyHtml: `<p>Move this class day to archive?</p>`, confirmText: 'Archive', cancelText: 'Cancel' });
+                if (!confirmArchive) return;
+                lesson.archived = true;
+                data = ensureNextLessonForClass(data, state.classId);
+                saveData(data);
+                render();
+            }));
+
+            // Delete lesson (2-step)
+            document.querySelectorAll('[data-action="deleteLesson"]').forEach(b => b.addEventListener('click', async (e) => {
+                const lessonId = e.target.closest('button').dataset.id;
+                const lesson = data.lessons.find(l => l.id === lessonId);
+                if (!lesson) return;
+                if (!await showModal({ title: 'Delete class day?', bodyHtml: '<p>Are you sure you want to delete this class day?</p>' })) return;
+                const typed = await showModal({ title: 'Confirm deletion', bodyHtml: `<p>Type the class name "<strong>${state.className}</strong>" to confirm:</p><input id="modalInput">`, input: true });
+                if (typed !== state.className) { showAlert('Incorrect class name.'); return; }
+                data.lessons = data.lessons.filter(l => l.id !== lessonId);
+                data.behaviorEvents = data.behaviorEvents.filter(be => be.lessonId !== lessonId);
+                data = ensureNextLessonForClass(data, state.classId);
+                saveData(data);
+                render();
+            }));
+
+            document.querySelectorAll('[data-action="openLesson"]').forEach(b => b.addEventListener('click', (e) => {
+                state.lessonId = e.target.closest('button').dataset.id;
+                setView('lessonDetail');
+            }));
+        }
+
+        // ---------- LESSON DETAIL (with correct limit prompt) ----------
+        function renderLessonDetail(container, data) {
+            const institution = data.institutions.find(i => i.id === state.institutionId) || { limit: 3, consequence: 'Lose the right to stay in the room for 5 minutes' };
+            const limit = institution.limit || 3;
+            const consequence = institution.consequence || 'Lose the right to stay in the room for 5 minutes';
+            const lesson = data.lessons.find(l => l.id === state.lessonId);
+            const lessonDate = lesson ? new Date(lesson.date).toLocaleDateString() : '';
+
+            let headerHtml = `<div class="lesson-header">
+                <span><strong>🏫 Institution:</strong> ${state.institutionName}</span>
+                <span><strong>📚 Class:</strong> ${state.className}</span>
+                <span><strong>📅 Date:</strong> ${lessonDate}</span>
+            </div>`;
+
+            const lessonBehaviors = data.behaviorEvents.filter(be => be.lessonId === state.lessonId);
+            const studentMap = {};
+            data.students.filter(s => s.classId === state.classId).forEach(s => {
+                studentMap[s.id] = { name: s.name, appropriate: [], inappropriate: [] };
+            });
+            lessonBehaviors.forEach(be => {
+                if (studentMap[be.studentId]) {
+                    if (be.type === 'appropriate') studentMap[be.studentId].appropriate.push(be);
+                    else studentMap[be.studentId].inappropriate.push(be);
+                }
+            });
+
+            let tableHtml = `<div class="lesson-table">
+                <div class="table-header">Student</div>
+                <div class="table-header">😊/😞</div>
+                <div class="table-header">Behaviors</div>
+                <div class="table-header">😞 count</div>
+                <div class="table-header">😊 count</div>
+                <div class="table-header">Undo</div>`;
+
+            Object.entries(studentMap).forEach(([studentId, rec]) => {
+                const appCount = rec.appropriate.length;
+                const inappCount = rec.inappropriate.length;
+                const behaviorTexts = [...rec.appropriate.map(b => b.description), ...rec.inappropriate.map(b => b.description)].join(', ');
+
+                tableHtml += `
+                    <div class="table-cell student-name-cell">${rec.name}</div>
+                    <div class="table-cell">
+                        <span class="clickable-smile" data-student="${studentId}" data-type="appropriate">😊</span>
+                        <span class="clickable-smile" data-student="${studentId}" data-type="inappropriate">😞</span>
+                    </div>
+                    <div class="table-cell">${behaviorTexts}</div>
+                    <div class="table-cell"><span class="counter-badge" id="inapp-${studentId}">${inappCount}</span></div>
+                    <div class="table-cell"><span class="counter-badge" id="app-${studentId}">${appCount}</span></div>
+                    <div class="table-cell">
+                        <button class="undo-btn" data-student="${studentId}" title="Undo last behavior"><i class="fas fa-undo-alt"></i></button>
+                    </div>
+                `;
+            });
+
+            tableHtml += '</div><button class="btn mt-2" id="closeLesson">Back to class days</button>';
+            container.innerHTML = headerHtml + tableHtml;
+
+            document.querySelectorAll('.clickable-smile').forEach(el => {
+                el.addEventListener('click', async (e) => {
+                    const studentId = e.target.dataset.student;
+                    const type = e.target.dataset.type;
+                    const list = data.behaviors.filter(b => b.institutionId === state.institutionId && b.type === type);
+                    if (list.length === 0) {
+                        showAlert('No behaviors defined. Go to Settings and add some.');
+                        return;
+                    }
+                    const options = list.map(b => `<option value="${b.id}">${b.description}</option>`).join('');
+                    const selectHtml = `<select id="modalInput" class="modal-input">${options}</select>`;
+                    const selectedId = await showModal({ title: `Select ${type} behavior`, bodyHtml: selectHtml, input: true });
+                    if (!selectedId) return;
+                    const behavior = list.find(b => b.id === selectedId);
+                    if (!behavior) return;
+
+                    const newEvent = {
+                        id: generateId(),
+                        lessonId: state.lessonId,
+                        studentId,
+                        type,
+                        description: behavior.description,
+                        timestamp: new Date().toISOString()
+                    };
+                    data.behaviorEvents.push(newEvent);
+                    saveData(data);
+
+                    // Check limit for inappropriate
+                    if (type === 'inappropriate') {
+                        const updatedInapp = data.behaviorEvents.filter(be => be.lessonId === state.lessonId && be.studentId === studentId && be.type === 'inappropriate').length;
+                        if (updatedInapp === limit) {
+                            // Show the full instruction with consequence
+                            showAlert(`⚠️ Go to ${rec.name}'s level, make eye contact, state the rules that were broken, and explain the consequence: ${consequence}`);
+                        }
+                    } else {
+                        showAlert('😊 Praise the appropriate behavior in front of the class.');
+                    }
+
+                    render(); // re-render to update counts
+                });
+            });
+
+            document.querySelectorAll('.undo-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const studentId = e.currentTarget.dataset.student;
+                    const studentEvents = data.behaviorEvents
+                        .filter(be => be.lessonId === state.lessonId && be.studentId === studentId)
+                        .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+                    if (studentEvents.length === 0) {
+                        showAlert('No behavior to undo for this student.');
+                        return;
+                    }
+                    const lastEvent = studentEvents[0];
+                    const confirmUndo = await showModal({
+                        title: 'Undo last',
+                        bodyHtml: `<p>Remove last behavior: "${lastEvent.description}"?</p>`,
+                        confirmText: 'Undo',
+                        cancelText: 'Cancel'
+                    });
+                    if (confirmUndo) {
+                        data.behaviorEvents = data.behaviorEvents.filter(be => be.id !== lastEvent.id);
+                        saveData(data);
+                        render();
+                    }
+                });
+            });
+
+            document.getElementById('closeLesson')?.addEventListener('click', () => setView('lessons'));
+        }
+
+        // ---------- SETTINGS (unchanged) ----------
+        function renderSettings(container, data) {
+            if (!state.institutionId) {
+                container.innerHTML = '<p>Please select an institution first.</p><button class="btn" id="goToInst">Go to institutions</button>';
+                document.getElementById('goToInst')?.addEventListener('click', () => setView('institutions'));
+                return;
+            }
+            const institution = data.institutions.find(i => i.id === state.institutionId) || { limit: 3, consequence: 'Lose the right to stay in the room for 5 minutes' };
+            const appropriate = data.behaviors.filter(b => b.institutionId === state.institutionId && b.type === 'appropriate');
+            const inappropriate = data.behaviors.filter(b => b.institutionId === state.institutionId && b.type === 'inappropriate');
+
+            container.innerHTML = `
+                <div class="section-title">
+                    <span>⚙️ Settings for ${state.institutionName}</span>
+                    <button class="btn" id="backFromSettings">Back</button>
+                </div>
+                <div class="settings-group">
+                    <h3>😊 Appropriate behaviors</h3>
+                    <div id="appropriateList" class="behavior-list"></div>
+                    <button class="btn btn-sm" id="addAppropriate">+ Add appropriate</button>
+                </div>
+                <div class="settings-group">
+                    <h3>😞 Inappropriate behaviors</h3>
+                    <div id="inappropriateList" class="behavior-list"></div>
+                    <button class="btn btn-sm" id="addInappropriate">+ Add inappropriate</button>
+                </div>
+                <div class="settings-group">
+                    <h3>🚦 Limits & consequences</h3>
+                    <label>Inappropriate limit (default 3)</label>
+                    <input type="number" id="limitInput" value="${institution.limit || 3}" min="1" style="width:100px;">
+                    <label class="mt-2">Consequence message</label>
+                    <input type="text" id="consequenceInput" value="${institution.consequence || 'Lose the right to stay in the room for 5 minutes'}" style="width:100%;">
+                    <button class="btn btn-primary mt-2" id="saveLimits">Save limits</button>
+                </div>
+                <div class="settings-group">
+                    <button class="btn" id="exportBackupBtn"><i class="fas fa-download"></i> Export full backup (JSON)</button>
+                </div>
+            `;
+
+            function renderBehaviorLists() {
+                const appDiv = document.getElementById('appropriateList');
+                const inappDiv = document.getElementById('inappropriateList');
+                appDiv.innerHTML = appropriate.map(b => `<div class="behavior-item">${b.description} 
+                    <div><button class="icon-btn" data-id="${b.id}" data-action="editBehavior"><i class="fas fa-edit"></i></button>
+                    <button class="icon-btn" data-id="${b.id}" data-action="deleteBehavior"><i class="fas fa-trash"></i></button></div>
+                </div>`).join('');
+                inappDiv.innerHTML = inappropriate.map(b => `<div class="behavior-item">${b.description} 
+                    <div><button class="icon-btn" data-id="${b.id}" data-action="editBehavior"><i class="fas fa-edit"></i></button>
+                    <button class="icon-btn" data-id="${b.id}" data-action="deleteBehavior"><i class="fas fa-trash"></i></button></div>
+                </div>`).join('');
+            }
+            renderBehaviorLists();
+
+            document.getElementById('addAppropriate').addEventListener('click', async () => {
+                const desc = await showModal({ title: 'New appropriate behavior', bodyHtml: '<input id="modalInput" placeholder="e.g., Helped peer">', input: true });
+                if (desc) {
+                    data.behaviors.push({ id: generateId(), institutionId: state.institutionId, type: 'appropriate', description: desc });
+                    saveData(data); render();
+                }
+            });
+            document.getElementById('addInappropriate').addEventListener('click', async () => {
+                const desc = await showModal({ title: 'New inappropriate behavior', bodyHtml: '<input id="modalInput" placeholder="e.g., Disruptive">', input: true });
+                if (desc) {
+                    data.behaviors.push({ id: generateId(), institutionId: state.institutionId, type: 'inappropriate', description: desc });
+                    saveData(data); render();
+                }
+            });
+
+            document.querySelectorAll('[data-action="editBehavior"]').forEach(b => b.addEventListener('click', async (e) => {
+                const id = e.target.closest('button').dataset.id;
+                const behavior = data.behaviors.find(bh => bh.id === id);
+                if (!behavior) return;
+                const newDesc = await showModal({ title: 'Edit behavior', bodyHtml: `<input id="modalInput" value="${behavior.description}">`, input: true });
+                if (newDesc && newDesc.trim()) {
+                    behavior.description = newDesc.trim();
+                    saveData(data); render();
+                }
+            }));
+
+            document.querySelectorAll('[data-action="deleteBehavior"]').forEach(b => b.addEventListener('click', async (e) => {
+                const id = e.target.closest('button').dataset.id;
+                if (await showModal({ title: 'Delete behavior', bodyHtml: '<p>Remove this behavior?</p>' })) {
+                    data.behaviors = data.behaviors.filter(bh => bh.id !== id);
+                    saveData(data); render();
+                }
+            }));
+
+            document.getElementById('saveLimits')?.addEventListener('click', async () => {
+                const limit = parseInt(document.getElementById('limitInput').value) || 3;
+                const consequence = document.getElementById('consequenceInput').value;
+                const inst = data.institutions.find(i => i.id === state.institutionId);
+                if (inst) { inst.limit = limit; inst.consequence = consequence; }
+                saveData(data); showAlert('Saved'); render();
+            });
+
+            document.getElementById('backFromSettings')?.addEventListener('click', () => setView('institutions'));
+
+            document.getElementById('exportBackupBtn')?.addEventListener('click', async () => {
+                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `full_backup_${new Date().toISOString()}.json`; a.click();
+            });
+        }
+
+        // ---------- INIT ----------
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const view = e.currentTarget.dataset.view;
+                if (view === 'institutions') setView('institutions');
+                else if (view === 'settings') setView('settings');
+            });
+        });
+
+        render();
+    })();
+</script>
+</body>
+</html>

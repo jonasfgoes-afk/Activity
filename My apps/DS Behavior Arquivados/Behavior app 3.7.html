@@ -1,0 +1,2215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>BehaviorApp · consequence count & back button top</title>
+    <!-- Manifest for PWA -->
+    <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22BehaviorApp%22%2C%22short_name%22%3A%22Behavior%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f4f7fa%22%2C%22theme_color%22%3A%22%231e2b37%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%233498db'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='white' font-family='Arial'%3E🧠%3C/text%3E%3C/svg%3E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image/svg+xml%22%7D%5D%7D">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* ... existing styles ... plus new drag-handle classes */
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #eef2f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 1rem;
+        }
+        #app {
+            max-width: 1300px;
+            width: 100%;
+            background: white;
+            border-radius: 2rem 2rem 1.5rem 1.5rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        header {
+            background: #1e2b37;
+            color: white;
+            padding: 1.2rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        header h1 {
+            font-weight: 500;
+            font-size: 1.9rem;
+            letter-spacing: -0.5px;
+        }
+        header h1 i {
+            margin-right: 10px;
+            color: #f1c40f;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 0.8rem;
+        }
+        .nav-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 0.5rem 1.4rem;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        .nav-btn.active {
+            background: white;
+            color: #1e2b37;
+            font-weight: 600;
+        }
+        main {
+            padding: 2rem;
+            background: #ffffff;
+        }
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            color: #1e2b37;
+        }
+        .btn {
+            background: #f0f3f7;
+            border: none;
+            padding: 0.6rem 1.4rem;
+            border-radius: 40px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            transition: 0.15s;
+            border: 1px solid transparent;
+        }
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        .btn-sm {
+            padding: 0.3rem 1rem;
+            font-size: 0.85rem;
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .card {
+            background: #f9fafc;
+            border-radius: 24px;
+            padding: 1.3rem 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.1s;
+        }
+        .card.dragging {
+            opacity: 0.5;
+            transform: scale(0.98);
+        }
+        .institution-card {
+            border-left: 6px solid #3498db; /* light blue */
+        }
+        .class-card {
+            border-left: 6px solid #2ecc71; /* light green */
+            cursor: grab;
+        }
+        .class-card.dragging {
+            cursor: grabbing;
+        }
+        .lesson-header {
+            background: #fff9e6; /* light yellow */
+            padding: 1rem 1.5rem;
+            border-radius: 40px;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            border-left: 6px solid #f1c40f; /* gold */
+            position: relative;
+            align-items: center;
+        }
+        .dice-button {
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #e67e22;
+            transition: transform 0.2s;
+            margin-left: auto;
+        }
+        .dice-button:hover {
+            transform: scale(1.2);
+            color: #d35400;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        .card-actions {
+            display: flex;
+            gap: 0.4rem;
+        }
+        .drag-handle {
+            cursor: grab;
+            font-size: 1.4rem;
+            color: #7f8c8d;
+            margin-right: 0.5rem;
+            user-select: none;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            color: #5f6b7a;
+            padding: 0.2rem 0.4rem;
+            border-radius: 30px;
+        }
+        .icon-btn:hover {
+            background: #e2e6ea;
+            color: #2c3e50;
+        }
+        .student-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid #eaeef2;
+        }
+        .student-name {
+            font-weight: 500;
+        }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 1.5rem;
+        }
+        .lesson-table {
+            display: grid;
+            grid-template-columns: 1.5fr 1.2fr 2fr 0.5fr 1.5fr;
+            background: #f2f5f9;
+            border-radius: 20px;
+            border: 1px solid #d0dbe8;
+            min-width: 650px;
+        }
+        .table-header {
+            background: #2c3e50;
+            color: white;
+            padding: 0.9rem 0.5rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .table-cell {
+            padding: 0.8rem 0.3rem;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-break: break-word;
+        }
+        .student-name-cell {
+            justify-content: flex-start;
+            padding-left: 1rem;
+            font-weight: 500;
+        }
+        .smile-with-count {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .smile-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .clickable-smile {
+            font-size: 2rem;
+            cursor: pointer;
+            transition: 0.1s;
+            padding: 0 5px;
+        }
+        .clickable-smile:hover {
+            transform: scale(1.2);
+        }
+        .count-badge {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 1.8rem;
+            text-align: center;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            max-width: 480px;
+            width: 90%;
+            border-radius: 32px;
+            padding: 2rem;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+        }
+        .modal-content h3 {
+            margin-bottom: 1.2rem;
+            color: #1e2b37;
+        }
+        .modal-content input, .modal-content textarea, .modal-content select {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            border: 1px solid #cfd9e6;
+            border-radius: 50px;
+            font-size: 1rem;
+            margin: 0.6rem 0;
+        }
+        .modal-content textarea {
+            border-radius: 24px;
+            resize: vertical;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem 1.8rem;
+            margin: 1rem 0;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.8rem;
+            margin-top: 2rem;
+        }
+        hr {
+            margin: 1.5rem 0;
+            border: 1px solid #edf2f7;
+        }
+        .hidden { display: none; }
+        .flex { display: flex; gap: 0.5rem; align-items: center; }
+        .mt-2 { margin-top: 0.8rem; }
+        .warning { color: #c0392b; font-weight: 500; }
+        .settings-group {
+            background: #f8fafd;
+            padding: 1.5rem;
+            border-radius: 28px;
+            margin-bottom: 1.5rem;
+        }
+        .behavior-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin: 1rem 0;
+        }
+        .behavior-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 40px;
+            border: 1px solid #dce3ec;
+            cursor: grab;
+        }
+        .behavior-item.dragging {
+            opacity: 0.5;
+        }
+        .behavior-drag-handle {
+            cursor: grab;
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            margin-right: 0.5rem;
+        }
+        .undo-btn {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: #e67e22;
+            padding: 0 5px;
+        }
+        .undo-btn:hover {
+            color: #d35400;
+        }
+        .archive-section {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 2px dashed #b0c4de;
+        }
+        .archive-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+        .timer-controls {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .timer-display {
+            font-family: monospace;
+            font-size: 1.1rem;
+            font-weight: 600;
+            min-width: 60px;
+            text-align: center;
+        }
+        .timer-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #2c3e50;
+            padding: 2px 6px;
+            border-radius: 20px;
+        }
+        .timer-btn:hover {
+            background: #e2e6ea;
+        }
+        .timer-btn.stop-alarm {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .timer-placeholder {
+            color: #aaa;
+            font-style: italic;
+        }
+        .sound-preview {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #2c3e50;
+        }
+        .history-day {
+            background: #f9fafc;
+            border-radius: 20px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #e2e8f0;
+        }
+        .history-day-header {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+        .history-behavior {
+            display: inline-block;
+            background: #e6edf5;
+            border-radius: 30px;
+            padding: 0.3rem 1rem;
+            margin: 0.2rem 0.5rem 0.2rem 0;
+            font-size: 0.9rem;
+        }
+        .totals {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f0f7ff;
+            border-radius: 40px;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .info-note {
+            background: #d9edf7;
+            color: #31708f;
+            padding: 0.8rem 1.2rem;
+            border-radius: 40px;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+        @media (max-width: 700px) {
+            main { padding: 1rem; }
+            .lesson-table { min-width: 600px; }
+            .timer-display { font-size: 1rem; min-width: 50px; }
+            .timer-btn { font-size: 1rem; padding: 2px 4px; }
+            .clickable-smile { font-size: 1.8rem; }
+            .count-badge { font-size: 1rem; min-width: 1.5rem; }
+            .table-header { padding: 0.7rem 0.3rem; font-size: 0.85rem; }
+            .table-cell { padding: 0.6rem 0.2rem; font-size: 0.85rem; }
+            .lesson-header { flex-direction: column; gap: 0.5rem; }
+            .dice-button { margin-left: 0; align-self: flex-end; }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <header>
+        <h1><i class="fas fa-smile-wink"></i> BehaviorApp</h1>
+        <div class="nav-buttons">
+            <button class="nav-btn" data-view="institutions"><i class="fas fa-building"></i> Institutions</button>
+            <button class="nav-btn" data-view="globalSettings"><i class="fas fa-cog"></i> Global Settings</button>
+        </div>
+    </header>
+    <main id="main-content">
+        <div style="text-align: center; padding: 3rem;">Loading...</div>
+    </main>
+</div>
+
+<!-- custom modal -->
+<div id="customModal" class="modal">
+    <div class="modal-content" id="modalContent">
+        <h3 id="modalTitle"></h3>
+        <div id="modalBody"></div>
+        <div class="modal-actions" id="modalActions"></div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- SERVICE WORKER REGISTRATION (PWA) ----------
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swScript = `
+                    const CACHE_NAME = 'behaviorapp-v1';
+                    const urlsToCache = [self.location.href];
+                    self.addEventListener('install', event => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+                        );
+                    });
+                    self.addEventListener('fetch', event => {
+                        event.respondWith(
+                            caches.match(event.request).then(response => response || fetch(event.request))
+                        );
+                    });
+                `;
+                const blob = new Blob([swScript], { type: 'application/javascript' });
+                const url = URL.createObjectURL(blob);
+                navigator.serviceWorker.register(url).then(reg => {
+                    console.log('Service Worker registered');
+                }).catch(err => console.log('SW registration failed', err));
+            });
+        }
+
+        // ---------- DATA STORAGE ----------
+        const STORAGE_KEY = 'behaviorApp_data';
+
+        const defaultData = {
+            institutions: [],
+            classes: [],
+            students: [],
+            lessons: [],
+            behaviorEvents: [],
+            global: {
+                behaviors: [], // { id, type, description }
+                defaultTimerSeconds: 300,
+                timerSoundDataURL: null,
+                limit: 3,
+                consequence: 'Lose the right to stay in the room for 5 minutes'
+            }
+        };
+
+        function loadData() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            let data;
+            if (!stored) {
+                data = JSON.parse(JSON.stringify(defaultData));
+                const defaultAppropriate = ['Helped a peer', 'Raised hand', 'Followed directions'];
+                const defaultInappropriate = ['Disruptive', 'Out of seat', 'Talking out of turn'];
+                defaultAppropriate.forEach(desc => {
+                    data.global.behaviors.push({ id: generateId(), type: 'appropriate', description: desc });
+                });
+                defaultInappropriate.forEach(desc => {
+                    data.global.behaviors.push({ id: generateId(), type: 'inappropriate', description: desc });
+                });
+            } else {
+                try {
+                    data = JSON.parse(stored);
+                } catch (e) {
+                    data = JSON.parse(JSON.stringify(defaultData));
+                }
+            }
+            if (!data.global) data.global = defaultData.global;
+            if (!data.global.behaviors) data.global.behaviors = [];
+            if (data.global.defaultTimerSeconds === undefined) data.global.defaultTimerSeconds = 300;
+            if (data.global.limit === undefined) data.global.limit = 3;
+            if (!data.global.consequence) data.global.consequence = 'Lose the right to stay in the room for 5 minutes';
+            data.institutions = data.institutions.map(inst => {
+                if (!inst.override) inst.override = {};
+                if (!inst.override.behaviors) inst.override.behaviors = [];
+                if (inst.override.defaultTimerSeconds === undefined) inst.override.defaultTimerSeconds = null;
+                if (inst.override.limit === undefined) inst.override.limit = null;
+                if (inst.override.consequence === undefined) inst.override.consequence = null;
+                if (inst.override.timerSoundDataURL === undefined) inst.override.timerSoundDataURL = null;
+                return inst;
+            });
+            data.classes = data.classes.map(cls => {
+                if (!cls.override) cls.override = {};
+                if (!cls.override.behaviors) cls.override.behaviors = [];
+                if (cls.override.defaultTimerSeconds === undefined) cls.override.defaultTimerSeconds = null;
+                if (cls.override.limit === undefined) cls.override.limit = null;
+                if (cls.override.consequence === undefined) cls.override.consequence = null;
+                if (cls.override.timerSoundDataURL === undefined) cls.override.timerSoundDataURL = null;
+                return cls;
+            });
+            data.lessons = data.lessons.map(l => ({ ...l, archived: l.archived === true }));
+            return data;
+        }
+
+        function saveData(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data, null, 2));
+        }
+
+        function generateId() {
+            return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function getLocalTodayString() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function parseLocalDate(dateStr) {
+            const [year, month, day] = dateStr.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        }
+
+        function getDayOfWeek(dateStr) {
+            const date = parseLocalDate(dateStr);
+            return date.toLocaleDateString('en-US', { weekday: 'long' });
+        }
+
+        function getNextClassDate(classDays, startDateStr) {
+            if (!classDays || classDays.length === 0) return null;
+            const targetDays = classDays.map(d => {
+                const map = { 'Sunday':0,'Monday':1,'Tuesday':2,'Wednesday':3,'Thursday':4,'Friday':5,'Saturday':6 };
+                return map[d];
+            }).filter(d => d !== undefined);
+            if (targetDays.length === 0) return null;
+
+            const startDate = parseLocalDate(startDateStr);
+            for (let i = 0; i <= 60; i++) {
+                if (targetDays.includes(startDate.getDay())) {
+                    const year = startDate.getFullYear();
+                    const month = String(startDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(startDate.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                }
+                startDate.setDate(startDate.getDate() + 1);
+            }
+            return null;
+        }
+
+        function getNextMissingClassDate(classObj, data) {
+            if (!classObj || !classObj.days || classObj.days.length === 0) return null;
+            const targetDays = classObj.days.map(d => {
+                const map = { 'Sunday':0,'Monday':1,'Tuesday':2,'Wednesday':3,'Thursday':4,'Friday':5,'Saturday':6 };
+                return map[d];
+            }).filter(d => d !== undefined);
+            if (targetDays.length === 0) return null;
+
+            const todayStr = getLocalTodayString();
+            let checkDate = parseLocalDate(todayStr);
+            for (let i = 0; i <= 60; i++) {
+                if (targetDays.includes(checkDate.getDay())) {
+                    const year = checkDate.getFullYear();
+                    const month = String(checkDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(checkDate.getDate()).padStart(2, '0');
+                    const dateStr = `${year}-${month}-${day}`;
+                    const existsActive = data.lessons.some(l => l.classId === classObj.id && l.date === dateStr && !l.archived);
+                    if (!existsActive) {
+                        return dateStr;
+                    }
+                }
+                checkDate.setDate(checkDate.getDate() + 1);
+            }
+            return null;
+        }
+
+        function autoArchiveAndCreateNext(data) {
+            const todayStr = getLocalTodayString();
+            let changed = false;
+
+            data.lessons.forEach(lesson => {
+                if (!lesson.archived && lesson.date < todayStr) {
+                    lesson.archived = true;
+                    changed = true;
+                }
+            });
+
+            if (changed) saveData(data);
+            return data;
+        }
+
+        function playTimerSound(dataURL) {
+            if (!dataURL) return;
+            try {
+                const audio = new Audio(dataURL);
+                audio.play().catch(e => console.warn('Audio play failed', e));
+            } catch (e) {
+                console.warn('Audio error', e);
+            }
+        }
+
+        let timers = {};
+        let activeLessonId = null;
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function clearTimersForLesson(lessonId) {
+            if (timers[lessonId]) {
+                Object.values(timers[lessonId]).forEach(t => {
+                    if (t.intervalId) clearInterval(t.intervalId);
+                });
+                delete timers[lessonId];
+            }
+        }
+
+        function stopAllTimers() {
+            Object.keys(timers).forEach(lessonId => clearTimersForLesson(lessonId));
+        }
+
+        let state = {
+            currentView: 'institutions',
+            institutionId: null,
+            institutionName: '',
+            classId: null,
+            className: '',
+            lessonId: null,
+            lessonDate: null,
+            studentId: null,
+            studentName: null
+        };
+
+        let historyStack = [];
+
+        function pushHistory(view, params) {
+            historyStack.push({ view, params });
+        }
+
+        function popHistory() {
+            if (historyStack.length > 1) {
+                historyStack.pop();
+                const prev = historyStack[historyStack.length - 1];
+                Object.assign(state, prev.params);
+                state.currentView = prev.view;
+                render();
+                return true;
+            }
+            return false;
+        }
+
+        window.addEventListener('popstate', (event) => {
+            event.preventDefault();
+            popHistory();
+        });
+
+        history.replaceState({}, document.title);
+
+        let modalResolve = null;
+
+        function showModal({ title, bodyHtml, showCancel = true, confirmText = 'OK', cancelText = 'Cancel', input = false, inputValue = '' }) {
+            return new Promise((resolve) => {
+                modalResolve = resolve;
+                document.getElementById('modalTitle').innerText = title;
+                document.getElementById('modalBody').innerHTML = bodyHtml;
+                const actionsDiv = document.getElementById('modalActions');
+                actionsDiv.innerHTML = '';
+                if (showCancel) {
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.className = 'btn';
+                    cancelBtn.innerText = cancelText;
+                    cancelBtn.onclick = () => { closeModal(); resolve(null); };
+                    actionsDiv.appendChild(cancelBtn);
+                }
+                const okBtn = document.createElement('button');
+                okBtn.className = 'btn btn-primary';
+                okBtn.innerText = confirmText;
+                okBtn.onclick = () => {
+                    if (input) {
+                        const inputEl = document.getElementById('modalInput');
+                        resolve(inputEl.value);
+                    } else {
+                        resolve(true);
+                    }
+                    closeModal();
+                };
+                actionsDiv.appendChild(okBtn);
+                document.getElementById('customModal').classList.add('active');
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.remove('active');
+            modalResolve = null;
+        }
+
+        function showAlert(message) {
+            return showModal({ title: 'Notice', bodyHtml: `<p>${message}</p>`, showCancel: false, confirmText: 'OK' });
+        }
+
+        function setView(view, params = {}) {
+            if (state.currentView === 'lessonDetail' && view !== 'lessonDetail') {
+                stopAllTimers();
+            }
+            Object.assign(state, params);
+            state.currentView = view;
+            pushHistory(view, params);
+            history.pushState({ view, params }, document.title);
+            render();
+        }
+
+        function render() {
+            let data = autoArchiveAndCreateNext(loadData());
+            const container = document.getElementById('main-content');
+            if (state.currentView === 'institutions') renderInstitutions(container, data);
+            else if (state.currentView === 'classes') renderClasses(container, data);
+            else if (state.currentView === 'students') renderStudents(container, data);
+            else if (state.currentView === 'lessons') renderLessons(container, data);
+            else if (state.currentView === 'lessonDetail') renderLessonDetail(container, data);
+            else if (state.currentView === 'globalSettings') renderGlobalSettings(container, data);
+            else if (state.currentView === 'institutionSettings') renderInstitutionSettings(container, data);
+            else if (state.currentView === 'classSettings') renderClassSettings(container, data);
+            else if (state.currentView === 'reports') renderReports(container, data);
+            else if (state.currentView === 'behaviorHistory') renderBehaviorHistory(container, data);
+            else container.innerHTML = '<div>Unknown view</div>';
+        }
+
+        function getEffectiveSettings(data, institutionId, classId) {
+            const global = data.global;
+            const inst = data.institutions.find(i => i.id === institutionId);
+            const cls = data.classes.find(c => c.id === classId);
+            let behaviors = global.behaviors.map(b => ({ ...b }));
+            let defaultTimerSeconds = global.defaultTimerSeconds;
+            let timerSoundDataURL = global.timerSoundDataURL;
+            let limit = global.limit;
+            let consequence = global.consequence;
+
+            if (inst && inst.override) {
+                if (inst.override.behaviors && inst.override.behaviors.length > 0) {
+                    behaviors = inst.override.behaviors.map(b => ({ ...b }));
+                }
+                if (inst.override.defaultTimerSeconds !== null) defaultTimerSeconds = inst.override.defaultTimerSeconds;
+                if (inst.override.timerSoundDataURL !== null) timerSoundDataURL = inst.override.timerSoundDataURL;
+                if (inst.override.limit !== null) limit = inst.override.limit;
+                if (inst.override.consequence !== null) consequence = inst.override.consequence;
+            }
+
+            if (cls && cls.override) {
+                if (cls.override.behaviors && cls.override.behaviors.length > 0) {
+                    behaviors = cls.override.behaviors.map(b => ({ ...b }));
+                }
+                if (cls.override.defaultTimerSeconds !== null) defaultTimerSeconds = cls.override.defaultTimerSeconds;
+                if (cls.override.timerSoundDataURL !== null) timerSoundDataURL = cls.override.timerSoundDataURL;
+                if (cls.override.limit !== null) limit = cls.override.limit;
+                if (cls.override.consequence !== null) consequence = cls.override.consequence;
+            }
+
+            return { behaviors, defaultTimerSeconds, timerSoundDataURL, limit, consequence };
+        }
+
+        // ---------- GLOBAL SETTINGS (with draggable behaviors) ----------
+        function renderGlobalSettings(container, data) {
+            const global = data.global;
+            const hasSound = !!global.timerSoundDataURL;
+
+            container.innerHTML = `
+                <div class="section-title">
+                    <span>⚙️ Global Settings</span>
+                    <button class="btn" id="backFromSettings">Back</button>
+                </div>
+                <div class="info-note">
+                    <i class="fas fa-info-circle"></i> These settings apply to all institutions and classes unless overridden.
+                </div>
+                <div class="settings-group">
+                    <h3>😊 Appropriate behaviors</h3>
+                    <div class="behavior-list" id="globalAppropriateList"></div>
+                    <button class="btn btn-sm" id="addGlobalAppropriate">+ Add appropriate</button>
+                </div>
+                <div class="settings-group">
+                    <h3>😞 Inappropriate behaviors</h3>
+                    <div class="behavior-list" id="globalInappropriateList"></div>
+                    <button class="btn btn-sm" id="addGlobalInappropriate">+ Add inappropriate</button>
+                </div>
+                <div class="settings-group">
+                    <h3>⏱️ Timer default (seconds)</h3>
+                    <input type="number" id="defaultTimerInput" value="${global.defaultTimerSeconds}" min="0" step="1" style="width:120px;">
+                </div>
+                <div class="settings-group">
+                    <h3>🔔 Timer sound (upload MP3/WAV)</h3>
+                    <input type="file" id="soundFileInput" accept="audio/*" style="margin-bottom:0.5rem;">
+                    <div class="sound-preview" id="soundPreview">${hasSound ? '✅ Custom sound loaded' : 'No custom sound (timer will be silent)'}</div>
+                    ${hasSound ? '<button class="btn btn-sm" id="clearSoundBtn">Clear sound</button>' : ''}
+                </div>
+                <div class="settings-group">
+                    <h3>🚦 Limits & consequences</h3>
+                    <label>Inappropriate limit (default 3)</label>
+                    <input type="number" id="limitInput" value="${global.limit}" min="1" style="width:100px;">
+                    <label class="mt-2">Consequence message</label>
+                    <input type="text" id="consequenceInput" value="${escapeHtml(global.consequence)}" style="width:100%;">
+                    <button class="btn btn-primary mt-2" id="saveGlobals">Save changes</button>
+                </div>
+                <div class="settings-group flex" style="gap: 1rem;">
+                    <button class="btn" id="exportBackupBtn"><i class="fas fa-download"></i> Export backup</button>
+                    <button class="btn" id="importBackupBtn"><i class="fas fa-upload"></i> Import backup</button>
+                </div>
+            `;
+
+            renderDraggableBehaviorLists(global.behaviors, 'global', container, data);
+
+            document.getElementById('addGlobalAppropriate').addEventListener('click', () => addBehavior('global', 'appropriate', data, container));
+            document.getElementById('addGlobalInappropriate').addEventListener('click', () => addBehavior('global', 'inappropriate', data, container));
+
+            document.getElementById('backFromSettings')?.addEventListener('click', () => setView('institutions'));
+
+            document.getElementById('saveGlobals')?.addEventListener('click', () => {
+                data.global.defaultTimerSeconds = parseInt(document.getElementById('defaultTimerInput').value) || 0;
+                data.global.limit = parseInt(document.getElementById('limitInput').value) || 1;
+                data.global.consequence = document.getElementById('consequenceInput').value;
+                saveData(data);
+                showAlert('Global settings saved.');
+                renderGlobalSettings(container, data);
+            });
+
+            const fileInput = document.getElementById('soundFileInput');
+            if (fileInput) {
+                fileInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        data.global.timerSoundDataURL = event.target.result;
+                        saveData(data);
+                        renderGlobalSettings(container, data);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            const clearSoundBtn = document.getElementById('clearSoundBtn');
+            if (clearSoundBtn) {
+                clearSoundBtn.addEventListener('click', () => {
+                    data.global.timerSoundDataURL = null;
+                    saveData(data);
+                    renderGlobalSettings(container, data);
+                });
+            }
+
+            document.getElementById('exportBackupBtn')?.addEventListener('click', async () => {
+                const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `full_backup_${new Date().toISOString()}.json`; a.click();
+            });
+
+            document.getElementById('importBackupBtn')?.addEventListener('click', () => {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'application/json';
+                fileInput.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const importedData = JSON.parse(event.target.result);
+                            if (!importedData.institutions || !importedData.classes || !importedData.students || !importedData.lessons || !importedData.behaviorEvents || !importedData.global) {
+                                showAlert('Invalid backup file: missing required sections.');
+                                return;
+                            }
+                            showModal({
+                                title: 'Confirm import',
+                                bodyHtml: '<p>This will replace all current data. Continue?</p>',
+                                confirmText: 'Yes',
+                                cancelText: 'No'
+                            }).then(confirmed => {
+                                if (confirmed) {
+                                    importedData.lessons = importedData.lessons.map(l => ({ ...l, archived: l.archived === true }));
+                                    saveData(importedData);
+                                    stopAllTimers();
+                                    state.currentView = 'institutions';
+                                    state.institutionId = null;
+                                    render();
+                                    showAlert('Data imported successfully.');
+                                }
+                            });
+                        } catch (error) {
+                            showAlert('Invalid JSON file.');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                fileInput.click();
+            });
+        }
+
+        function renderDraggableBehaviorLists(behaviors, context, container, data, institutionId, classId) {
+            const appList = container.querySelector('#globalAppropriateList, #institutionAppropriateList, #classAppropriateList');
+            const inappList = container.querySelector('#globalInappropriateList, #institutionInappropriateList, #classInappropriateList');
+
+            const renderList = (listEl, type) => {
+                const typeBehaviors = behaviors.filter(b => b.type === type);
+                listEl.innerHTML = typeBehaviors.map((b, index) => `
+                    <div class="behavior-item" draggable="true" data-id="${b.id}" data-index="${index}">
+                        <span class="behavior-drag-handle">⋮⋮</span>
+                        <span style="flex:1;">${escapeHtml(b.description)}</span>
+                        <button class="icon-btn" data-id="${b.id}" data-action="deleteBehavior"><i class="fas fa-trash"></i></button>
+                    </div>
+                `).join('');
+
+                let draggedItem = null;
+                listEl.querySelectorAll('.behavior-item').forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                        draggedItem = item;
+                        item.classList.add('dragging');
+                        e.dataTransfer.setData('text/plain', item.dataset.id);
+                        e.dataTransfer.effectAllowed = 'move';
+                    });
+                    item.addEventListener('dragend', () => {
+                        item.classList.remove('dragging');
+                        draggedItem = null;
+                    });
+                    item.addEventListener('dragover', (e) => e.preventDefault());
+                    item.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        if (!draggedItem || draggedItem === item) return;
+                        const draggedId = draggedItem.dataset.id;
+                        const targetId = item.dataset.id;
+                        const allItems = Array.from(listEl.querySelectorAll('.behavior-item'));
+                        const draggedIdx = allItems.indexOf(draggedItem);
+                        const targetIdx = allItems.indexOf(item);
+                        const behaviorArray = behaviors.filter(b => b.type === type);
+                        const draggedBehavior = behaviorArray.find(b => b.id === draggedId);
+                        const targetBehavior = behaviorArray.find(b => b.id === targetId);
+                        const globalArray = (context === 'global') ? data.global.behaviors :
+                            (context === 'institution') ? data.institutions.find(i => i.id === institutionId).override.behaviors :
+                            data.classes.find(c => c.id === classId).override.behaviors;
+                        const globalIndices = globalArray.map((b, idx) => ({ id: b.id, idx }));
+                        const draggedGlobalIdx = globalIndices.find(g => g.id === draggedId).idx;
+                        const targetGlobalIdx = globalIndices.find(g => g.id === targetId).idx;
+                        const [moved] = globalArray.splice(draggedGlobalIdx, 1);
+                        const newTargetIdx = globalArray.findIndex(b => b.id === targetId);
+                        if (draggedIdx < targetIdx) {
+                            globalArray.splice(newTargetIdx + 1, 0, moved);
+                        } else {
+                            globalArray.splice(newTargetIdx, 0, moved);
+                        }
+                        saveData(data);
+                        if (context === 'global') renderGlobalSettings(container, data);
+                        else if (context === 'institution') renderInstitutionSettings(container, data);
+                        else renderClassSettings(container, data);
+                    });
+                });
+
+                listEl.querySelectorAll('[data-action="deleteBehavior"]').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const id = e.target.closest('button').dataset.id;
+                        if (await showModal({ title: 'Delete behavior', bodyHtml: '<p>Remove this behavior?</p>' })) {
+                            const behaviorArray = (context === 'global') ? data.global.behaviors :
+                                (context === 'institution') ? data.institutions.find(i => i.id === institutionId).override.behaviors :
+                                data.classes.find(c => c.id === classId).override.behaviors;
+                            const index = behaviorArray.findIndex(b => b.id === id);
+                            if (index !== -1) behaviorArray.splice(index, 1);
+                            saveData(data);
+                            if (context === 'global') renderGlobalSettings(container, data);
+                            else if (context === 'institution') renderInstitutionSettings(container, data);
+                            else renderClassSettings(container, data);
+                        }
+                    });
+                });
+            };
+
+            if (appList) renderList(appList, 'appropriate');
+            if (inappList) renderList(inappList, 'inappropriate');
+        }
+
+        // ---------- INSTITUTIONS ----------
+        function renderInstitutions(container, data) {
+            let html = `<div class="section-title"><span>🏫 Your institutions</span><button class="btn btn-primary" id="addInstitutionBtn"><i class="fas fa-plus"></i> Add institution</button></div>`;
+            html += '<div class="card-grid" id="institutionGrid">';
+            data.institutions.forEach(inst => {
+                const classCount = data.classes.filter(c => c.institutionId === inst.id).length;
+                html += `<div class="card institution-card" draggable="true" data-id="${inst.id}">
+                    <div class="card-header">
+                        <div style="display: flex; align-items: center;">
+                            <span class="drag-handle" draggable="false">⋮⋮</span>
+                            <span>${escapeHtml(inst.name)}</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="icon-btn" data-id="${inst.id}" data-name="${escapeHtml(inst.name)}" data-action="editInst"><i class="fas fa-edit"></i></button>
+                            <button class="icon-btn" data-id="${inst.id}" data-name="${escapeHtml(inst.name)}" data-action="deleteInst"><i class="fas fa-trash"></i></button>
+                            <button class="icon-btn" data-id="${inst.id}" data-name="${escapeHtml(inst.name)}" data-action="settingsInst"><i class="fas fa-cog"></i></button>
+                        </div>
+                    </div>
+                    <p><i class="fas fa-users"></i> classes: ${classCount}</p>
+                    <button class="btn btn-sm" data-id="${inst.id}" data-name="${escapeHtml(inst.name)}" data-action="selectInst"><i class="fas fa-arrow-right"></i> Open</button>
+                </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+
+            const grid = document.getElementById('institutionGrid');
+            let draggedItem = null;
+            grid.addEventListener('dragstart', (e) => {
+                const card = e.target.closest('.institution-card');
+                if (!card) return;
+                draggedItem = card;
+                card.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', card.dataset.id);
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            grid.addEventListener('dragend', (e) => {
+                const card = e.target.closest('.institution-card');
+                if (card) card.classList.remove('dragging');
+                draggedItem = null;
+            });
+            grid.addEventListener('dragover', (e) => e.preventDefault());
+            grid.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const targetCard = e.target.closest('.institution-card');
+                if (!targetCard || !draggedItem || draggedItem === targetCard) return;
+                const draggedId = draggedItem.dataset.id;
+                const targetId = targetCard.dataset.id;
+                const allInstitutions = data.institutions;
+                const draggedIdx = allInstitutions.findIndex(i => i.id === draggedId);
+                const targetIdx = allInstitutions.findIndex(i => i.id === targetId);
+                const [moved] = allInstitutions.splice(draggedIdx, 1);
+                allInstitutions.splice(targetIdx, 0, moved);
+                saveData(data);
+                render();
+            });
+
+            document.getElementById('addInstitutionBtn')?.addEventListener('click', async () => {
+                const name = await showModal({ title: 'New institution', bodyHtml: '<input id="modalInput" placeholder="e.g., Lincoln High" class="modal-input">', input: true });
+                if (name) {
+                    data.institutions.push({ 
+                        id: generateId(), 
+                        name, 
+                        override: { behaviors: [], defaultTimerSeconds: null, timerSoundDataURL: null, limit: null, consequence: null }
+                    });
+                    saveData(data); render();
+                }
+            });
+
+            document.querySelectorAll('[data-action="editInst"]').forEach(b => b.addEventListener('click', async (e) => {
+                const id = e.target.closest('button').dataset.id;
+                const old = e.target.closest('button').dataset.name;
+                const neu = await showModal({ title: 'Edit name', bodyHtml: `<input id="modalInput" value="${escapeHtml(old)}">`, input: true });
+                if (neu) {
+                    const inst = data.institutions.find(i => i.id === id);
+                    if (inst) inst.name = neu;
+                    saveData(data); render();
+                }
+            }));
+
+            document.querySelectorAll('[data-action="deleteInst"]').forEach(b => b.addEventListener('click', async (e) => {
+                const id = e.target.closest('button').dataset.id;
+                const name = e.target.closest('button').dataset.name;
+                if (!await showModal({ title: 'Delete institution?', bodyHtml: '<p>Are you sure? This cannot be undone.</p>' })) return;
+                const typed = await showModal({ title: 'Confirm name', bodyHtml: `<p>Type "<strong>${escapeHtml(name)}</strong>" to confirm:</p><input id="modalInput">`, input: true });
+                if (typed !== name) { showAlert('Incorrect name'); return; }
+
+                const instClasses = data.classes.filter(c => c.institutionId === id);
+                const classIds = instClasses.map(c => c.id);
+                const lessonIds = data.lessons.filter(l => classIds.includes(l.classId)).map(l => l.id);
+
+                const backup = await showModal({ title: 'Backup?', bodyHtml: '<p>Do you want to create a JSON backup before deleting? (Yes/No)</p>', confirmText: 'Yes', cancelText: 'No' });
+                if (backup) {
+                    const instStudents = data.students.filter(s => classIds.includes(s.classId));
+                    const instLessons = data.lessons.filter(l => classIds.includes(l.classId));
+                    const instBehaviorEvents = data.behaviorEvents.filter(be => lessonIds.includes(be.lessonId));
+                    const backupData = {
+                        institution: data.institutions.find(i => i.id === id),
+                        classes: instClasses,
+                        students: instStudents,
+                        lessons: instLessons,
+                        behaviorEvents: instBehaviorEvents
+                    };
+                    const blob = new Blob([JSON.stringify(backupData)], { type: 'application/json' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `institution_${name}_backup.json`; a.click();
+                }
+
+                data.institutions = data.institutions.filter(i => i.id !== id);
+                data.classes = data.classes.filter(c => c.institutionId !== id);
+                data.students = data.students.filter(s => !classIds.includes(s.classId));
+                data.lessons = data.lessons.filter(l => !classIds.includes(l.classId));
+                data.behaviorEvents = data.behaviorEvents.filter(be => !lessonIds.includes(be.lessonId));
+                saveData(data);
+                render();
+            }));
+
+            document.querySelectorAll('[data-action="selectInst"]').forEach(b => b.addEventListener('click', (e) => {
+                const id = e.target.closest('button').dataset.id;
+                const name = e.target.closest('button').dataset.name;
+                setView('classes', { institutionId: id, institutionName: name });
+            }));
+
+            document.querySelectorAll('[data-action="settingsInst"]').forEach(b => b.addEventListener('click', (e) => {
+                const id = e.target.closest('button').dataset.id;
+                const name = e.target.closest('button').dataset.name;
+                setView('institutionSettings', { institutionId: id, institutionName: name });
+            }));
+        }
+
+        // ---------- CLASSES (unchanged) ----------
+        function renderClasses(container, data) {
+            const institution = data.institutions.find(i => i.id === state.institutionId);
+            if (!institution) { setView('institutions'); return; }
+
+            container.innerHTML = `
+                <div class="section-title">
+                    <button class="btn" id="backToInstitutions"><i class="fas fa-arrow-left"></i> Institutions</button>
+                    <span>📚 ${escapeHtml(state.institutionName)} / Class names</span>
+                    <button class="btn btn-primary" id="addClassBtn"><i class="fas fa-plus"></i> Add class name</button>
+                </div>
+                <div class="card-grid" id="classGrid"></div>
+            `;
+
+            const grid = document.getElementById('classGrid');
+            data.classes.filter(c => c.institutionId === state.institutionId).forEach(cls => {
+                const days = cls.days ? cls.days.join(', ') : '';
+                const card = document.createElement('div');
+                card.className = 'card class-card';
+                card.setAttribute('draggable', 'true');
+                card.dataset.id = cls.id;
+                card.dataset.institutionId = cls.institutionId;
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div style="display: flex; align-items: center;">
+                            <span class="drag-handle" draggable="false">⋮⋮</span>
+                            <span>${escapeHtml(cls.name)}</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="icon-btn" data-id="${cls.id}" data-name="${escapeHtml(cls.name)}" data-action="editClass"><i class="fas fa-edit"></i></button>
+                            <button class="icon-btn" data-id="${cls.id}" data-name="${escapeHtml(cls.name)}" data-action="deleteClass"><i class="fas fa-trash"></i></button>
+                            <button class="icon-btn" data-id="${cls.id}" data-name="${escapeHtml(cls.name)}" data-action="settingsClass"><i class="fas fa-cog"></i></button>
+                        </div>
+                    </div>
+                    <p><i class="far fa-calendar-alt"></i> ${escapeHtml(days) || 'No days'}</p>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem; flex-wrap: wrap;">
+                        <button class="btn btn-sm" data-id="${cls.id}" data-name="${escapeHtml(cls.name)}" data-action="daysOfClass"><i class="fas fa-calendar-alt"></i> Days of class</button>
+                        <button class="btn btn-sm" data-id="${cls.id}" data-name="${escapeHtml(cls.name)}" data-action="studentsClass"><i class="fas fa-users"></i> Students</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            let draggedItem = null;
+            grid.addEventListener('dragstart', (e) => {
+                const card = e.target.closest('.class-card');
+                if (!card) return;
+                draggedItem = card;
+                card.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', card.dataset.id);
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            grid.addEventListener('dragend', (e) => {
+                const card = e.target.closest('.class-card');
+                if (card) card.classList.remove('dragging');
+                draggedItem = null;
+            });
+            grid.addEventListener('dragover', (e) => e.preventDefault());
+            grid.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const targetCard = e.target.closest('.class-card');
+                if (!targetCard || !draggedItem || draggedItem === targetCard) return;
+                const draggedId = draggedItem.dataset.id;
+                const targetId = targetCard.dataset.id;
+                const allClasses = data.classes;
+                const draggedIdx = allClasses.findIndex(c => c.id === draggedId);
+                const targetIdx = allClasses.findIndex(c => c.id === targetId);
+                const [moved] = allClasses.splice(draggedIdx, 1);
+                allClasses.splice(targetIdx, 0, moved);
+                saveData(data);
+                render();
+            });
+
+            document.getElementById('backToInstitutions').addEventListener('click', () => setView('institutions'));
+            document.getElementById('addClassBtn').addEventListener('click', async () => {
+                const name = await showModal({ title: 'New class name', bodyHtml: '<input id="modalInput" placeholder="e.g., Math 101">', input: true });
+                if (!name) return;
+                const daysHtml = `<div class="checkbox-group" id="dayCheckboxes">${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d => `<label><input type="checkbox" value="${d}"> ${d}</label>`).join('')}</div>`;
+                const selectedDays = await showModal({ title: 'Select class days', bodyHtml: daysHtml, confirmText: 'Save', input: false });
+                if (!selectedDays) return;
+                const checkboxes = document.querySelectorAll('#dayCheckboxes input:checked');
+                const days = Array.from(checkboxes).map(cb => cb.value);
+                if (days.length === 0) { showAlert('Select at least one day'); return; }
+                data.classes.push({ id: generateId(), institutionId: state.institutionId, name, days, override: { behaviors: [], defaultTimerSeconds: null, timerSoundDataURL: null, limit: null, consequence: null } });
+                saveData(data); render();
+            });
+
+            document.querySelectorAll('[data-action="editClass"]').forEach(b => b.addEventListener('click', async (e) => {
+                const id = e.target.closest('button').dataset.id;
+                const cls = data.classes.find(c => c.id === id);
+                if (!cls) return;
+                const daysHtml = `<div class="checkbox-group" id="dayCheckboxes">${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d => {
+                    const checked = cls.days && cls.days.includes(d) ? 'checked' : '';
+                    return `<label><input type="checkbox" value="${d}" ${checked}> ${d}</label>`;
+                }).join('')}</div>`;
+                const bodyHtml = `
+                    <input id="classNameInput" placeholder="Class name" value="${escapeHtml(cls.name)}" style="width:100%; margin-bottom:1rem;">
+                    ${daysHtml}
+                `;
+                const result = await showModal({
+                    title: 'Edit class',
+                    bodyHtml,
+                    showCancel: true,
+                    confirmText: 'Save',
+                    cancelText: 'Cancel',
+                    input: false
+                });
+                if (!result) return;
+                const newName = document.getElementById('classNameInput').value;
+                const checkboxes = document.querySelectorAll('#dayCheckboxes input:checked');
+                const days = Array.from(checkboxes).map(cb => cb.value);
+                if (!newName.trim()) { showAlert('Name cannot be empty'); return; }
+                if (days.length === 0) { showAlert('Select at least one day'); return; }
+                cls.name = newName.trim();
+                cls.days = days;
+                saveData(data);
+                render();
+            }));
+
+            document.querySelectorAll('[data-action="deleteClass"]').forEach(b => b.addEventListener('click', async (e) => {
+                const id = e.target.closest('button').dataset.id; const name = e.target.closest('button').dataset.name;
+                if (!await showModal({ title: 'Delete class name?', bodyHtml: '<p>Are you sure?</p>' })) return;
+                const typed = await showModal({ title: 'Confirm', bodyHtml: `<p>Type "${escapeHtml(name)}"</p><input id="modalInput">`, input: true });
+                if (typed !== name) { showAlert('Incorrect'); return; }
+                const classIds = [id]; const lessonIds = data.lessons.filter(l => l.classId === id).map(l => l.id);
+                data.classes = data.classes.filter(c => c.id !== id);
+                data.students = data.students.filter(s => s.classId !== id);
+                data.lessons = data.lessons.filter(l => l.classId !== id);
+                data.behaviorEvents = data.behaviorEvents.filter(be => !lessonIds.includes(be.lessonId));
+                saveData(data); render();
+            }));
+
+            document.querySelectorAll('[data-action="daysOfClass"]').forEach(b => b.addEventListener('click', (e) => {
+                state.classId = e.target.closest('button').dataset.id; state.className = e.target.closest('button').dataset.name;
+                setView('lessons', { classId: state.classId, className: state.className });
+            }));
+
+            document.querySelectorAll('[data-action="studentsClass"]').forEach(b => b.addEventListener('click', (e) => {
+                state.classId = e.target.closest('button').dataset.id; state.className = e.target.closest('button').dataset.name;
+                setView('students', { classId: state.classId, className: state.className });
+            }));
+
+            document.querySelectorAll('[data-action="settingsClass"]').forEach(b => b.addEventListener('click', (e) => {
+                state.classId = e.target.closest('button').dataset.id; state.className = e.target.closest('button').dataset.name;
+                setView('classSettings', { classId: state.classId, className: state.className });
+            }));
+        }
+
+        // ---------- STUDENTS (removed "Days of class" button) ----------
+        function renderStudents(container, data) {
+            container.innerHTML = `
+                <div class="section-title">
+                    <button class="btn" id="backToClasses"><i class="fas fa-arrow-left"></i> Class names</button>
+                    <span>👥 ${escapeHtml(state.className)}</span>
+                    <button class="btn btn-primary" id="addStudentBtn"><i class="fas fa-user-plus"></i> Add students</button>
+                </div>
+                <div id="studentList"></div>
+            `;
+            const listDiv = document.getElementById('studentList');
+            data.students.filter(s => s.classId === state.classId).forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'student-row';
+                div.innerHTML = `
+                    <span class="student-name">${escapeHtml(s.name)}</span>
+                    <div>
+                        <button class="icon-btn" data-id="${s.id}" data-action="editStudent"><i class="fas fa-edit"></i></button>
+                        <button class="icon-btn" data-id="${s.id}" data-action="deleteStudent"><i class="fas fa-trash"></i></button>
+                        <button class="icon-btn" data-id="${s.id}" data-action="reportStudent"><i class="fas fa-chart-bar"></i></button>
+                    </div>
+                `;
+                listDiv.appendChild(div);
+            });
+
+            document.getElementById('backToClasses').addEventListener('click', () => setView('classes'));
+
+            document.getElementById('addStudentBtn').addEventListener('click', async () => {
+                const choice = await new Promise((resolve) => {
+                    const modalDiv = document.getElementById('customModal');
+                    document.getElementById('modalTitle').innerText = 'Add students';
+                    document.getElementById('modalBody').innerHTML = `
+                        <button class="btn" id="chooseManual" style="width:100%; margin-bottom:10px;">➕ Manual entry</button>
+                        <button class="btn" id="chooseImport" style="width:100%;">📋 Import from column</button>
+                    `;
+                    const actionsDiv = document.getElementById('modalActions');
+                    actionsDiv.innerHTML = '<button class="btn" id="cancelAdd">Cancel</button>';
+                    document.getElementById('cancelAdd').onclick = () => { closeModal(); resolve(null); };
+                    document.getElementById('chooseManual').onclick = () => { closeModal(); resolve('manual'); };
+                    document.getElementById('chooseImport').onclick = () => { closeModal(); resolve('import'); };
+                    modalDiv.classList.add('active');
+                });
+                if (!choice) return;
+                if (choice === 'manual') {
+                    const name = await showModal({ title: 'Manual entry', bodyHtml: '<input id="modalInput" placeholder="Student name">', input: true });
+                    if (name && name.trim()) {
+                        data.students.push({ id: generateId(), classId: state.classId, name: name.trim() });
+                        saveData(data); render();
+                    }
+                } else {
+                    const text = await showModal({ title: 'Import names', bodyHtml: '<textarea id="modalInput" rows="6" placeholder="One name per line"></textarea>', input: true });
+                    if (text) {
+                        const names = text.split('\n').map(s => s.trim()).filter(s => s);
+                        names.forEach(n => data.students.push({ id: generateId(), classId: state.classId, name: n }));
+                        saveData(data); render();
+                        showAlert(`Added ${names.length} student(s).`);
+                    }
+                }
+            });
+
+            document.querySelectorAll('[data-action="editStudent"]').forEach(b => b.addEventListener('click', async (e) => {
+                const id = e.target.closest('button').dataset.id;
+                const student = data.students.find(s => s.id === id);
+                if (!student) return;
+                const newName = await showModal({ title: 'Edit student name', bodyHtml: `<input id="modalInput" value="${escapeHtml(student.name)}">`, input: true });
+                if (newName && newName.trim()) {
+                    student.name = newName.trim();
+                    saveData(data); render();
+                }
+            }));
+
+            document.querySelectorAll('[data-action="deleteStudent"]').forEach(b => b.addEventListener('click', async (e) => {
+                const id = e.target.closest('button').dataset.id;
+                if (await showModal({ title: 'Delete student', bodyHtml: '<p>Remove this student?</p>' })) {
+                    data.students = data.students.filter(s => s.id !== id);
+                    data.behaviorEvents = data.behaviorEvents.filter(be => be.studentId !== id);
+                    saveData(data); render();
+                }
+            }));
+
+            document.querySelectorAll('[data-action="reportStudent"]').forEach(b => b.addEventListener('click', (e) => {
+                const studentId = e.target.closest('button').dataset.id;
+                const student = data.students.find(s => s.id === studentId);
+                if (student) {
+                    setView('behaviorHistory', { studentId: student.id, studentName: student.name });
+                }
+            }));
+        }
+
+        // ---------- LESSONS (unchanged) ----------
+        function renderLessons(container, data) {
+            const classLessons = data.lessons.filter(l => l.classId === state.classId);
+            const activeLessons = classLessons.filter(l => !l.archived);
+            const archivedLessons = classLessons.filter(l => l.archived);
+
+            container.innerHTML = `
+                <div class="section-title">
+                    <button class="btn" id="backToClasses"><i class="fas fa-arrow-left"></i> Class names</button>
+                    <span>📅 Days of class · ${escapeHtml(state.className)}</span>
+                    <button class="btn btn-primary" id="createLessonBtn"><i class="fas fa-plus"></i> Create class day</button>
+                </div>
+                <h3>Active days</h3>
+                <div class="card-grid" id="activeLessonGrid"></div>
+                ${archivedLessons.length > 0 ? `
+                    <div class="archive-section">
+                        <div class="archive-title"><i class="fas fa-archive"></i> Archived days</div>
+                        <div class="card-grid" id="archivedLessonGrid"></div>
+                    </div>
+                ` : ''}
+            `;
+
+            const activeGrid = document.getElementById('activeLessonGrid');
+            activeLessons.forEach(lesson => {
+                const card = document.createElement('div'); card.className = 'card';
+                const dateStr = lesson.date ? new Date(lesson.date + 'T12:00:00').toLocaleDateString() : 'No date';
+                const dayOfWeek = lesson.date ? getDayOfWeek(lesson.date) : '';
+                card.innerHTML = `
+                    <div><strong>${escapeHtml(dayOfWeek)}</strong> ${escapeHtml(dateStr)}</div>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem;">
+                        <button class="btn btn-sm" data-id="${lesson.id}" data-action="openLesson">open</button>
+                        <button class="btn btn-sm" data-id="${lesson.id}" data-action="archiveLesson"><i class="fas fa-archive"></i> Archive</button>
+                        <button class="btn btn-sm btn-danger" data-id="${lesson.id}" data-action="deleteLesson"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                activeGrid.appendChild(card);
+            });
+
+            if (archivedLessons.length > 0) {
+                const archivedGrid = document.getElementById('archivedLessonGrid');
+                archivedLessons.forEach(lesson => {
+                    const card = document.createElement('div'); card.className = 'card';
+                    const dateStr = lesson.date ? new Date(lesson.date + 'T12:00:00').toLocaleDateString() : 'No date';
+                    const dayOfWeek = lesson.date ? getDayOfWeek(lesson.date) : '';
+                    card.innerHTML = `
+                        <div><strong>${escapeHtml(dayOfWeek)}</strong> ${escapeHtml(dateStr)}</div>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem;">
+                            <button class="btn btn-sm" data-id="${lesson.id}" data-action="openLesson">open</button>
+                            <button class="btn btn-sm btn-danger" data-id="${lesson.id}" data-action="deleteLesson"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                    archivedGrid.appendChild(card);
+                });
+            }
+
+            document.getElementById('backToClasses').addEventListener('click', () => setView('classes'));
+
+            document.getElementById('createLessonBtn').addEventListener('click', async () => {
+                const classObj = data.classes.find(c => c.id === state.classId);
+                if (!classObj || !classObj.days || classObj.days.length === 0) {
+                    showAlert('This class has no days selected.'); return;
+                }
+                const nextMissing = getNextMissingClassDate(classObj, data);
+                if (!nextMissing) {
+                    showAlert('No upcoming class days available without an active lesson in the next 60 days.');
+                    return;
+                }
+                data.lessons.push({
+                    id: generateId(),
+                    classId: state.classId,
+                    date: nextMissing,
+                    archived: false
+                });
+                saveData(data);
+                render();
+                showAlert(`Created class day for ${new Date(nextMissing + 'T12:00:00').toLocaleDateString()}`);
+            });
+
+            document.querySelectorAll('[data-action="archiveLesson"]').forEach(b => b.addEventListener('click', async (e) => {
+                const lessonId = e.target.closest('button').dataset.id;
+                const lesson = data.lessons.find(l => l.id === lessonId);
+                if (!lesson) return;
+                const confirmArchive = await showModal({ title: 'Archive class day?', bodyHtml: `<p>Move this day to archive?</p>`, confirmText: 'Archive', cancelText: 'Cancel' });
+                if (!confirmArchive) return;
+                lesson.archived = true;
+                saveData(data);
+                render();
+            }));
+
+            document.querySelectorAll('[data-action="deleteLesson"]').forEach(b => b.addEventListener('click', async (e) => {
+                const lessonId = e.target.closest('button').dataset.id;
+                const lesson = data.lessons.find(l => l.id === lessonId);
+                if (!lesson) return;
+                if (!await showModal({ title: 'Delete class day?', bodyHtml: '<p>Are you sure you want to delete this class day?</p>' })) return;
+                const typed = await showModal({ title: 'Confirm deletion', bodyHtml: `<p>Type the class name "<strong>${escapeHtml(state.className)}</strong>" to confirm:</p><input id="modalInput">`, input: true });
+                if (typed !== state.className) { showAlert('Incorrect class name.'); return; }
+                data.lessons = data.lessons.filter(l => l.id !== lessonId);
+                data.behaviorEvents = data.behaviorEvents.filter(be => be.lessonId !== lessonId);
+                saveData(data);
+                render();
+            }));
+
+            document.querySelectorAll('[data-action="openLesson"]').forEach(b => b.addEventListener('click', (e) => {
+                state.lessonId = e.target.closest('button').dataset.id;
+                setView('lessonDetail', { lessonId: state.lessonId });
+            }));
+        }
+
+        // ---------- LESSON DETAIL (back button at top) ----------
+        function renderLessonDetail(container, data) {
+            const effective = getEffectiveSettings(data, state.institutionId, state.classId);
+            const limit = effective.limit;
+            const consequence = effective.consequence;
+            const defaultTimer = effective.defaultTimerSeconds;
+            const timerSound = effective.timerSoundDataURL;
+            const lesson = data.lessons.find(l => l.id === state.lessonId);
+            const lessonDate = lesson ? new Date(lesson.date + 'T12:00:00').toLocaleDateString() : '';
+
+            const lessonBehaviors = data.behaviorEvents.filter(be => be.lessonId === state.lessonId);
+            const studentMap = {};
+            data.students.filter(s => s.classId === state.classId).forEach(s => {
+                studentMap[s.id] = { name: s.name, appropriate: [], inappropriate: [] };
+            });
+            lessonBehaviors.forEach(be => {
+                if (studentMap[be.studentId]) {
+                    if (be.type === 'appropriate') studentMap[be.studentId].appropriate.push(be);
+                    else studentMap[be.studentId].inappropriate.push(be);
+                }
+            });
+
+            if (!timers[state.lessonId]) timers[state.lessonId] = {};
+
+            Object.keys(timers[state.lessonId]).forEach(studentId => {
+                const student = studentMap[studentId];
+                if (!student || student.inappropriate.length < limit) {
+                    const timer = timers[state.lessonId][studentId];
+                    if (timer && timer.intervalId) clearInterval(timer.intervalId);
+                    delete timers[state.lessonId][studentId];
+                }
+            });
+
+            Object.entries(studentMap).forEach(([studentId, student]) => {
+                if (student.inappropriate.length >= limit && !timers[state.lessonId][studentId]) {
+                    timers[state.lessonId][studentId] = {
+                        remaining: defaultTimer,
+                        running: false,
+                        intervalId: null,
+                        alarmActive: false
+                    };
+                }
+            });
+
+            // Back button now inside header
+            let headerHtml = `<div class="lesson-header">
+                <button class="btn btn-sm" id="closeLesson"><i class="fas fa-arrow-left"></i> Back</button>
+                <span><strong>🏫 Institution:</strong> ${escapeHtml(state.institutionName)}</span>
+                <span><strong>📚 Class:</strong> ${escapeHtml(state.className)}</span>
+                <span><strong>📅 Date:</strong> ${escapeHtml(lessonDate)}</span>
+                <span class="dice-button" id="drawStudentBtn" title="Draw a student with fewest appropriate behaviors"><i class="fas fa-dice"></i></span>
+            </div>`;
+
+            let tableHtml = `<div class="table-container"><div class="lesson-table">
+                <div class="table-header">Student</div>
+                <div class="table-header">😊 / 😞</div>
+                <div class="table-header">Behaviors</div>
+                <div class="table-header">Undo</div>
+                <div class="table-header">Timer</div>`;
+
+            Object.entries(studentMap).forEach(([studentId, rec]) => {
+                const appCount = rec.appropriate.length;
+                const inappCount = rec.inappropriate.length;
+                const behaviorTexts = [...rec.appropriate.map(b => escapeHtml(b.description)), ...rec.inappropriate.map(b => escapeHtml(b.description))].join(', ');
+                const timer = timers[state.lessonId][studentId];
+                const hasTimer = !!timer;
+
+                const smileHtml = `
+                    <div class="smile-with-count">
+                        <div class="smile-item">
+                            <span class="clickable-smile" data-student="${studentId}" data-type="appropriate">😊</span>
+                            <span class="count-badge">${appCount}</span>
+                        </div>
+                        <div class="smile-item">
+                            <span class="clickable-smile" data-student="${studentId}" data-type="inappropriate">😞</span>
+                            <span class="count-badge">${inappCount}</span>
+                        </div>
+                    </div>
+                `;
+
+                let timerCell = '';
+                if (hasTimer) {
+                    const remaining = timer.remaining;
+                    const alarmActive = timer.alarmActive;
+                    if (alarmActive) {
+                        timerCell = `
+                            <button class="timer-btn stop-alarm" data-student="${studentId}" data-action="stopAlarm" title="Stop alarm and prompt apology"><i class="fas fa-stop"></i> Stop</button>
+                        `;
+                    } else {
+                        timerCell = `
+                            <span class="timer-display" id="timer-${studentId}">${formatTime(remaining)}</span>
+                            <button class="timer-btn" data-student="${studentId}" data-action="startTimer"><i class="fas fa-play"></i></button>
+                            <button class="timer-btn" data-student="${studentId}" data-action="pauseTimer"><i class="fas fa-pause"></i></button>
+                            <button class="timer-btn" data-student="${studentId}" data-action="resetTimer"><i class="fas fa-undo-alt"></i></button>
+                        `;
+                    }
+                } else {
+                    timerCell = '<span class="timer-placeholder">—</span>';
+                }
+
+                tableHtml += `
+                    <div class="table-cell student-name-cell">${escapeHtml(rec.name)}</div>
+                    <div class="table-cell">${smileHtml}</div>
+                    <div class="table-cell">${behaviorTexts}</div>
+                    <div class="table-cell">
+                        <button class="undo-btn" data-student="${studentId}" title="Undo last behavior"><i class="fas fa-undo-alt"></i></button>
+                    </div>
+                    <div class="table-cell">
+                        <div class="timer-controls" id="timer-controls-${studentId}">
+                            ${timerCell}
+                        </div>
+                    </div>
+                `;
+            });
+
+            tableHtml += '</div></div>';
+            container.innerHTML = headerHtml + tableHtml;
+
+            document.getElementById('drawStudentBtn')?.addEventListener('click', () => {
+                const students = Object.entries(studentMap).map(([id, rec]) => ({
+                    id,
+                    name: rec.name,
+                    appropriateCount: rec.appropriate.length
+                }));
+                if (students.length === 0) {
+                    showAlert('No students in this class.');
+                    return;
+                }
+                const minCount = Math.min(...students.map(s => s.appropriateCount));
+                const candidates = students.filter(s => s.appropriateCount === minCount);
+                candidates.sort((a, b) => a.name.localeCompare(b.name));
+                const chosen = candidates[0];
+                showAlert(`🎲 Draw result: ${chosen.name} (${chosen.appropriateCount} positive behaviors)`);
+            });
+
+            document.getElementById('closeLesson')?.addEventListener('click', () => setView('lessons'));
+
+            // Timer event handlers (unchanged)
+            document.querySelectorAll('[data-action="startTimer"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const studentId = e.currentTarget.dataset.student;
+                    const timer = timers[state.lessonId][studentId];
+                    if (!timer || timer.running || timer.alarmActive) return;
+                    timer.running = true;
+                    timer.intervalId = setInterval(() => {
+                        if (timer.remaining > 0) {
+                            timer.remaining--;
+                            const disp = document.getElementById(`timer-${studentId}`);
+                            if (disp) disp.innerText = formatTime(timer.remaining);
+                        } else {
+                            clearInterval(timer.intervalId);
+                            timer.running = false;
+                            timer.intervalId = null;
+                            if (!timer.alarmActive) {
+                                timer.alarmActive = true;
+                                if (timerSound) {
+                                    playTimerSound(timerSound);
+                                }
+                                render();
+                            }
+                        }
+                    }, 1000);
+                });
+            });
+
+            document.querySelectorAll('[data-action="pauseTimer"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const studentId = e.currentTarget.dataset.student;
+                    const timer = timers[state.lessonId][studentId];
+                    if (timer && timer.running) {
+                        clearInterval(timer.intervalId);
+                        timer.running = false;
+                        timer.intervalId = null;
+                    }
+                });
+            });
+
+            document.querySelectorAll('[data-action="resetTimer"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const studentId = e.currentTarget.dataset.student;
+                    const timer = timers[state.lessonId][studentId];
+                    if (timer) {
+                        if (timer.running) {
+                            clearInterval(timer.intervalId);
+                            timer.running = false;
+                            timer.intervalId = null;
+                        }
+                        timer.remaining = defaultTimer;
+                        timer.alarmActive = false;
+                        const disp = document.getElementById(`timer-${studentId}`);
+                        if (disp) disp.innerText = formatTime(defaultTimer);
+                        render();
+                    }
+                });
+            });
+
+            document.querySelectorAll('[data-action="stopAlarm"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const studentId = e.currentTarget.dataset.student;
+                    const timer = timers[state.lessonId][studentId];
+                    if (timer && timer.alarmActive) {
+                        timer.alarmActive = false;
+                        const studentName = studentMap[studentId].name;
+                        showAlert(`Make sure ${studentName} knows what rule they broke and demand an apology.`);
+                        render();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.clickable-smile').forEach(el => {
+                el.addEventListener('click', async (e) => {
+                    const studentId = e.target.dataset.student;
+                    const type = e.target.dataset.type;
+                    const list = effective.behaviors.filter(b => b.type === type);
+                    if (list.length === 0) {
+                        showAlert('No behaviors defined for this context. Go to Settings to add some.');
+                        return;
+                    }
+                    const options = list.map(b => `<option value="${b.id}">${escapeHtml(b.description)}</option>`).join('');
+                    const selectHtml = `<select id="modalInput" class="modal-input">${options}</select>`;
+                    const selectedId = await showModal({ title: `Select ${type} behavior`, bodyHtml: selectHtml, input: true });
+                    if (!selectedId) return;
+                    const behavior = list.find(b => b.id === selectedId);
+                    if (!behavior) return;
+
+                    const newEvent = {
+                        id: generateId(),
+                        lessonId: state.lessonId,
+                        studentId,
+                        type,
+                        description: behavior.description,
+                        timestamp: new Date().toISOString()
+                    };
+                    data.behaviorEvents.push(newEvent);
+                    saveData(data);
+
+                    const updatedInapp = data.behaviorEvents.filter(be => be.lessonId === state.lessonId && be.studentId === studentId && be.type === 'inappropriate').length;
+                    const studentObj = data.students.find(s => s.id === studentId);
+                    const studentName = studentObj ? studentObj.name : 'Student';
+
+                    if (type === 'inappropriate') {
+                        if (updatedInapp === limit) {
+                            showAlert(`⚠️ Go to ${studentName}'s level, make eye contact, state the rules that were broken, and explain the consequence: ${consequence}`);
+                        }
+                    } else {
+                        showAlert('😊 Praise the appropriate behavior in front of the class.');
+                    }
+
+                    render();
+                });
+            });
+
+            document.querySelectorAll('.undo-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const studentId = e.currentTarget.dataset.student;
+                    const studentEvents = data.behaviorEvents
+                        .filter(be => be.lessonId === state.lessonId && be.studentId === studentId)
+                        .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+                    if (studentEvents.length === 0) {
+                        showAlert('No behavior to undo for this student.');
+                        return;
+                    }
+                    const lastEvent = studentEvents[0];
+                    const confirmUndo = await showModal({
+                        title: 'Undo last',
+                        bodyHtml: `<p>Remove last behavior: "${escapeHtml(lastEvent.description)}"?</p>`,
+                        confirmText: 'Undo',
+                        cancelText: 'Cancel'
+                    });
+                    if (confirmUndo) {
+                        data.behaviorEvents = data.behaviorEvents.filter(be => be.id !== lastEvent.id);
+                        saveData(data);
+                        render();
+                    }
+                });
+            });
+        }
+
+        // ---------- BEHAVIOR HISTORY (with Faced consequence count) ----------
+        function renderBehaviorHistory(container, data) {
+            const student = data.students.find(s => s.id === state.studentId);
+            if (!student) {
+                container.innerHTML = '<p>Student not found.</p><button class="btn" id="backToReports">Back</button>';
+                document.getElementById('backToReports')?.addEventListener('click', () => setView('reports'));
+                return;
+            }
+
+            const effective = getEffectiveSettings(data, state.institutionId, state.classId);
+            const limit = effective.limit;
+
+            const classLessons = data.lessons.filter(l => l.classId === state.classId).sort((a, b) => a.date.localeCompare(b.date));
+            const studentEvents = data.behaviorEvents.filter(be => be.studentId === state.studentId);
+
+            const totalPositive = studentEvents.filter(be => be.type === 'appropriate').length;
+            const totalNegative = studentEvents.filter(be => be.type === 'inappropriate').length;
+
+            // Count lessons where student reached limit
+            const eventsByLesson = {};
+            studentEvents.forEach(be => {
+                if (!eventsByLesson[be.lessonId]) eventsByLesson[be.lessonId] = [];
+                eventsByLesson[be.lessonId].push(be);
+            });
+
+            let facedConsequence = 0;
+            classLessons.forEach(lesson => {
+                const negativeCount = (eventsByLesson[lesson.id] || []).filter(be => be.type === 'inappropriate').length;
+                if (negativeCount >= limit) facedConsequence++;
+            });
+
+            let html = `
+                <div class="section-title">
+                    <button class="btn" id="backToReports"><i class="fas fa-arrow-left"></i> Reports</button>
+                    <span>📋 ${escapeHtml(student.name)} · History</span>
+                </div>
+                <div class="totals">
+                    <span>😊 Positive: ${totalPositive}</span>
+                    <span>😞 Negative: ${totalNegative}</span>
+                    <span>⚠️ Faced consequence: ${facedConsequence}</span>
+                </div>
+                <h3>Days of class</h3>
+            `;
+
+            if (classLessons.length === 0) {
+                html += '<p>No days found.</p>';
+            } else {
+                classLessons.forEach(lesson => {
+                    const dateStr = new Date(lesson.date + 'T12:00:00').toLocaleDateString();
+                    const dayOfWeek = getDayOfWeek(lesson.date);
+                    const events = eventsByLesson[lesson.id] || [];
+                    const positiveEvents = events.filter(e => e.type === 'appropriate');
+                    const negativeEvents = events.filter(e => e.type === 'inappropriate');
+                    const reachedLimit = negativeEvents.length >= limit;
+
+                    html += `<div class="history-day">`;
+                    html += `<div class="history-day-header">${escapeHtml(dayOfWeek)} ${escapeHtml(dateStr)} ${lesson.archived ? '(archived)' : ''} ${reachedLimit ? ' ⚠️' : ''}</div>`;
+
+                    if (positiveEvents.length > 0) {
+                        html += `<div><strong>😊 Positive:</strong> `;
+                        positiveEvents.forEach(e => {
+                            html += `<span class="history-behavior">${escapeHtml(e.description)}</span>`;
+                        });
+                        html += `</div>`;
+                    }
+                    if (negativeEvents.length > 0) {
+                        html += `<div><strong>😞 Negative:</strong> `;
+                        negativeEvents.forEach(e => {
+                            html += `<span class="history-behavior">${escapeHtml(e.description)}</span>`;
+                        });
+                        html += `</div>`;
+                    }
+                    if (events.length === 0) {
+                        html += `<p>No behaviors recorded.</p>`;
+                    }
+                    html += `</div>`;
+                });
+            }
+
+            container.innerHTML = html;
+            document.getElementById('backToReports')?.addEventListener('click', () => setView('reports'));
+        }
+
+        // ---------- REPORTS (unchanged) ----------
+        function renderReports(container, data) {
+            const classStudents = data.students.filter(s => s.classId === state.classId);
+            container.innerHTML = `
+                <div class="section-title">
+                    <button class="btn" id="backToClasses"><i class="fas fa-arrow-left"></i> Class names</button>
+                    <span>📊 Reports · ${escapeHtml(state.className)}</span>
+                </div>
+                <h3>Select a student to view behavior history</h3>
+                <div id="studentReportsList"></div>
+            `;
+            const listDiv = document.getElementById('studentReportsList');
+            if (classStudents.length === 0) {
+                listDiv.innerHTML = '<p>No students in this class.</p>';
+            } else {
+                classStudents.forEach(s => {
+                    const div = document.createElement('div');
+                    div.className = 'student-row';
+                    div.innerHTML = `<span class="student-name">${escapeHtml(s.name)}</span>`;
+                    div.addEventListener('click', () => {
+                        setView('behaviorHistory', { studentId: s.id, studentName: s.name });
+                    });
+                    listDiv.appendChild(div);
+                });
+            }
+            document.getElementById('backToClasses').addEventListener('click', () => setView('classes'));
+        }
+
+        // ---------- INSTITUTION SETTINGS (unchanged) ----------
+        function renderInstitutionSettings(container, data) {
+            const institution = data.institutions.find(i => i.id === state.institutionId);
+            if (!institution) { setView('institutions'); return; }
+            const effective = getEffectiveSettings(data, institution.id, null);
+            const override = institution.override;
+            const hasSound = !!override.timerSoundDataURL;
+
+            container.innerHTML = `
+                <div class="section-title">
+                    <button class="btn" id="backToInstitutions"><i class="fas fa-arrow-left"></i> Institutions</button>
+                    <span>⚙️ ${escapeHtml(institution.name)} Settings</span>
+                </div>
+                <div class="info-note">
+                    <i class="fas fa-info-circle"></i> These settings override global settings for all classes in this institution.
+                </div>
+                <button class="btn btn-sm" id="resetToGlobal">Reset all to global</button>
+                <div class="settings-group">
+                    <h3>😊 Appropriate behaviors</h3>
+                    <div class="behavior-list" id="institutionAppropriateList"></div>
+                    <button class="btn btn-sm" id="addInstAppropriate">+ Add appropriate</button>
+                </div>
+                <div class="settings-group">
+                    <h3>😞 Inappropriate behaviors</h3>
+                    <div class="behavior-list" id="institutionInappropriateList"></div>
+                    <button class="btn btn-sm" id="addInstInappropriate">+ Add inappropriate</button>
+                </div>
+                <div class="settings-group">
+                    <h3>⏱️ Timer default (seconds)</h3>
+                    <input type="number" id="defaultTimerInput" value="${override.defaultTimerSeconds !== null ? override.defaultTimerSeconds : effective.defaultTimerSeconds}" min="0" step="1" style="width:120px;">
+                </div>
+                <div class="settings-group">
+                    <h3>🔔 Timer sound (upload MP3/WAV)</h3>
+                    <input type="file" id="soundFileInput" accept="audio/*" style="margin-bottom:0.5rem;">
+                    <div class="sound-preview" id="soundPreview">${hasSound ? '✅ Custom sound loaded' : 'No custom sound (timer will be silent)'}</div>
+                    ${hasSound ? '<button class="btn btn-sm" id="clearSoundBtn">Clear sound</button>' : ''}
+                </div>
+                <div class="settings-group">
+                    <h3>🚦 Limits & consequences</h3>
+                    <label>Inappropriate limit</label>
+                    <input type="number" id="limitInput" value="${override.limit !== null ? override.limit : effective.limit}" min="1" style="width:100px;">
+                    <label class="mt-2">Consequence message</label>
+                    <input type="text" id="consequenceInput" value="${escapeHtml(override.consequence !== null ? override.consequence : effective.consequence)}" style="width:100%;">
+                    <button class="btn btn-primary mt-2" id="saveInst">Save changes</button>
+                </div>
+            `;
+
+            renderDraggableBehaviorLists(override.behaviors, 'institution', container, data, institution.id);
+
+            document.getElementById('addInstAppropriate').addEventListener('click', () => addBehavior('institution', 'appropriate', data, container, institution.id, null));
+            document.getElementById('addInstInappropriate').addEventListener('click', () => addBehavior('institution', 'inappropriate', data, container, institution.id, null));
+
+            document.getElementById('backToInstitutions').addEventListener('click', () => setView('institutions'));
+
+            document.getElementById('resetToGlobal')?.addEventListener('click', async () => {
+                if (await showModal({ title: 'Reset to global', bodyHtml: '<p>This will discard all institution overrides. Continue?</p>' })) {
+                    institution.override = { behaviors: [], defaultTimerSeconds: null, timerSoundDataURL: null, limit: null, consequence: null };
+                    saveData(data);
+                    renderInstitutionSettings(container, data);
+                }
+            });
+
+            document.getElementById('saveInst')?.addEventListener('click', () => {
+                institution.override.defaultTimerSeconds = parseInt(document.getElementById('defaultTimerInput').value) || 0;
+                institution.override.limit = parseInt(document.getElementById('limitInput').value) || 1;
+                institution.override.consequence = document.getElementById('consequenceInput').value;
+                saveData(data);
+                showAlert('Institution settings saved.');
+                renderInstitutionSettings(container, data);
+            });
+
+            const fileInput = document.getElementById('soundFileInput');
+            if (fileInput) {
+                fileInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        institution.override.timerSoundDataURL = event.target.result;
+                        saveData(data);
+                        renderInstitutionSettings(container, data);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            const clearSoundBtn = document.getElementById('clearSoundBtn');
+            if (clearSoundBtn) {
+                clearSoundBtn.addEventListener('click', () => {
+                    institution.override.timerSoundDataURL = null;
+                    saveData(data);
+                    renderInstitutionSettings(container, data);
+                });
+            }
+        }
+
+        // ---------- CLASS SETTINGS (unchanged) ----------
+        function renderClassSettings(container, data) {
+            const cls = data.classes.find(c => c.id === state.classId);
+            if (!cls) { setView('classes'); return; }
+            const institution = data.institutions.find(i => i.id === cls.institutionId);
+            const effective = getEffectiveSettings(data, cls.institutionId, cls.id);
+            const override = cls.override;
+            const hasSound = !!override.timerSoundDataURL;
+
+            container.innerHTML = `
+                <div class="section-title">
+                    <button class="btn" id="backToClasses"><i class="fas fa-arrow-left"></i> Classes</button>
+                    <span>⚙️ ${escapeHtml(cls.name)} Settings</span>
+                </div>
+                <div class="info-note">
+                    <i class="fas fa-info-circle"></i> These settings override global and institution settings for this class only.
+                </div>
+                <button class="btn btn-sm" id="resetToGlobal">Reset all to global</button>
+                <div class="settings-group">
+                    <h3>😊 Appropriate behaviors</h3>
+                    <div class="behavior-list" id="classAppropriateList"></div>
+                    <button class="btn btn-sm" id="addClassAppropriate">+ Add appropriate</button>
+                </div>
+                <div class="settings-group">
+                    <h3>😞 Inappropriate behaviors</h3>
+                    <div class="behavior-list" id="classInappropriateList"></div>
+                    <button class="btn btn-sm" id="addClassInappropriate">+ Add inappropriate</button>
+                </div>
+                <div class="settings-group">
+                    <h3>⏱️ Timer default (seconds)</h3>
+                    <input type="number" id="defaultTimerInput" value="${override.defaultTimerSeconds !== null ? override.defaultTimerSeconds : effective.defaultTimerSeconds}" min="0" step="1" style="width:120px;">
+                </div>
+                <div class="settings-group">
+                    <h3>🔔 Timer sound (upload MP3/WAV)</h3>
+                    <input type="file" id="soundFileInput" accept="audio/*" style="margin-bottom:0.5rem;">
+                    <div class="sound-preview" id="soundPreview">${hasSound ? '✅ Custom sound loaded' : 'No custom sound (timer will be silent)'}</div>
+                    ${hasSound ? '<button class="btn btn-sm" id="clearSoundBtn">Clear sound</button>' : ''}
+                </div>
+                <div class="settings-group">
+                    <h3>🚦 Limits & consequences</h3>
+                    <label>Inappropriate limit</label>
+                    <input type="number" id="limitInput" value="${override.limit !== null ? override.limit : effective.limit}" min="1" style="width:100px;">
+                    <label class="mt-2">Consequence message</label>
+                    <input type="text" id="consequenceInput" value="${escapeHtml(override.consequence !== null ? override.consequence : effective.consequence)}" style="width:100%;">
+                    <button class="btn btn-primary mt-2" id="saveClass">Save changes</button>
+                </div>
+            `;
+
+            renderDraggableBehaviorLists(override.behaviors, 'class', container, data, null, cls.id);
+
+            document.getElementById('addClassAppropriate').addEventListener('click', () => addBehavior('class', 'appropriate', data, container, cls.institutionId, cls.id));
+            document.getElementById('addClassInappropriate').addEventListener('click', () => addBehavior('class', 'inappropriate', data, container, cls.institutionId, cls.id));
+
+            document.getElementById('backToClasses').addEventListener('click', () => setView('classes'));
+
+            document.getElementById('resetToGlobal')?.addEventListener('click', async () => {
+                if (await showModal({ title: 'Reset to global', bodyHtml: '<p>This will discard all class overrides. Continue?</p>' })) {
+                    cls.override = { behaviors: [], defaultTimerSeconds: null, timerSoundDataURL: null, limit: null, consequence: null };
+                    saveData(data);
+                    renderClassSettings(container, data);
+                }
+            });
+
+            document.getElementById('saveClass')?.addEventListener('click', () => {
+                cls.override.defaultTimerSeconds = parseInt(document.getElementById('defaultTimerInput').value) || 0;
+                cls.override.limit = parseInt(document.getElementById('limitInput').value) || 1;
+                cls.override.consequence = document.getElementById('consequenceInput').value;
+                saveData(data);
+                showAlert('Class settings saved.');
+                renderClassSettings(container, data);
+            });
+
+            const fileInput = document.getElementById('soundFileInput');
+            if (fileInput) {
+                fileInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        cls.override.timerSoundDataURL = event.target.result;
+                        saveData(data);
+                        renderClassSettings(container, data);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            const clearSoundBtn = document.getElementById('clearSoundBtn');
+            if (clearSoundBtn) {
+                clearSoundBtn.addEventListener('click', () => {
+                    cls.override.timerSoundDataURL = null;
+                    saveData(data);
+                    renderClassSettings(container, data);
+                });
+            }
+        }
+
+        async function addBehavior(context, type, data, container, institutionId, classId) {
+            const method = await new Promise((resolve) => {
+                const modalDiv = document.getElementById('customModal');
+                document.getElementById('modalTitle').innerText = 'Add behavior';
+                document.getElementById('modalBody').innerHTML = `
+                    <button class="btn" id="chooseManual" style="width:100%; margin-bottom:10px;">✏️ Manual entry</button>
+                    <button class="btn" id="chooseImport" style="width:100%;">📋 Import from column (one per line)</button>
+                `;
+                const actionsDiv = document.getElementById('modalActions');
+                actionsDiv.innerHTML = '<button class="btn" id="cancelAdd">Cancel</button>';
+                document.getElementById('cancelAdd').onclick = () => { closeModal(); resolve(null); };
+                document.getElementById('chooseManual').onclick = () => { closeModal(); resolve('manual'); };
+                document.getElementById('chooseImport').onclick = () => { closeModal(); resolve('import'); };
+                modalDiv.classList.add('active');
+            });
+            if (!method) return;
+
+            if (method === 'manual') {
+                const desc = await showModal({ title: `New ${type} behavior`, bodyHtml: '<input id="modalInput" placeholder="Behavior description">', input: true });
+                if (desc && desc.trim()) {
+                    if (context === 'global') {
+                        data.global.behaviors.push({ id: generateId(), type, description: desc.trim() });
+                    } else if (context === 'institution') {
+                        const inst = data.institutions.find(i => i.id === institutionId);
+                        inst.override.behaviors.push({ id: generateId(), type, description: desc.trim() });
+                    } else if (context === 'class') {
+                        const cls = data.classes.find(c => c.id === classId);
+                        cls.override.behaviors.push({ id: generateId(), type, description: desc.trim() });
+                    }
+                    saveData(data);
+                    if (context === 'global') renderGlobalSettings(container, data);
+                    else if (context === 'institution') renderInstitutionSettings(container, data);
+                    else renderClassSettings(container, data);
+                }
+            } else {
+                const text = await showModal({ title: 'Import names', bodyHtml: '<textarea id="modalInput" rows="6" placeholder="One behavior per line"></textarea>', input: true });
+                if (text) {
+                    const lines = text.split('\n').map(s => s.trim()).filter(s => s);
+                    lines.forEach(desc => {
+                        if (context === 'global') {
+                            data.global.behaviors.push({ id: generateId(), type, description: desc });
+                        } else if (context === 'institution') {
+                            const inst = data.institutions.find(i => i.id === institutionId);
+                            inst.override.behaviors.push({ id: generateId(), type, description: desc });
+                        } else if (context === 'class') {
+                            const cls = data.classes.find(c => c.id === classId);
+                            cls.override.behaviors.push({ id: generateId(), type, description: desc });
+                        }
+                    });
+                    saveData(data);
+                    if (context === 'global') renderGlobalSettings(container, data);
+                    else if (context === 'institution') renderInstitutionSettings(container, data);
+                    else renderClassSettings(container, data);
+                }
+            }
+        }
+
+        // ---------- INIT ----------
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const view = e.currentTarget.dataset.view;
+                if (view === 'institutions') setView('institutions');
+                else if (view === 'globalSettings') setView('globalSettings');
+            });
+        });
+
+        render();
+    })();
+</script>
+</body>
+</html>
