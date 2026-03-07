@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MILAD">
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e3c72">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <title>Gestão de Louvores - MILAD</title>
+  
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { background: #f5f7fb; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; padding-bottom: 90px; overscroll-behavior-y: none; }
+    #app { max-width: 600px; width: 100%; background: white; box-shadow: 0 0 30px rgba(0,0,0,0.05); padding: 1.5rem 1rem; margin: 0; min-height: 100vh; position: relative; }
+    
+    .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+    .top-header h1 { font-size: 2rem; margin: 0; display: flex; align-items: center; gap: 0.5rem; color: #1e3c72; }
+    .settings-btn { font-size: 1.6rem; background: none; border: none; padding: 5px; color: #1e3c72; cursor: pointer; border-radius: 50%; transition: background 0.2s; }
+    .settings-btn:active { background: #e2e8f0; }
+
+    button { background: #edf2f7; border: none; border-radius: 40px; padding: 0.7rem 1.3rem; font-size: 0.95rem; font-weight: 500; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); touch-action: manipulation; transition: 0.2s; }
+    button:active { transform: scale(0.97); }
+    button.primary { background: #1e3c72; color: white; }
+    button.warning { background: #b91c1c; color: white; }
+    button.small { padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 30px; }
+    button.danger { background: #fde7e9; color: #a11f2b; }
+    
+    .menu-bar { display: flex; gap: 0.4rem; margin: 1rem 0; flex-wrap: wrap; background: #f0f4fa; padding: 0.6rem; border-radius: 30px; justify-content: center; }
+    .menu-btn { background: transparent; border: none; border-radius: 40px; padding: 0.5rem 1rem; font-size: 0.9rem; font-weight: 600; color: #2c3e50; }
+    .menu-btn.active { background: #1e3c72; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .menu-btn.history-btn { color: #516a82; font-weight: 700; }
+    
+    .class-card { background: #ffffff; border-left: 6px solid #2b6f9b; border-radius: 24px; padding: 1rem; margin: 1.2rem 0; box-shadow: 0 8px 16px rgba(0,0,0,0.04); }
+    .class-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .class-title { font-weight: 700; font-size: 1.3rem; display: flex; gap: 0.7rem; align-items: center; }
+    
+    .badge { font-size: 0.75rem; background: #ccc; padding: 0.25rem 0.9rem; border-radius: 30px; text-transform: uppercase; font-weight: 600; }
+    .badge.ensaiado { background: #2b6f9b; color: white; }
+    .badge.novo { background: #c95d0e; color: white; }
+    .meta { color: #2c3e50; font-weight: 500; font-size: 0.95rem; margin: 0.5rem 0; }
+    
+    .plan-block { background: #f8fcff; border-radius: 18px; padding: 0.9rem; margin: 0.9rem 0; border: 1px solid #d4e0ec; }
+    .plan-header { font-weight: 600; font-size: 1rem; display: flex; flex-direction: column; gap: 8px; margin-bottom: 0.5rem; }
+    .plan-date-row { display: flex; justify-content: space-between; align-items: center; }
+    .plan-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+    .delete-plan-btn { background: #f1b6b6; color: #9b1c1c; border: none; }
+    
+    .activity-list { display: flex; flex-direction: column; gap: 4px; }
+    .activity-item { display: flex; flex-direction: column; background: white; border: 1px solid #e0eaf2; border-radius: 12px; transition: opacity 0.2s; overflow: hidden; }
+    .activity-main { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem; width: 100%; flex-wrap: wrap; }
+    .activity-main input[type="checkbox"] { width: 1.3rem; height: 1.3rem; accent-color: #1e3c72; }
+    .activity-text { flex: 1; font-size: 0.95rem; min-width: 100px; font-weight: 500; }
+    .key-badge { background: #d9e2ed; border-radius: 30px; padding: 0.2rem 0.7rem; font-size: 0.8rem; font-weight: 600; color: #1e3c72; }
+    .activity-details { padding: 0.5rem 0.8rem; background: #f0f4fa; font-size: 0.85rem; color: #444; border-top: 1px solid #e0eaf2; white-space: pre-wrap; display: none; }
+    
+    .plan-notes-container { margin-top: 8px; border-top: 1px dashed #b0c9e0; padding-top: 8px; }
+    .plan-notes-textarea { width: 100%; border-radius: 8px; border: 1px solid #b0c9e0; padding: 8px; font-family: inherit; font-size: 0.9rem; background: #ffffff; resize: vertical; min-height: 60px;}
+
+    .drag-handle { cursor: grab; padding: 0 5px; color: #a0aec0; font-size: 1.2rem; user-select: none; touch-action: none; }
+    .drag-handle:active { cursor: grabbing; }
+    
+    .history-section { margin-top: 2.5rem; border-top: 3px solid #9bb7d4; padding-top: 1.2rem; }
+    .history-header { background: #d9e2ef; padding: 0.8rem 1.5rem; border-radius: 60px; text-align: center; font-weight: 700; font-size: 1.1rem; cursor: pointer; user-select: none; }
+    .history-content { padding: 0.5rem 0; transition: 0.2s; }
+    
+    details > summary { list-style: none; cursor: pointer; }
+    details > summary::-webkit-details-marker { display: none; }
+    .clickable-line { background: #f0f7fe; border-radius: 50px; padding: 0.6rem 1.2rem; margin: 0.8rem 0 0 0; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 600; color: #2b6f9b; font-size: 0.9rem; border: 1px solid #b9d1e9; }
+    
+    .import-export { margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; margin-bottom: 1rem; }
+    .picker-row { display: flex; align-items: center; gap: 0.5rem; background: #eaf0f9; padding: 0.5rem 1rem; border-radius: 60px; margin: 0.5rem 0; font-weight: 600; color: #2c3e50; }
+    .picker-row select { flex: 1; padding: 0.6rem; border-radius: 40px; border: 1px solid #b0c4de; background: white; outline: none; }
+    
+    dialog { border: none; border-radius: 24px; padding: 20px; width: 90%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); background: white; }
+    dialog::backdrop { background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); }
+    .dialog-form { display: flex; flex-direction: column; gap: 12px; }
+    .dialog-form h3 { margin: 0 0 10px 0; color: #1e3c72; }
+    .dialog-form label { font-weight: bold; font-size: 0.9rem; color: #444; }
+    .dialog-form input[type="text"], .dialog-form input[type="time"], .dialog-form input[type="number"], .dialog-form select, .dialog-form textarea { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ccc; border-radius: 12px; font-size: 1rem; font-family: inherit; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+    .radio-group { display: flex; gap: 15px; background: #f0f4fa; padding: 10px; border-radius: 12px; flex-wrap: wrap; }
+    .radio-group label { font-weight: normal; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+
+    .tags-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+    .tag-chip { background: #d9e2ed; color: #1e3c72; padding: 4px 10px; border-radius: 15px; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
+    .tag-chip button { background: none; border: none; color: #b91c1c; padding: 0; margin: 0; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+    .tag-chip-selectable { background: #f0f4fa; border: 1px solid #b0c4de; padding: 4px 10px; border-radius: 15px; font-size: 0.8rem; cursor: pointer; }
+    .tag-chip-selectable.selected { background: #1e3c72; color: white; border-color: #1e3c72; }
+    .profile-item { background: #f8fcff; border: 1px solid #d4e0ec; padding: 10px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;}
+
+    .fab { position: fixed; bottom: 25px; right: max(25px, calc(50vw - 280px)); width: 65px; height: 65px; border-radius: 50%; font-size: 32px; font-weight: normal; display: flex; align-items: center; justify-content: center; background: #1e3c72; color: white; box-shadow: 0 6px 16px rgba(30,60,114,0.4); z-index: 1000; transition: transform 0.2s; }
+    .fab:active { transform: scale(0.9); }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="top-header">
+    <h1>🎸 MILAD</h1>
+    <button class="settings-btn" onclick="abrirConfiguracoes()">⚙️</button>
+  </div>
+
+  <div class="menu-bar" id="menuBar">
+    <button class="menu-btn active" onclick="setView('all')">Todos os Cultos</button>
+    <button class="menu-btn" onclick="setView('day')">Por dia</button>
+    <button class="menu-btn" onclick="setView('louvores')">Banco</button>
+    <button class="menu-btn history-btn" onclick="scrollToHistory()">Histórico ⬇</button>
+  </div>
+
+  <div id="main-view">
+    <div id="dayPicker" class="picker-row" style="display: none;">
+      <span>📅 Dia da semana:</span>
+      <select id="daySelect" onchange="renderApp()">
+        <option value="Segunda-feira">Segunda-feira</option><option value="Terça-feira">Terça-feira</option>
+        <option value="Quarta-feira">Quarta-feira</option><option value="Quinta-feira">Quinta-feira</option>
+        <option value="Sexta-feira">Sexta-feira</option><option value="Sábado">Sábado</option><option value="Domingo">Domingo</option>
+      </select>
+    </div>
+
+    <div id="current-classes"></div>
+
+    <div class="history-section">
+      <details id="history-details">
+        <summary class="history-header">📂 Histórico de Cultos</summary>
+        <div class="history-content" id="history-content"></div>
+      </details>
+    </div>
+  </div>
+
+  <div id="louvores-view" style="display: none;">
+    <h2 style="color: #1e3c72; text-align: center;">Banco de Louvores</h2>
+    <p style="text-align: center; font-size: 0.9rem; color: #555;">Faça a gestão dos louvores e atribua as suas tags.</p>
+    <button class="primary" style="width: 100%; margin-bottom: 15px;" onclick="openLouvorDialog()">+ Adicionar Novo Louvor</button>
+    <div id="louvores-container"></div>
+  </div>
+
+  <div class="import-export">
+    <button onclick="document.getElementById('import-file').click()">📤 Importar Backup</button>
+    <button onclick="exportData()">📥 Exportar Backup</button>
+    <input type="file" id="import-file" style="display:none;" accept=".json" onchange="importData(event)">
+  </div>
+</div>
+
+<button class="fab" id="main-fab" onclick="abrirNovoCultoDialog()">+</button>
+
+<dialog id="settings-dialog">
+  <div class="dialog-form" style="max-height: 85vh; overflow-y: auto;">
+    <h3>Configurações MILAD</h3>
+    
+    <div style="background: #f0f4fa; padding: 10px; border-radius: 12px; margin-bottom: 10px;">
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: bold; color: #1e3c72;">
+        <input type="checkbox" id="set-auto-draw" style="width: 20px; height: 20px; accent-color: #1e3c72;"> Ativar Sorteio Automático
+      </label>
+      <p style="font-size: 0.8rem; color: #555; margin: 5px 0 0 28px;">Se ativado, ao adicionar uma nova data, os louvores serão sorteados automaticamente.</p>
+    </div>
+
+    <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
+      <input type="checkbox" id="set-ignore-keys" style="width: auto; margin: 0;"> Permitir Tons Iguais (Desmarque para exigir tons diferentes)
+    </label>
+    
+    <label>Evitar Repetições:</label>
+    <select id="set-repeat-days">
+        <option value="0">Permitir repetições</option>
+        <option value="7">Últimos 7 dias</option>
+        <option value="14">Últimos 14 dias</option>
+        <option value="21">Últimos 21 dias</option>
+        <option value="28">Últimos 28 dias</option>
+    </select>
+
+    <hr style="border:0; border-top:1px solid #ccc;">
+
+    <h4>Gerir Tags</h4>
+    <div id="tags-admin-list" class="tags-container"></div>
+    <div style="display: flex; gap: 5px; margin-top: 10px;">
+      <input type="text" id="new-tag-input" placeholder="Nova tag...">
+      <button class="primary" onclick="addTagAdmin()">Adicionar</button>
+    </div>
+
+    <hr style="border:0; border-top:1px solid #ccc;">
+
+    <h4>Perfis de Sorteio</h4>
+    <div id="profiles-admin-list"></div>
+    <button class="small" style="margin-top: 5px;" onclick="abrirNovoPerfilDialog()">+ Novo Perfil</button>
+
+    <div class="dialog-actions" style="margin-top: 20px;">
+      <button onclick="document.getElementById('settings-dialog').close()">Fechar</button>
+      <button class="primary" onclick="salvarConfiguracoesApp()">Salvar Tudo</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="profile-dialog">
+  <div class="dialog-form">
+    <h3 id="profile-dialog-title">Novo Perfil</h3>
+    <input type="hidden" id="edit-profile-id">
+    <label>Nome do Perfil:<input type="text" id="edit-profile-name"></label>
+    
+    <label>Regras de Sorteio (Quantidade por Tag):</label>
+    <div id="profile-rules-container" style="background:#f0f4fa; padding:10px; border-radius:10px;"></div>
+    
+    <div style="display: flex; gap: 5px; margin-top: 10px;">
+      <select id="profile-add-tag-select"></select>
+      <input type="number" id="profile-add-tag-qtd" value="1" min="1" style="width: 70px;">
+      <button class="small primary" onclick="addRuleToProfile()">+ Regra</button>
+    </div>
+
+    <div class="dialog-actions">
+      <button class="danger" onclick="document.getElementById('profile-dialog').close()">Cancelar</button>
+      <button class="primary" onclick="saveProfile()">Salvar Perfil</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="class-dialog">
+  <div class="dialog-form">
+    <h3>Adicionar Novo Culto</h3>
+    <label>Nome do Culto:<input type="text" id="new-class-name" placeholder="ex: Culto de Domingo"></label>
+    <label>Dia da Semana:
+      <select id="new-class-day">
+        <option value="Segunda-feira">Segunda-feira</option><option value="Terça-feira">Terça-feira</option>
+        <option value="Quarta-feira">Quarta-feira</option><option value="Quinta-feira">Quinta-feira</option>
+        <option value="Sexta-feira">Sexta-feira</option><option value="Sábado">Sábado</option><option value="Domingo">Domingo</option>
+      </select>
+    </label>
+    <label>Horário de Início:<input type="time" id="new-class-time" required></label>
+    <label>Perfil de Sorteio:
+      <select id="new-class-profile"></select>
+    </label>
+    <div class="dialog-actions">
+      <button class="danger" onclick="document.getElementById('class-dialog').close()">Cancelar</button>
+      <button class="primary" onclick="addClass()">Adicionar</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="preset-dialog">
+  <div class="dialog-form">
+    <h3 id="preset-dialog-title">Adicionar Louvor ao Banco</h3>
+    <input type="hidden" id="preset-id">
+    <label>Nome:<input type="text" id="preset-name"></label>
+    <label>Tonalidade:<input type="text" id="preset-duration" placeholder="Ex: G, C#m"></label>
+    <label>Categoria:
+      <select id="preset-categoria">
+        <option value="ensaiados">Ensaiado</option>
+        <option value="novos">Novo</option>
+      </select>
+    </label>
+    <label>Tags:</label>
+    <div id="preset-tags-container" class="tags-container" style="margin-bottom: 5px;"></div>
+    
+    <label>Detalhes (opcional):<textarea id="preset-details" rows="3"></textarea></label>
+    <div class="dialog-actions">
+      <button class="danger" onclick="document.getElementById('preset-dialog').close()">Cancelar</button>
+      <button class="primary" onclick="savePreset()">Salvar</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="add-act-dialog">
+  <div class="dialog-form">
+    <h3>Adicionar Louvor ao Culto</h3>
+    <input type="hidden" id="add-act-class-id"><input type="hidden" id="add-act-plan-id">
+    <div class="radio-group">
+      <label><input type="radio" name="actSource" value="new" checked onchange="toggleAddActMode()"> Inserir Manual</label>
+      <label><input type="radio" name="actSource" value="preset" onchange="toggleAddActMode()"> Do Banco</label>
+    </div>
+    
+    <div id="act-new-fields">
+      <label>Nome:<input type="text" id="add-act-name"></label>
+      <label>Tom:<input type="text" id="add-act-duration"></label>
+      <label>Categoria:
+        <select id="add-act-categoria">
+          <option value="ensaiados">Ensaiado</option>
+          <option value="novos">Novo</option>
+        </select>
+      </label>
+      <label>Detalhes:<textarea id="add-act-details" rows="2"></textarea></label>
+    </div>
+    
+    <div id="act-preset-fields" style="display: none;">
+      <label>Banco:<select id="add-act-preset-select"></select></label>
+    </div>
+
+    <div class="dialog-actions">
+      <button class="danger" onclick="document.getElementById('add-act-dialog').close()">Cancelar</button>
+      <button class="primary" onclick="saveNewActivity()">Adicionar</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  // ==========================================
+  // FIREBASE CONFIGURATION
+  // ==========================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyA5jxJvrT49rzDg4UOk3GYqWsaT1CX_3yY",
+    authDomain: "miladibavapp.firebaseapp.com",
+    databaseURL: "https://miladibavapp-default-rtdb.firebaseio.com", 
+    projectId: "miladibavapp",
+    storageBucket: "miladibavapp.firebasestorage.app",
+    messagingSenderId: "177251519785",
+    appId: "1:177251519785:web:b6a8ea76cf7f4689d4fb38"
+  };
+
+  if(firebaseConfig.apiKey !== "SUA_API_KEY_AQUI") {
+      firebase.initializeApp(firebaseConfig);
+  } else {
+      console.warn("Firebase não configurado. A executar localmente.");
+  }
+  const db = firebaseConfig.apiKey !== "SUA_API_KEY_AQUI" ? firebase.database() : null;
+  const dbRef = db ? db.ref('igreja_louvores_data') : null;
+
+  // ESTADO GLOBAL
+  let localData = JSON.parse(localStorage.getItem('igreja_louvores_hybrid')) || { cultos: [], bancoLouvores: [] };
+  let cultos = localData.cultos || [];
+  
+  // ADAPTADOR LOCAL PARA BANCO DE LOUVORES
+  let bancoLouvores = (localData.bancoLouvores || []).map(l => {
+      if (l.text && !l.name) l.name = l.text;
+      if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
+      return l;
+  });
+  
+  let currentView = 'all';
+
+  // CONFIGURAÇÕES AVANÇADAS MILAD
+  let configSorteio = JSON.parse(localStorage.getItem('milad_settings')) || {
+    autoDraw: false,
+    ignorarTons: false, 
+    evitarRepeticaoDias: 7, 
+    tagsDisponiveis: ["Adoração", "Celebração", "Apelo", "Abertura"],
+    perfisSorteio: [
+      { id: 'p1', nome: 'Culto Padrão', regras: { "Celebração": 2, "Adoração": 2 } }
+    ]
+  };
+
+  // ⚠️ TRAVA DE SEGURANÇA LOCAL
+  if (!configSorteio.perfisSorteio || configSorteio.perfisSorteio.length === 0) {
+    configSorteio.perfisSorteio = [{ id: 'p1', nome: 'Culto Padrão', regras: { "Celebração": 2, "Adoração": 2 } }];
+  }
+
+  let tempProfileRules = {};
+
+  renderApp();
+
+  // CLOUD SYNC
+  let isFirstLoad = true;
+  if(dbRef) {
+      dbRef.on('value', (snapshot) => {
+        const cloudData = snapshot.val();
+        if (cloudData) {
+          cultos = (cloudData.cultos || []).map(cls => {
+             if(cls.plans) {
+                 cls.plans.forEach(p => {
+                     if(p.activities) {
+                         p.activities.forEach(a => {
+                             if(a.text && !a.name) a.name = a.text;
+                             if(a.tonalidade && !a.duration) a.duration = a.tonalidade;
+                             if(a.isDone !== undefined && a.completed === undefined) a.completed = a.isDone;
+                         });
+                     }
+                 });
+             }
+             return cls;
+          });
+          
+          bancoLouvores = (cloudData.bancoLouvores || []).map(l => {
+              if (l.text && !l.name) l.name = l.text;
+              if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
+              return l;
+          });
+
+          if(cloudData.configSorteio) {
+              configSorteio = cloudData.configSorteio;
+              
+              // ⚠️ TRAVA DE SEGURANÇA NUVEM
+              if (!configSorteio.perfisSorteio || configSorteio.perfisSorteio.length === 0) {
+                  configSorteio.perfisSorteio = [{ id: 'p1', nome: 'Culto Padrão', regras: { "Celebração": 2, "Adoração": 2 } }];
+              }
+          }
+          
+          localStorage.setItem('igreja_louvores_hybrid', JSON.stringify({ cultos, bancoLouvores }));
+          localStorage.setItem('milad_settings', JSON.stringify(configSorteio));
+          renderApp();
+        } else if (isFirstLoad && (cultos.length > 0 || bancoLouvores.length > 0)) {
+          saveData();
+        }
+        isFirstLoad = false;
+      });
+  }
+
+  function saveData() {
+    localStorage.setItem('igreja_louvores_hybrid', JSON.stringify({ cultos, bancoLouvores }));
+    localStorage.setItem('milad_settings', JSON.stringify(configSorteio));
+    if(dbRef) dbRef.set({ cultos, bancoLouvores, configSorteio });
+  }
+
+  function generateId() { return Date.now().toString() + Math.random().toString(36).substr(2, 5); }
+
+  // ==========================================
+  // CONFIGURAÇÕES, TAGS E PERFIS
+  // ==========================================
+  function abrirConfiguracoes() {
+    document.getElementById('set-auto-draw').checked = configSorteio.autoDraw;
+    document.getElementById('set-ignore-keys').checked = configSorteio.ignorarTons;
+    document.getElementById('set-repeat-days').value = configSorteio.evitarRepeticaoDias;
+    renderTagsAdmin();
+    renderProfilesAdmin();
+    document.getElementById('settings-dialog').showModal();
+  }
+
+  function salvarConfiguracoesApp() {
+    configSorteio.autoDraw = document.getElementById('set-auto-draw').checked;
+    configSorteio.ignorarTons = document.getElementById('set-ignore-keys').checked;
+    configSorteio.evitarRepeticaoDias = parseInt(document.getElementById('set-repeat-days').value);
+    saveData();
+    document.getElementById('settings-dialog').close();
+  }
+
+  function renderTagsAdmin() {
+    const container = document.getElementById('tags-admin-list');
+    container.innerHTML = '';
+    configSorteio.tagsDisponiveis.forEach(tag => {
+      container.innerHTML += `<div class="tag-chip">${tag} <button onclick="removeTagAdmin('${tag}')">✕</button></div>`;
+    });
+  }
+  function addTagAdmin() {
+    const input = document.getElementById('new-tag-input');
+    const val = input.value.trim();
+    if(val && !configSorteio.tagsDisponiveis.includes(val)) {
+      configSorteio.tagsDisponiveis.push(val);
+      input.value = '';
+      renderTagsAdmin();
+    }
+  }
+  function removeTagAdmin(tag) {
+    configSorteio.tagsDisponiveis = configSorteio.tagsDisponiveis.filter(t => t !== tag);
+    renderTagsAdmin();
+  }
+
+  function renderProfilesAdmin() {
+    const container = document.getElementById('profiles-admin-list');
+    container.innerHTML = '';
+    configSorteio.perfisSorteio.forEach(p => {
+      let regrasStr = Object.entries(p.regras).map(([t,q]) => `${q}x ${t}`).join(', ');
+      if(!regrasStr) regrasStr = "Sem regras";
+      container.innerHTML += `
+        <div class="profile-item">
+          <div>
+            <strong>${p.nome}</strong>
+            <div style="font-size:0.8rem; color:#555;">${regrasStr}</div>
+          </div>
+          <button class="small danger" onclick="deleteProfile('${p.id}')">Excluir</button>
+        </div>
+      `;
+    });
+  }
+
+  function abrirNovoPerfilDialog() {
+    document.getElementById('edit-profile-id').value = '';
+    document.getElementById('edit-profile-name').value = '';
+    tempProfileRules = {};
+    renderProfileRules();
+    atualizarSelectTagsPerfil();
+    document.getElementById('profile-dialog').showModal();
+  }
+
+  function atualizarSelectTagsPerfil() {
+    const sel = document.getElementById('profile-add-tag-select');
+    sel.innerHTML = configSorteio.tagsDisponiveis.map(t => `<option value="${t}">${t}</option>`).join('');
+  }
+
+  function renderProfileRules() {
+    const container = document.getElementById('profile-rules-container');
+    container.innerHTML = Object.entries(tempProfileRules).map(([tag, qtd]) => `
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+        <span>${qtd}x ${tag}</span>
+        <button class="small" style="color:red; background:none; padding:0;" onclick="removeRule('${tag}')">✕</button>
+      </div>
+    `).join('') || "<span style='font-size:0.8rem; color:#888;'>Nenhuma regra adicionada.</span>";
+  }
+
+  function addRuleToProfile() {
+    const tag = document.getElementById('profile-add-tag-select').value;
+    const qtd = parseInt(document.getElementById('profile-add-tag-qtd').value);
+    if(tag && qtd > 0) {
+      tempProfileRules[tag] = qtd;
+      renderProfileRules();
+    }
+  }
+
+  function removeRule(tag) {
+    delete tempProfileRules[tag];
+    renderProfileRules();
+  }
+
+  function saveProfile() {
+    const id = document.getElementById('edit-profile-id').value || generateId();
+    const nome = document.getElementById('edit-profile-name').value.trim() || 'Novo Perfil';
+    
+    const index = configSorteio.perfisSorteio.findIndex(p => p.id === id);
+    if(index >= 0) {
+      configSorteio.perfisSorteio[index] = { id, nome, regras: {...tempProfileRules} };
+    } else {
+      configSorteio.perfisSorteio.push({ id, nome, regras: {...tempProfileRules} });
+    }
+    
+    renderProfilesAdmin();
+    document.getElementById('profile-dialog').close();
+    saveData();
+  }
+
+  function deleteProfile(id) {
+    if(confirm("Excluir este perfil?")) {
+      configSorteio.perfisSorteio = configSorteio.perfisSorteio.filter(p => p.id !== id);
+      renderProfilesAdmin();
+      saveData();
+    }
+  }
+
+  // ==========================================
+  // MOTOR DE SORTEIO INTELIGENTE
+  // ==========================================
+  function obterNomesRecentes(dias) {
+    if (dias === 0) return [];
+    const hoje = new Date();
+    hoje.setHours(23, 59, 59, 999);
+    const dataLimite = new Date();
+    dataLimite.setDate(hoje.getDate() - dias);
+    dataLimite.setHours(0, 0, 0, 0);
+
+    let nomes = [];
+    cultos.forEach(cls => {
+      cls.plans.forEach(plan => {
+        const planDate = new Date(plan.date + "T00:00:00");
+        if (planDate >= dataLimite && planDate <= hoje) {
+          plan.activities.forEach(act => nomes.push(act.name.toLowerCase().trim()));
+        }
+      });
+    });
+    return [...new Set(nomes)];
+  }
+
+  function sortearParaPlano(classId, planId) {
+    if (!configSorteio.autoDraw) return;
+    
+    const cls = cultos.find(c => c.id === classId);
+    const plan = cls.plans.find(p => p.id === planId);
+    const perfilId = cls.perfilId || (configSorteio.perfisSorteio[0] ? configSorteio.perfisSorteio[0].id : null);
+    const perfil = configSorteio.perfisSorteio.find(p => p.id === perfilId);
+    
+    if(!perfil) return;
+
+    const nomesProibidos = obterNomesRecentes(configSorteio.evitarRepeticaoDias);
+    let pool = [...bancoLouvores].filter(l => !nomesProibidos.includes(l.name.toLowerCase().trim()));
+    
+    let selecionados = [];
+    let tonsUsados = [];
+
+    for (const [tag, qtd] of Object.entries(perfil.regras)) {
+      let candidatos = pool.filter(l => l.tags && l.tags.includes(tag));
+      
+      for (let i = 0; i < qtd; i++) {
+        if (candidatos.length === 0) break;
+        
+        candidatos = candidatos.sort(() => Math.random() - 0.5);
+
+        let escolhido;
+        if (!configSorteio.ignorarTons) {
+           escolhido = candidatos.find(l => !tonsUsados.includes(l.duration));
+        }
+        
+        if(!escolhido) escolhido = candidatos[0];
+
+        selecionados.push({
+          id: generateId(),
+          name: escolhido.name,
+          duration: escolhido.duration,
+          categoria: escolhido.categoria,
+          details: escolhido.details,
+          completed: false
+        });
+        
+        pool = pool.filter(p => p.name !== escolhido.name);
+        candidatos = candidatos.filter(c => c.name !== escolhido.name);
+        tonsUsados.push(escolhido.duration);
+      }
+    }
+
+    plan.activities = selecionados;
+  }
+
+  // ==========================================
+  // FUNÇÕES DE BOTÕES DE PLANOS E LINKS
+  // ==========================================
+  function linkify(text) {
+    if (!text) return '';
+    const escapedText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return escapedText.replace(urlRegex, function(url) {
+        return `<a href="${url}" target="_blank" style="color: #1e3c72; text-decoration: underline; font-weight: bold;">${url}</a>`;
+    });
+  }
+
+  function archivePlan(classId, planId) {
+    if (confirm("Mover esta data para o histórico?")) {
+      const cls = cultos.find(c => c.id === classId);
+      const plan = cls.plans.find(p => p.id === planId);
+      plan.isArchived = true;
+      saveData();
+      renderApp();
+    }
+  }
+
+  function copyPlan(classId, planId) {
+    const cls = cultos.find(c => c.id === classId);
+    const plan = cls.plans.find(p => p.id === planId);
+    if (!plan.activities || plan.activities.length === 0) return alert("Não há louvores para copiar.");
+    localStorage.setItem('igreja_louvores_clipboard', JSON.stringify(plan.activities));
+    alert(plan.activities.length + " louvores copiados para a memória!");
+  }
+
+  function pastePlan(classId, planId) {
+    const clipboardData = localStorage.getItem('igreja_louvores_clipboard');
+    if (!clipboardData) return alert("A área de transferência está vazia! Copie um culto primeiro.");
+    const activitiesToPaste = JSON.parse(clipboardData);
+    
+    const cls = cultos.find(c => c.id === classId);
+    const plan = cls.plans.find(p => p.id === planId);
+    if (!plan.activities) plan.activities = [];
+    
+    activitiesToPaste.forEach(act => {
+      plan.activities.push({
+        id: generateId(),
+        name: act.name || act.text,
+        duration: act.duration || act.tonalidade, 
+        categoria: act.categoria || "ensaiados",
+        details: act.details || "",
+        completed: false
+      });
+    });
+    saveData();
+    renderApp();
+  }
+
+  function togglePlanNotes(planId) {
+    const el = document.getElementById(`notes-${planId}`);
+    if (el) {
+      el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+  }
+
+  function savePlanNotes(classId, planId, value) {
+    const cls = cultos.find(c => c.id === classId);
+    const plan = cls.plans.find(p => p.id === planId);
+    if (plan) {
+      plan.notes = value;
+      saveData();
+    }
+  }
+
+  function isPlanHistory(plan) {
+    if (plan.isArchived) return true;
+    const now = new Date();
+    const planDate = new Date(plan.date + "T23:59:59");
+    return planDate < now;
+  }
+
+  // ==========================================
+  // RENDERIZAÇÃO
+  // ==========================================
+  function setView(view) {
+    currentView = view;
+    document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    document.getElementById('dayPicker').style.display = view === 'day' ? 'flex' : 'none';
+    document.getElementById('louvores-view').style.display = view === 'louvores' ? 'block' : 'none';
+    document.getElementById('main-view').style.display = (view === 'all' || view === 'day') ? 'block' : 'none';
+    
+    if (view === 'louvores') renderLouvores();
+    else renderApp();
+  }
+
+  function renderApp() {
+    if(currentView === 'louvores') { renderLouvores(); return; }
+
+    const container = document.getElementById('current-classes');
+    const historyContainer = document.getElementById('history-content');
+    container.innerHTML = '';
+    historyContainer.innerHTML = '';
+    
+    let filterDay = currentView === 'day' ? document.getElementById('daySelect').value : null;
+
+    let historyCount = 0;
+
+    cultos.forEach(cls => {
+      if (filterDay && cls.day !== filterDay) return;
+
+      let hasActivePlans = false;
+      let activePlansHTML = '';
+      let historyPlansHTML = '';
+
+      const sortedPlans = cls.plans ? [...cls.plans].sort((a, b) => new Date(b.date) - new Date(a.date)) : [];
+
+      sortedPlans.forEach((plan) => {
+        let activitiesHTML = plan.activities ? plan.activities.map((act) => `
+          <div class="activity-item" data-act-id="${act.id}" data-plan-id="${plan.id}" data-class-id="${cls.id}">
+            <div class="activity-main">
+              <span class="drag-handle" onmousedown="initDrag(event)" ontouchstart="initTouch(event)">☰</span>
+              <input type="checkbox" ${act.completed ? 'checked' : ''} onchange="toggleActivity('${cls.id}', '${plan.id}', '${act.id}')">
+              <span class="activity-text" style="${act.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${act.name}</span>
+              <span class="badge ${act.categoria === 'ensaiados' ? 'ensaiado' : 'novo'}">${act.categoria === 'ensaiados' ? 'E' : 'N'}</span>
+              <span class="key-badge">${act.duration || '-'}</span>
+              <button class="small" onclick="toggleDetails('${act.id}')">▼</button>
+            </div>
+            <div id="details-${act.id}" class="activity-details">${linkify(act.details) || 'Sem detalhes.'}</div>
+          </div>
+        `).join('') : '<div style="font-size:0.85rem; color:#888; text-align:center;">Nenhum louvor.</div>';
+
+        const planBlock = `
+          <div class="plan-block">
+            <div class="plan-header">
+              <div class="plan-date-row">
+                 <span>🗓️ Data: ${formatDateBR(plan.date)}</span>
+                 <button class="small delete-plan-btn" onclick="deletePlan('${cls.id}', '${plan.id}')">Excluir</button>
+              </div>
+              <div class="plan-actions">
+                <button class="small" onclick="archivePlan('${cls.id}', '${plan.id}')" title="Arquivar">Arq</button>
+                <button class="small" onclick="copyPlan('${cls.id}', '${plan.id}')" title="Copiar Louvores">Copiar</button>
+                <button class="small" onclick="pastePlan('${cls.id}', '${plan.id}')" title="Colar Louvores">Colar</button>
+                <button class="small" onclick="togglePlanNotes('${plan.id}')" title="Observações Gerais">Obs</button>
+                <button class="small primary" onclick="openAddActDialog('${cls.id}', '${plan.id}')">+ Louvor</button>
+              </div>
+            </div>
+            <div class="activity-list">${activitiesHTML}</div>
+            
+            <div id="notes-${plan.id}" class="plan-notes-container" style="${plan.notes ? 'display:block;' : 'display:none;'}">
+                <textarea class="plan-notes-textarea" placeholder="Observações e avisos gerais para este culto..." onchange="savePlanNotes('${cls.id}', '${plan.id}', this.value)">${plan.notes || ''}</textarea>
+            </div>
+          </div>
+        `;
+
+        if (isPlanHistory(plan)) {
+          historyPlansHTML += planBlock;
+        } else {
+          hasActivePlans = true;
+          activePlansHTML += planBlock;
+        }
+      });
+
+      // NOVO: Cabeçalho limpo sem o botão "Nova Data"
+      const classHeader = `
+        <div class="class-header">
+          <div class="class-title"><span>⛪</span> ${cls.name}</div>
+          <div style="display:flex; gap:5px;">
+             <button class="small danger" onclick="deleteClass('${cls.id}')" title="Excluir Culto Inteiro">🗑️</button>
+          </div>
+        </div>
+        <div class="meta">📍 Dia: ${cls.day} | ⏰ ${cls.time}</div>
+      `;
+
+      // NOVO: Botão largo para adicionar plano em baixo
+      const addPlanBtn = `<button class="primary" style="width: 100%; margin-top: 10px; border-radius: 12px; padding: 12px;" onclick="addPlan('${cls.id}')">+ Adicionar plano de culto</button>`;
+
+      if (hasActivePlans || (!hasActivePlans && historyPlansHTML === '')) {
+        container.innerHTML += `<div class="class-card">${classHeader}${activePlansHTML}${addPlanBtn}</div>`;
+      }
+
+      if (historyPlansHTML !== '') {
+        historyCount++;
+        historyContainer.innerHTML += `<div class="class-card" style="border-left-color:#9bb7d4; opacity:0.9;">${classHeader}${historyPlansHTML}</div>`;
+      }
+    });
+
+    if (historyCount === 0) historyContainer.innerHTML = "<p style='text-align:center; color:#888;'>Nenhum histórico.</p>";
+  }
+
+  function abrirNovoCultoDialog() {
+    const sel = document.getElementById('new-class-profile');
+    sel.innerHTML = configSorteio.perfisSorteio.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+    document.getElementById('class-dialog').showModal();
+  }
+
+  function addClass() {
+    const name = document.getElementById('new-class-name').value;
+    const day = document.getElementById('new-class-day').value;
+    const time = document.getElementById('new-class-time').value;
+    const perfilId = document.getElementById('new-class-profile').value;
+
+    if (name && time) {
+      cultos.push({ id: generateId(), name, day, time, perfilId, plans: [] });
+      saveData();
+      document.getElementById('class-dialog').close();
+      renderApp();
+    }
+  }
+
+  function deleteClass(classId) {
+    const passo1 = confirm("PASSO 1/3: Tem a certeza que deseja excluir este culto inteiro?");
+    if (!passo1) return;
+
+    const passo2 = confirm("PASSO 2/3: ATENÇÃO! Esta ação é irreversível e apagará TODO o histórico deste culto. Deseja mesmo continuar?");
+    if (!passo2) return;
+
+    const passo3 = prompt("PASSO 3/3: Para confirmar a exclusão definitiva, digite a palavra EXCLUIR em maiúsculas:");
+    
+    if (passo3 === "EXCLUIR") {
+      cultos = cultos.filter(c => c.id !== classId);
+      saveData();
+      renderApp();
+      alert("Culto excluído com sucesso.");
+    } else {
+      alert("Palavra incorreta. A exclusão foi cancelada por segurança.");
+    }
+  }
+
+  // NOVO: Função de adicionar plano sem prompt
+  function addPlan(classId) {
+    const cls = cultos.find(c => c.id === classId);
+    let nextDate = getNextPlanDate(cls);
+    
+    const planId = generateId();
+    cls.plans.push({ id: planId, date: nextDate, activities: [], isArchived: false, notes: "" });
+    
+    if(configSorteio.autoDraw) {
+      sortearParaPlano(classId, planId);
+    }
+
+    saveData();
+    renderApp();
+  }
+
+  // NOVO: Cálculo inteligente de data (semana seguinte ou próximo dia correspondente)
+  function getNextPlanDate(cls) {
+    if (cls.plans && cls.plans.length > 0) {
+      // Pega a data mais recente cadastrada neste culto
+      const dates = cls.plans.map(p => new Date(p.date + "T00:00:00"));
+      const latest = new Date(Math.max.apply(null, dates));
+      latest.setDate(latest.getDate() + 7); // Adiciona 7 dias
+      return latest.toISOString().split('T')[0];
+    } else {
+      // Se for o primeiro plano, procura a data do próximo dia da semana correspondente
+      const daysMap = {"Domingo":0, "Segunda-feira":1, "Terça-feira":2, "Quarta-feira":3, "Quinta-feira":4, "Sexta-feira":5, "Sábado":6};
+      const targetDay = daysMap[cls.day] !== undefined ? daysMap[cls.day] : 0;
+      const d = new Date();
+      let currentDay = d.getDay();
+      let diff = targetDay - currentDay;
+      if (diff <= 0) diff += 7; // Garante que será no futuro
+      d.setDate(d.getDate() + diff);
+      return d.toISOString().split('T')[0];
+    }
+  }
+
+  function deletePlan(classId, planId) {
+    if(confirm("Excluir esta data?")) {
+      const cls = cultos.find(c => c.id === classId);
+      cls.plans = cls.plans.filter(p => p.id !== planId);
+      saveData();
+      renderApp();
+    }
+  }
+
+  // --- LOUVORES (BANCO) ---
+  let selectedTagsForPreset = [];
+  
+  function renderLouvores() {
+    const container = document.getElementById('louvores-container');
+    container.innerHTML = bancoLouvores.map(l => {
+      const tagsHtml = (l.tags||[]).map(t => `<span class="tag-chip" style="font-size:0.6rem;">${t}</span>`).join('');
+      return `
+      <div class="activity-item" style="margin-bottom: 8px;">
+        <div class="activity-main" style="justify-content:space-between;">
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <div style="font-weight:600;">${l.name} <span class="key-badge">${l.duration || '-'}</span></div>
+            <div style="display:flex; gap:3px;">${tagsHtml}</div>
+          </div>
+          <div>
+            <button class="small" onclick="editPreset('${l.id}')">✏️</button>
+            <button class="small danger" onclick="deletePreset('${l.id}')">🗑️</button>
+          </div>
+        </div>
+      </div>
+    `}).join('');
+  }
+
+  function openLouvorDialog() {
+    document.getElementById('preset-id').value = '';
+    document.getElementById('preset-name').value = '';
+    document.getElementById('preset-duration').value = '';
+    document.getElementById('preset-details').value = '';
+    document.getElementById('preset-dialog-title').innerText = 'Adicionar Louvor';
+    selectedTagsForPreset = [];
+    renderTagsForPreset();
+    document.getElementById('preset-dialog').showModal();
+  }
+
+  function editPreset(id) {
+    const l = bancoLouvores.find(b => b.id === id);
+    if(l) {
+      document.getElementById('preset-id').value = l.id;
+      document.getElementById('preset-name').value = l.name;
+      document.getElementById('preset-duration').value = l.duration;
+      document.getElementById('preset-categoria').value = l.categoria || 'ensaiados';
+      document.getElementById('preset-details').value = l.details || '';
+      document.getElementById('preset-dialog-title').innerText = 'Editar Louvor';
+      selectedTagsForPreset = l.tags ? [...l.tags] : [];
+      renderTagsForPreset();
+      document.getElementById('preset-dialog').showModal();
+    }
+  }
+
+  function renderTagsForPreset() {
+    const cont = document.getElementById('preset-tags-container');
+    cont.innerHTML = configSorteio.tagsDisponiveis.map(tag => {
+      const isSel = selectedTagsForPreset.includes(tag);
+      return `<div class="tag-chip-selectable ${isSel ? 'selected' : ''}" onclick="toggleTagForPreset('${tag}')">${tag}</div>`;
+    }).join('');
+  }
+
+  function toggleTagForPreset(tag) {
+    if(selectedTagsForPreset.includes(tag)) {
+      selectedTagsForPreset = selectedTagsForPreset.filter(t => t !== tag);
+    } else {
+      selectedTagsForPreset.push(tag);
+    }
+    renderTagsForPreset();
+  }
+
+  function savePreset() {
+    const id = document.getElementById('preset-id').value || generateId();
+    const name = document.getElementById('preset-name').value;
+    const duration = document.getElementById('preset-duration').value;
+    const categoria = document.getElementById('preset-categoria').value;
+    const details = document.getElementById('preset-details').value;
+
+    if (name) {
+      const obj = { id, name, duration, categoria, details, tags: [...selectedTagsForPreset] };
+      const index = bancoLouvores.findIndex(b => b.id === id);
+      if(index >= 0) bancoLouvores[index] = obj;
+      else bancoLouvores.push(obj);
+      
+      saveData();
+      document.getElementById('preset-dialog').close();
+      if(currentView === 'louvores') renderLouvores();
+    }
+  }
+
+  function deletePreset(id) {
+    if(confirm('Excluir este louvor do banco?')) {
+      bancoLouvores = bancoLouvores.filter(b => b.id !== id);
+      saveData();
+      renderLouvores();
+    }
+  }
+
+  // --- ADIÇÃO MANUAL AO CULTO ---
+  function openAddActDialog(classId, planId) {
+    document.getElementById('add-act-class-id').value = classId;
+    document.getElementById('add-act-plan-id').value = planId;
+    document.getElementById('add-act-name').value = '';
+    document.getElementById('add-act-duration').value = '';
+    
+    const select = document.getElementById('add-act-preset-select');
+    select.innerHTML = bancoLouvores.map(p => `<option value="${p.id}">${p.name} (${p.duration||'-'})</option>`).join('');
+    
+    document.getElementById('add-act-dialog').showModal();
+  }
+
+  function toggleAddActMode() {
+    const mode = document.querySelector('input[name="actSource"]:checked').value;
+    document.getElementById('act-new-fields').style.display = mode === 'new' ? 'block' : 'none';
+    document.getElementById('act-preset-fields').style.display = mode === 'preset' ? 'block' : 'none';
+  }
+
+  function saveNewActivity() {
+    const classId = document.getElementById('add-act-class-id').value;
+    const planId = document.getElementById('add-act-plan-id').value;
+    const mode = document.querySelector('input[name="actSource"]:checked').value;
+    
+    let activity = { id: generateId(), completed: false };
+
+    if (mode === 'preset') {
+      const presetId = document.getElementById('add-act-preset-select').value;
+      const preset = bancoLouvores.find(p => p.id === presetId);
+      if(!preset) return;
+      activity = { ...activity, name: preset.name, duration: preset.duration, categoria: preset.categoria, details: preset.details };
+    } else {
+      activity.name = document.getElementById('add-act-name').value;
+      activity.duration = document.getElementById('add-act-duration').value;
+      activity.categoria = document.getElementById('add-act-categoria').value;
+      activity.details = document.getElementById('add-act-details').value;
+    }
+
+    if (activity.name) {
+      const cls = cultos.find(c => c.id === classId);
+      const plan = cls.plans.find(p => p.id === planId);
+      plan.activities.push(activity);
+      saveData();
+      document.getElementById('add-act-dialog').close();
+      renderApp();
+    }
+  }
+
+  function toggleActivity(classId, planId, actId) {
+    const cls = cultos.find(c => c.id === classId);
+    const plan = cls.plans.find(p => p.id === planId);
+    const act = plan.activities.find(a => a.id === actId);
+    act.completed = !act.completed;
+    saveData();
+    renderApp();
+  }
+
+  function toggleDetails(id) {
+    const el = document.getElementById(`details-${id}`);
+    el.style.display = el.style.display === 'block' ? 'none' : 'block';
+  }
+
+  function formatDateBR(dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  function scrollToHistory() {
+    const hist = document.getElementById('history-details');
+    hist.open = true;
+    hist.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function exportData() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({cultos, bancoLouvores, configSorteio}));
+    const dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", "milad_backup.json");
+    dlAnchorElem.click();
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          cultos = data.cultos || [];
+          bancoLouvores = data.bancoLouvores || [];
+          if(data.configSorteio) configSorteio = data.configSorteio;
+          saveData();
+          renderApp();
+          alert("Backup importado com sucesso!");
+        } catch (err) { alert("Erro ao ler o ficheiro."); }
+      };
+      reader.readAsText(file);
+    }
+  }
+
+  // ==========================================
+  // DRAG & DROP LOGIC
+  // ==========================================
+  let dragData = null;
+  let touchData = null;
+
+  function reorderActivity(classId, planId, fromId, toId) {
+    const cls = cultos.find(c => c.id === classId);
+    const plan = cls.plans.find(p => p.id === planId);
+    const fromIndex = plan.activities.findIndex(a => a.id === fromId);
+    const toIndex = plan.activities.findIndex(a => a.id === toId);
+    
+    const [moved] = plan.activities.splice(fromIndex, 1);
+    plan.activities.splice(toIndex, 0, moved);
+    
+    saveData();
+    renderApp();
+  }
+
+  function initDrag(e) {
+    const item = e.target.closest('.activity-item');
+    if (!item) return;
+    
+    item.setAttribute('draggable', true);
+    
+    item.ondragstart = (ev) => {
+        dragData = {
+            actId: item.getAttribute('data-act-id'),
+            planId: item.getAttribute('data-plan-id'),
+            classId: item.getAttribute('data-class-id')
+        };
+        ev.dataTransfer.effectAllowed = 'move';
+        item.style.opacity = '0.5';
+    };
+    
+    item.ondragover = (ev) => { ev.preventDefault(); };
+    
+    item.ondrop = (ev) => {
+        ev.preventDefault();
+        const dropItem = ev.target.closest('.activity-item');
+        if (dropItem && dragData) {
+            const targetActId = dropItem.getAttribute('data-act-id');
+            const targetPlanId = dropItem.getAttribute('data-plan-id');
+            const targetClassId = dropItem.getAttribute('data-class-id');
+            if (targetPlanId === dragData.planId && targetClassId === dragData.classId && dragData.actId !== targetActId) {
+                reorderActivity(dragData.classId, dragData.planId, dragData.actId, targetActId);
+            }
+        }
+    };
+    
+    item.ondragend = () => {
+        item.removeAttribute('draggable');
+        item.style.opacity = '1';
+        dragData = null;
+    };
+  }
+
+  function initTouch(e) {
+    const targetItem = e.target.closest('.activity-item');
+    if (!targetItem) return;
+    
+    const touch = e.touches[0];
+    const rect = targetItem.getBoundingClientRect();
+    
+    touchData = {
+      actId: targetItem.getAttribute('data-act-id'),
+      planId: targetItem.getAttribute('data-plan-id'),
+      classId: targetItem.getAttribute('data-class-id'),
+      targetItem: targetItem,
+      offsetX: touch.clientX - rect.left,
+      offsetY: touch.clientY - rect.top,
+      clone: targetItem.cloneNode(true)
+    };
+    
+    touchData.clone.style.position = 'fixed';
+    touchData.clone.style.top = rect.top + 'px';
+    touchData.clone.style.left = rect.left + 'px';
+    touchData.clone.style.width = rect.width + 'px';
+    touchData.clone.style.zIndex = '9999';
+    touchData.clone.style.opacity = '0.8';
+    touchData.clone.style.pointerEvents = 'none';
+    
+    document.body.appendChild(touchData.clone);
+    targetItem.style.opacity = '0.3';
+    
+    document.addEventListener('touchmove', touchMove, { passive: false });
+    document.addEventListener('touchend', touchEnd);
+  }
+
+  function touchMove(e) {
+    if (!touchData) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    touchData.clone.style.top = (touch.clientY - touchData.offsetY) + 'px';
+    touchData.clone.style.left = (touch.clientX - touchData.offsetX) + 'px';
+  }
+
+  function touchEnd(e) {
+    if (!touchData) return;
+    const touch = e.changedTouches[0];
+    touchData.clone.remove();
+    touchData.targetItem.style.opacity = '1';
+    
+    document.removeEventListener('touchmove', touchMove);
+    document.removeEventListener('touchend', touchEnd);
+    
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropItem = dropTarget ? dropTarget.closest('.activity-item') : null;
+    
+    if (dropItem && dropItem !== touchData.targetItem) {
+        const targetActId = dropItem.getAttribute('data-act-id');
+        const targetPlanId = dropItem.getAttribute('data-plan-id');
+        const targetClassId = dropItem.getAttribute('data-class-id');
+        if (targetPlanId === touchData.planId && targetClassId === touchData.classId) {
+             reorderActivity(touchData.classId, touchData.planId, touchData.actId, targetActId);
+        }
+    }
+    touchData = null;
+  }
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then((registration) => {
+          console.log('PWA: Service Worker registado com sucesso!', registration.scope);
+        })
+        .catch((error) => {
+          console.log('PWA: Falha ao registar o Service Worker.', error);
+        });
+    });
+  }
+</script>
+
+</body>
+</html>

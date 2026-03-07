@@ -7,7 +7,13 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Weekly Classes">
+  <meta name="theme-color" content="#1e3c72">
   <title>Weekly classes</title>
+
+  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Weekly%20Classes%22%2C%22short_name%22%3A%22Classes%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f5f7fb%22%2C%22theme_color%22%3A%22%231e3c72%22%7D">
+  
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231e3c72'/><text x='50' y='50' dominant-baseline='central' text-anchor='middle' font-size='50'>📚</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231e3c72'/><text x='50' y='50' dominant-baseline='central' text-anchor='middle' font-size='50'>📚</text></svg>">
   
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
@@ -43,9 +49,6 @@
     .plan-header { font-weight: 600; font-size: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 0.5rem; gap: 5px; }
     .plan-actions { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; flex: 1; }
     
-    .plan-collapsed { display: none; }
-    .expand-btn { width: 100%; border: 1px dashed #b0c9e0; background: #f0f7fe; color: #1e3c72; font-weight: bold; margin-top: 5px; border-radius: 10px; padding: 8px; font-size: 0.85rem; cursor: pointer; }
-    
     /* ACTIVITY ITEMS */
     .activity-list { display: flex; flex-direction: column; gap: 4px; }
     .activity-item { display: flex; flex-direction: column; background: white; border: 1px solid #e0eaf2; border-radius: 12px; overflow: hidden; transition: opacity 0.3s, background 0.3s; }
@@ -61,10 +64,9 @@
     .tag-pill { display: inline-block; font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; background: #edf2f7; color: #4a5568; margin-right: 4px; font-weight: bold; margin-top: 4px; border: 1px solid #cbd5e0; }
     .tag-class { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 
-    /* NOTES */
+    /* NOTES & DRAG */
     .plan-notes-container { margin-top: 8px; border-top: 1px dashed #b0c9e0; padding-top: 8px; }
     .plan-notes-textarea { width: 100%; border-radius: 8px; border: 1px solid #b0c9e0; padding: 8px; font-family: inherit; font-size: 0.9rem; resize: vertical; }
-
     .drag-handle { cursor: grab; padding: 0 5px; color: #a0aec0; font-size: 1.2rem; user-select: none; touch-action: none; }
     
     /* HISTORY */
@@ -137,6 +139,16 @@
   <div id="presets-view" style="display: none;">
     <h2 style="color: #1e3c72; text-align: center;">Activity Inventory</h2>
     <button class="primary" style="width: 100%; margin-bottom: 15px;" onclick="openPresetDialog()">+ Add New Activity</button>
+    
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+      <input type="text" id="preset-search" placeholder="🔍 Search activities..." onkeyup="renderPresets()" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
+      <select id="preset-sort" onchange="renderPresets()" style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.9rem; background: #f0f4fa; color: #1e3c72; font-weight: bold; outline: none; cursor: pointer;">
+        <option value="newest">Newest First</option>
+        <option value="name">Name (A-Z)</option>
+        <option value="tag">Tags</option>
+      </select>
+    </div>
+    
     <div id="presets-container"></div>
   </div>
 
@@ -172,6 +184,11 @@
       <h3>🎲 Automatic Draw Profiles</h3>
       <p style="font-size: 0.8rem; color: #666; margin-bottom: 12px;">Create different draw settings and assign them to specific classes.</p>
       
+      <details class="info-note" style="background: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1; padding: 10px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 12px;">
+        <summary style="font-weight: bold; cursor: pointer; outline: none;">ℹ️ How Auto-Draw Works</summary>
+        <p style="margin-top: 8px;">The engine will attempt to pull the <b>exact number</b> of activities you specify for each tag, as well as for activities with "No Tag". If your inventory doesn't have enough matching activities available (or if they are on cooldown), the draw will stop and provide fewer activities than requested.</p>
+      </details>
+      
       <div class="settings-row">
         <select id="set-profile-select" style="flex:1; padding:8px; border-radius:10px; border:1px solid #ccc; margin-right: 5px; font-weight: bold; color: #1e3c72;" onchange="switchProfile()"></select>
         <button class="primary small" onclick="createProfile()">+ New</button>
@@ -188,22 +205,32 @@
           <span>Enable Auto-Draw:</span>
           <input type="checkbox" id="set-auto-draw" style="width:20px; height:20px;" onchange="updateProfile()">
         </div>
+        
         <div class="settings-row">
-          <span>Acts per draw:</span>
-          <input type="number" id="set-draw-count" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()">
+          <span>Avoid repeats:</span>
+          <input type="checkbox" id="set-cooldown-enabled" style="width:20px; height:20px;" onchange="updateProfile()">
         </div>
         <div class="settings-row">
-          <span>Avoid repeats past (days):</span>
+          <span>Repeat cycle (days):</span>
           <select id="set-cooldown" style="width:100px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()">
-            <option value="7">7 Days</option><option value="14">14 Days</option><option value="21">21 Days</option>
+            <option value="7">7 Days</option>
+            <option value="14">14 Days</option>
+            <option value="21">21 Days</option>
+            <option value="28">28 Days</option>
           </select>
         </div>
         
-        <h4 style="margin: 15px 0 5px 0; font-size:0.9rem; color:#555;">Max limits per tag (leave blank for unlimited)</h4>
+        <h4 style="margin: 15px 0 5px 0; font-size:0.9rem; color:#555;">Exact number to draw (leave blank for 0)</h4>
         <div id="auto-draw-tag-limits"></div>
       </div>
 
       <h4 style="margin: 15px 0 5px 0; font-size:0.9rem; color:#1e3c72; border-top: 1px dashed #ccc; padding-top: 10px;">Apply this profile to classes:</h4>
+      
+      <details class="info-note" style="background: #fef3c7; border: 1px solid #fde68a; color: #92400e; padding: 10px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 8px;">
+        <summary style="font-weight: bold; cursor: pointer; outline: none;">⚠️ Class Assignment Rule</summary>
+        <p style="margin-top: 8px;">A class can only be assigned to <b>one profile at a time</b>. Checking a class here automatically unchecks it from any other profile.</p>
+      </details>
+      
       <div id="profile-class-list" style="display:flex; flex-direction:column; gap:8px; background: #f0f4fa; padding: 10px; border-radius: 10px;"></div>
     </div>
   </div>
@@ -231,6 +258,26 @@
   </div>
 </dialog>
 
+<dialog id="edit-class-dialog">
+  <div class="dialog-form">
+    <h3>Edit Class</h3>
+    <input type="hidden" id="edit-class-id">
+    <label>Location:<select id="edit-class-type"></select></label>
+    <label>Class Name:<input type="text" id="edit-class-name"></label>
+    <label>Day of the Week:
+      <select id="edit-class-day">
+        <option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option>
+        <option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="Sunday">Sunday</option>
+      </select>
+    </label>
+    <label>Start Time:<input type="time" id="edit-class-time" required></label>
+    <div class="dialog-actions">
+      <button class="danger" onclick="document.getElementById('edit-class-dialog').close()">Cancel</button>
+      <button class="primary" onclick="saveEditClass()">Save</button>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="preset-dialog">
   <div class="dialog-form">
     <h3 id="preset-dialog-title">Add Activity</h3>
@@ -243,7 +290,11 @@
       <div id="preset-tags-container" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:5px;"></div>
     </div>
 
-    <label>Class Association:<select id="preset-class-assoc"><option value="all">All Classes</option></select></label>
+    <div>
+      <label style="font-size: 0.9rem;">Class Association:</label>
+      <div id="preset-class-assoc-container" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:5px;"></div>
+    </div>
+
     <label>Details:<textarea id="preset-details" rows="3"></textarea></label>
     
     <div class="dialog-actions">
@@ -334,20 +385,25 @@
         id: 'default',
         name: 'Default Setup',
         autoDraw: (data.settings && data.settings.autoDraw) || false,
-        drawCount: (data.settings && data.settings.drawCount) || 3,
         cooldown: (data.settings && data.settings.cooldown) || 14,
-        tagLimits: (data.settings && data.settings.tagLimits) || {}
+        cooldownEnabled: true,
+        tagLimits: (data.settings && data.settings.tagLimits) || {},
+        untaggedCount: ''
       }];
     }
+    data.drawProfiles.forEach(p => {
+      if (typeof p.cooldownEnabled === 'undefined') p.cooldownEnabled = true;
+      if (typeof p.untaggedCount === 'undefined') p.untaggedCount = '';
+    });
     return data;
   }
 
   function loadLocal() {
-    const saved = localStorage.getItem('weekly_classes_v6');
+    const saved = localStorage.getItem('weekly_classes_v7');
     if (saved) {
       state = ensureDrawProfiles({...state, ...JSON.parse(saved)});
     } else {
-      const old = localStorage.getItem('weekly_classes_v5');
+      const old = localStorage.getItem('weekly_classes_v6');
       if (old) { state = ensureDrawProfiles({...state, ...JSON.parse(old)}); saveData(); }
       else { state = ensureDrawProfiles(state); }
     }
@@ -356,11 +412,13 @@
     const todayStr = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getDay()];
     document.getElementById('daySelect').value = todayStr;
     
-    renderNav(); renderApp(); renderSettings();
+    renderNav(); 
+    setViewType(state.currentView || 'day'); 
+    renderSettings();
   }
 
   function saveData() {
-    localStorage.setItem('weekly_classes_v6', JSON.stringify(state));
+    localStorage.setItem('weekly_classes_v7', JSON.stringify(state));
     dbRef.set({ classes: state.classes, presets: state.presets, locations: state.locations, activityTags: state.activityTags, drawProfiles: state.drawProfiles });
   }
 
@@ -380,13 +438,12 @@
   });
 
   // ==========================================
-  // DYNAMIC MULTI-STEP CONFIRMATION LOGIC
+  // CONFIRMATION LOGIC
   // ==========================================
   let delTracker = {};
-
   function requireClicks(id, totalClicks) {
     if (totalClicks === 1) return confirm("Remove this item?");
-    let btn = window.event ? window.event.target.closest('button') : null;
+    let btn = window.event ? window.event.target.closest('button') : null; 
     if (!delTracker[id]) delTracker[id] = { step: 1 };
     let d = delTracker[id];
     clearTimeout(d.timer);
@@ -412,20 +469,28 @@
   // ==========================================
   // NAVIGATION
   // ==========================================
-  function setLocation(loc) { state.currentLoc = loc; renderNav(); renderApp(); }
+  function setLocation(loc) { 
+    state.currentLoc = loc; 
+    localStorage.setItem('weekly_classes_v7', JSON.stringify(state)); 
+    renderNav(); 
+    renderApp(); 
+  }
 
-  function setViewType(type) {
-    state.currentView = type;
-    document.querySelectorAll('button[id^="btn-"]').forEach(b => b.classList.remove('active'));
-    document.getElementById('btn-' + type).classList.add('active');
+  function setViewType(t) {
+    state.currentView = t;
+    localStorage.setItem('weekly_classes_v7', JSON.stringify(state)); 
     
-    document.getElementById('main-view').style.display = (type === 'presets' || type === 'settings') ? 'none' : 'block';
-    document.getElementById('presets-view').style.display = (type === 'presets') ? 'block' : 'none';
-    document.getElementById('settings-view').style.display = (type === 'settings') ? 'block' : 'none';
-    document.getElementById('main-fab').style.display = (type === 'presets' || type === 'settings') ? 'none' : 'flex';
-    document.getElementById('classPicker').style.display = (type === 'class') ? 'flex' : 'none';
-    document.getElementById('dayPicker').style.display = (type === 'day') ? 'flex' : 'none';
-    document.getElementById('history-section-div').style.display = (type === 'presets' || type === 'settings') ? 'none' : 'block';
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById('btn-'+t);
+    if(btn) btn.classList.add('active');
+    
+    document.getElementById('main-view').style.display = (t==='presets'||t==='settings')?'none':'block';
+    document.getElementById('presets-view').style.display = (t==='presets')?'block':'none';
+    document.getElementById('settings-view').style.display = (t==='settings')?'block':'none';
+    
+    const cp = document.getElementById('classPicker'); if(cp) cp.style.display = (t==='class')?'flex':'none';
+    const dp = document.getElementById('dayPicker'); if(dp) dp.style.display = (t==='day')?'flex':'none';
+    
     renderApp();
   }
 
@@ -441,7 +506,7 @@
   }
 
   // ==========================================
-  // SETTINGS, TAGS, LOCATIONS & EXPORT/IMPORT
+  // SETTINGS
   // ==========================================
   function renderSettings() {
     document.getElementById('loc-mgmt-list').innerHTML = state.locations.filter(l => l !== 'all').map(l => `
@@ -456,10 +521,9 @@
     `).join('');
     
     document.getElementById('tag-mgmt-list').innerHTML = state.activityTags.map(t => `
-      <span class="tag-pill" style="font-size:0.8rem; padding:4px 10px; background:white;">${t} <span style="color:red; cursor:pointer; margin-left:5px;" onclick="deleteActivityTag('${t}')">✖</span></span>
+      <span class="tag-pill" style="font-size:0.8rem; padding:4px 10px; background:white;">${t} <span style="color:red; cursor:pointer; margin-left:5px;" onclick="deleteActivityTag('${t}')">✕</span></span>
     `).join('');
 
-    // --- RENDER AUTO-DRAW PROFILES ---
     const profSelect = document.getElementById('set-profile-select');
     profSelect.innerHTML = state.drawProfiles.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
     profSelect.value = currentProfileId;
@@ -468,13 +532,13 @@
     if(prof) {
       document.getElementById('set-profile-name').value = prof.name;
       document.getElementById('set-auto-draw').checked = prof.autoDraw;
-      document.getElementById('set-draw-count').value = prof.drawCount;
-      document.getElementById('set-cooldown').value = prof.cooldown;
+      document.getElementById('set-cooldown-enabled').checked = prof.cooldownEnabled !== false;
+      document.getElementById('set-cooldown').value = prof.cooldown || 14;
 
       document.getElementById('auto-draw-tag-limits').innerHTML = state.activityTags.map(tag => {
         const safeId = tag.replace(/\s+/g, '-');
-        return `<div class="settings-row"><span>${tag} max:</span><input type="number" id="set-limit-${safeId}" value="${prof.tagLimits[tag] || ''}" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()"></div>`;
-      }).join('');
+        return `<div class="settings-row"><span>${tag}:</span><input type="number" id="set-limit-${safeId}" value="${prof.tagLimits[tag] || ''}" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()"></div>`;
+      }).join('') + `<div class="settings-row"><span>No Tag:</span><input type="number" id="set-limit-notag" value="${prof.untaggedCount || ''}" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()"></div>`;
 
       document.getElementById('profile-class-list').innerHTML = state.classes.length > 0 ? state.classes.map(c => {
          const isAssigned = (c.drawProfileId === prof.id) || (!c.drawProfileId && prof.id === state.drawProfiles[0].id);
@@ -489,7 +553,7 @@
 
   function createProfile() {
     const newId = generateId();
-    state.drawProfiles.push({ id: newId, name: 'New Profile', autoDraw: false, drawCount: 3, cooldown: 14, tagLimits: {} });
+    state.drawProfiles.push({ id: newId, name: 'New Profile', autoDraw: false, cooldown: 14, cooldownEnabled: true, tagLimits: {}, untaggedCount: '' });
     currentProfileId = newId; saveData(); renderSettings();
   }
 
@@ -508,14 +572,17 @@
     if(!prof) return;
     prof.name = document.getElementById('set-profile-name').value || 'Unnamed Profile';
     prof.autoDraw = document.getElementById('set-auto-draw').checked;
-    prof.drawCount = parseInt(document.getElementById('set-draw-count').value) || 3;
+    prof.cooldownEnabled = document.getElementById('set-cooldown-enabled').checked;
     prof.cooldown = parseInt(document.getElementById('set-cooldown').value) || 14;
     
+    if (!prof.tagLimits) prof.tagLimits = {};
     state.activityTags.forEach(tag => {
-      const val = document.getElementById(`set-limit-${tag.replace(/\s+/g, '-')}`).value;
-      if (!prof.tagLimits) prof.tagLimits = {};
-      prof.tagLimits[tag] = val;
+      const el = document.getElementById(`set-limit-${tag.replace(/\s+/g, '-')}`);
+      if(el) prof.tagLimits[tag] = el.value;
     });
+    
+    const noTagEl = document.getElementById('set-limit-notag');
+    if(noTagEl) prof.untaggedCount = noTagEl.value;
     
     const sel = document.getElementById('set-profile-select');
     const opt = sel.querySelector(`option[value="${prof.id}"]`);
@@ -530,7 +597,6 @@
     saveData(); renderSettings(); 
   }
 
-  // EXPORT / IMPORT LOGIC
   function exportData() {
     const dataStr = JSON.stringify(state, null, 2);
     const blob = new Blob([dataStr], { type: "application/json" });
@@ -550,7 +616,7 @@
         const importedState = JSON.parse(e.target.result);
         if (confirm("This will replace all your current classes, plans, and settings with the imported file. Are you sure you want to proceed?")) {
           state = ensureDrawProfiles({
-            classes: importedState.classes || [], presets: importedState.presets || [], locations: importedState.locations || ['all', 'school', 'home'], activityTags: importedState.activityTags || ['Ice breaker', 'JW'], settings: importedState.settings || {}, drawProfiles: importedState.drawProfiles || [], currentLoc: 'all', currentView: 'day'
+            classes: importedState.classes || [], presets: importedState.presets || [], locations: importedState.locations || ['all', 'school', 'home'], activityTags: importedState.activityTags || ['Ice breaker', 'JW'], drawProfiles: importedState.drawProfiles || [], currentLoc: 'all', currentView: 'day'
           });
           currentProfileId = state.drawProfiles[0].id;
           saveData(); renderNav(); renderSettings(); renderApp(); alert("Data imported successfully!");
@@ -613,66 +679,121 @@
   }
 
   // ==========================================
-  // UTILS & AUTO-DRAW (UPDATED FOR PROFILES)
+  // UTILS & AUTO-DRAW
   // ==========================================
   function generateId() { return Date.now().toString() + Math.random().toString(36).substr(2, 5); }
   
   function getNextPlanDate(cls) {
     const dayMap = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    let baseDate = new Date(); baseDate.setHours(12, 0, 0, 0);
-    const safePlans = cls.plans || [];
-    if (safePlans.length > 0) {
-      const latest = safePlans.reduce((a, b) => a.date > b.date ? a : b).date;
-      baseDate = new Date(latest + "T12:00:00"); baseDate.setDate(baseDate.getDate() + 7);
-    } else {
-      let diff = (dayMap.indexOf(cls.day) - baseDate.getDay() + 7) % 7;
-      baseDate.setDate(baseDate.getDate() + diff);
+    const targetDayIndex = dayMap.indexOf(cls.day);
+    
+    // Start from today
+    let d = new Date();
+    // Normalize to start of day in local time to avoid timezone drifting issues
+    d.setHours(0,0,0,0);
+    
+    // Find how many days until the next occurrence (0 = today, 1 = tomorrow, etc)
+    let diff = (targetDayIndex - d.getDay() + 7) % 7;
+    
+    // If we want the NEXT occurrence and not today, if diff is 0, add 7
+    // But typically in this app, if today is the day, you want to plan for today
+    d.setDate(d.getDate() + diff);
+    
+    // Final check against class history to ensure we don't duplicate
+    if (cls.plans && cls.plans.length > 0) {
+        const dates = cls.plans.map(p => p.date);
+        while (dates.includes(d.toISOString().split('T')[0])) {
+            d.setDate(d.getDate() + 7);
+        }
     }
-    return baseDate.toISOString().split('T')[0];
+    
+    return d.toISOString().split('T')[0];
   }
 
-  function runAutoDraw(classId, planId) {
-    if (state.presets.length === 0) return;
-    const cls = state.classes.find(c => c.id === classId); 
-    
-    // Fetch appropriate profile for this class
-    const profId = cls.drawProfileId || (state.drawProfiles.length > 0 ? state.drawProfiles[0].id : null);
-    const profile = state.drawProfiles.find(p => p.id === profId);
-    if (!profile || !profile.autoDraw) return; // Exit if auto-draw is turned off for this profile
+  function runAutoDraw(cid, pid) {
+    const c = state.classes.find(x => x.id === cid);
+    const p = c.plans.find(x => x.id === pid);
+    const prof = state.drawProfiles.find(x => x.id === c.drawProfileId) || state.drawProfiles[0];
+    if (!prof || !prof.autoDraw) return;
 
-    if (!cls.plans) cls.plans = [];
-    const plan = cls.plans.find(p => p.id === planId);
-    if (!plan.activities) plan.activities = [];
-
-    const planDate = new Date(plan.date + "T12:00:00");
-    const cutoffDate = new Date(planDate.getTime() - (profile.cooldown * 24 * 60 * 60 * 1000));
-    
     let recent = new Set();
-    cls.plans.forEach(p => { 
-      const pd = new Date(p.date + "T12:00:00"); 
-      if (pd >= cutoffDate && pd < planDate) {
-        (p.activities || []).forEach(a => recent.add(a.text)); 
+    if (prof.cooldownEnabled !== false) {
+      const planDate = new Date(p.date + "T12:00:00");
+      const cutoff = new Date(planDate.getTime() - ((prof.cooldown || 14) * 24 * 60 * 60 * 1000));
+      c.plans.forEach(plan => {
+        const pd = new Date(plan.date + "T12:00:00");
+        if (pd >= cutoff && pd < planDate) {
+          (plan.activities || []).forEach(a => recent.add(a.text));
+        }
+      });
+    }
+
+    let pool = state.presets.filter(pr => {
+      if (pr.classAssoc) {
+        if (Array.isArray(pr.classAssoc) && !pr.classAssoc.includes('all') && !pr.classAssoc.includes(c.id)) return false;
+        if (typeof pr.classAssoc === 'string' && pr.classAssoc !== 'all' && pr.classAssoc !== c.id && pr.classAssoc !== c.name) return false;
       }
-    });
+      if (prof.cooldownEnabled !== false && recent.has(pr.name)) return false;
+      return true;
+    }).sort(() => Math.random() - 0.5);
 
-    let available = state.presets.filter(pr => {
-      if (pr.classAssoc && pr.classAssoc !== 'all' && pr.classAssoc !== cls.name) return false;
-      return !recent.has(pr.name);
-    }).sort(() => 0.5 - Math.random());
-
-    let selected = []; let tagCounts = {};
-    for (let pr of available) {
-      if (selected.length >= profile.drawCount) break;
-      let canAdd = true;
-      if (pr.tags) {
-        for (let tag of pr.tags) {
-          let lim = parseInt(profile.tagLimits && profile.tagLimits[tag]);
-          if (!isNaN(lim) && (tagCounts[tag] || 0) >= lim) { canAdd = false; break; }
+    let selected = [];
+    
+    // Draw exact count for each defined tag
+    if (prof.tagLimits) {
+      for (let tag of state.activityTags) {
+        let count = parseInt(prof.tagLimits[tag]);
+        if (!isNaN(count) && count > 0) {
+          let found = 0;
+          for (let i = 0; i < pool.length && found < count; i++) {
+            if (pool[i].tags && pool[i].tags.includes(tag)) {
+              selected.push(pool[i]);
+              pool.splice(i, 1);
+              i--;
+              found++;
+            }
+          }
         }
       }
-      if (canAdd) { selected.push(pr); if (pr.tags) pr.tags.forEach(t => tagCounts[t] = (tagCounts[t] || 0) + 1); }
     }
-    selected.forEach(pr => plan.activities.push({ id: generateId(), text: pr.name, duration: pr.duration, details: pr.details, isDone: false, tags: pr.tags || [] }));
+
+    // Draw exact count for "No Tag"
+    let untaggedCount = parseInt(prof.untaggedCount);
+    if (!isNaN(untaggedCount) && untaggedCount > 0) {
+      let found = 0;
+      for (let i = 0; i < pool.length && found < untaggedCount; i++) {
+        if (!pool[i].tags || pool[i].tags.length === 0) {
+          selected.push(pool[i]);
+          pool.splice(i, 1);
+          i--;
+          found++;
+        }
+      }
+    }
+    
+    // Fallback for older profiles that might still have drawCount but no explicit tag limits
+    let hasAnyLimit = false;
+    if (prof.tagLimits) {
+       for (let k in prof.tagLimits) {
+          if (parseInt(prof.tagLimits[k]) > 0) hasAnyLimit = true;
+       }
+    }
+    if (untaggedCount > 0) hasAnyLimit = true;
+    
+    if (!hasAnyLimit && prof.drawCount) {
+       for(let i=0; i < prof.drawCount && pool.length > 0; i++){
+          selected.push(pool.shift());
+       }
+    }
+
+    selected.forEach(pr => p.activities.push({
+      id: generateId(), 
+      text: pr.name, 
+      duration: pr.duration, 
+      details: pr.details, 
+      isDone: false, 
+      tags: pr.tags || []
+    }));
   }
 
   // ==========================================
@@ -700,6 +821,37 @@
     if(state.currentView === 'day') document.getElementById('daySelect').value = day;
     renderApp();
   }
+
+  function openEditClassDialog(classId) {
+    const cls = state.classes.find(c => c.id === classId);
+    if(!cls) return;
+    document.getElementById('edit-class-id').value = cls.id;
+    document.getElementById('edit-class-type').innerHTML = state.locations.filter(l => l !== 'all').map(l => `<option value="${l}">${l.toUpperCase()}</option>`).join('');
+    document.getElementById('edit-class-type').value = cls.type;
+    document.getElementById('edit-class-name').value = cls.name;
+    document.getElementById('edit-class-day').value = cls.day;
+    document.getElementById('edit-class-time').value = cls.time;
+    document.getElementById('edit-class-dialog').showModal();
+  }
+
+  function saveEditClass() {
+    const id = document.getElementById('edit-class-id').value;
+    const cls = state.classes.find(c => c.id === id);
+    const name = document.getElementById('edit-class-name').value.trim();
+    const time = document.getElementById('edit-class-time').value;
+    
+    if (!name) return alert("Please enter a class name.");
+    if (!time) return alert("Please select a start time.");
+
+    cls.type = document.getElementById('edit-class-type').value;
+    cls.name = name;
+    cls.day = document.getElementById('edit-class-day').value;
+    cls.time = time;
+
+    saveData();
+    document.getElementById('edit-class-dialog').close();
+    renderApp();
+  }
   
   function deleteClass(classId) { if(!requireClicks('c_'+classId, 3)) return; state.classes = state.classes.filter(c => c.id !== classId); saveData(); renderApp(); }
 
@@ -711,7 +863,6 @@
   }
   
   function deletePlan(cid, pid) { if(!requireClicks('p_'+pid, 2)) return; const cls = state.classes.find(c => c.id === cid); cls.plans = (cls.plans || []).filter(p => p.id !== pid); saveData(); renderApp(); }
-  function togglePlanCollapse(id) { const el = document.getElementById('p-' + id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
   function archivePlan(cid, pid) { const p = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); if(p && confirm("Archive?")) { p.isArchived = true; saveData(); renderApp(); } }
   function unarchivePlan(cid, pid) { const p = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); if(p && confirm("Unarchive?")) { p.isArchived = false; saveData(); renderApp(); } }
 
@@ -720,6 +871,7 @@
     if (!plan.activities || plan.activities.length === 0) return alert("Plan is empty.");
     localStorage.setItem('wc_clipboard', JSON.stringify(plan.activities)); alert(plan.activities.length + " activities copied!");
   }
+  
   function pastePlan(cid, pid) {
     const clip = localStorage.getItem('wc_clipboard'); if (!clip) return alert("Clipboard is empty.");
     const acts = JSON.parse(clip); const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid);
@@ -727,6 +879,7 @@
     acts.forEach(a => plan.activities.push({ id: generateId(), text: a.text, duration: a.duration, details: a.details, isDone: false, tags: a.tags || [] }));
     saveData(); renderApp();
   }
+  
   function toggleDetails(elementId) { const el = document.getElementById(elementId); if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
   function savePlanNotes(cid, pid, val) { const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); if(plan) { plan.notes = val; saveData(); } }
 
@@ -736,39 +889,65 @@
   function openPresetDialog(presetId = null) {
     document.getElementById('preset-id').value = presetId || "";
     document.getElementById('preset-dialog-title').innerText = presetId ? "Edit Activity" : "Add Activity";
+    
     document.getElementById('preset-tags-container').innerHTML = state.activityTags.map(tag => `<label style="font-size:0.85rem; font-weight:normal; display:flex; align-items:center; gap:3px;"><input type="checkbox" class="preset-tag-cb" value="${tag}"> ${tag}</label>`).join('');
-    document.getElementById('preset-class-assoc').innerHTML = '<option value="all">Appropriate for All Classes</option>' + state.classes.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+    
+    document.getElementById('preset-class-assoc-container').innerHTML = `<label style="font-size:0.85rem; font-weight:normal; display:flex; align-items:center; gap:3px;"><input type="checkbox" class="preset-class-cb" value="all"> All Classes</label>` + state.classes.map(c => `<label style="font-size:0.85rem; font-weight:normal; display:flex; align-items:center; gap:3px;"><input type="checkbox" class="preset-class-cb" value="${c.id}"> ${c.name}</label>`).join('');
 
     if (presetId) {
       const p = state.presets.find(x => x.id === presetId);
-      document.getElementById('preset-name').value = p.name; document.getElementById('preset-duration').value = p.duration;
-      document.getElementById('preset-details').value = p.details || ""; document.getElementById('preset-class-assoc').value = p.classAssoc || 'all';
+      document.getElementById('preset-name').value = p.name || "";
+      document.getElementById('preset-duration').value = p.duration || "";
+      document.getElementById('preset-details').value = p.details || "";
+      
       document.querySelectorAll('.preset-tag-cb').forEach(cb => cb.checked = (p.tags || []).includes(cb.value));
-    } else { document.getElementById('preset-name').value = ""; document.getElementById('preset-duration').value = ""; document.getElementById('preset-details').value = ""; }
+      const assoc = p.classAssoc || ['all'];
+      document.querySelectorAll('.preset-class-cb').forEach(cb => cb.checked = assoc.includes(cb.value) || (assoc === 'all' && cb.value === 'all') || (typeof assoc === 'string' && assoc === cb.value));
+    } else {
+      document.getElementById('preset-name').value = "";
+      document.getElementById('preset-duration').value = "";
+      document.getElementById('preset-details').value = "";
+      document.querySelectorAll('.preset-class-cb').forEach(cb => cb.checked = cb.value === 'all');
+    }
     document.getElementById('preset-dialog').showModal();
   }
 
   function savePreset() {
-    const id = document.getElementById('preset-id').value; const name = document.getElementById('preset-name').value.trim();
+    const id = document.getElementById('preset-id').value; 
+    const name = document.getElementById('preset-name').value.trim();
     if (!name) return alert("Name required.");
+    
     const tags = Array.from(document.querySelectorAll('.preset-tag-cb:checked')).map(cb => cb.value);
+    const classAssoc = Array.from(document.querySelectorAll('.preset-class-cb:checked')).map(cb => cb.value);
 
     if (id) {
-      const p = state.presets.find(x => x.id === id); p.name = name; p.duration = parseInt(document.getElementById('preset-duration').value); p.details = document.getElementById('preset-details').value; p.tags = tags; p.classAssoc = document.getElementById('preset-class-assoc').value;
+      const p = state.presets.find(x => x.id === id); 
+      p.name = name; 
+      p.duration = parseInt(document.getElementById('preset-duration').value); 
+      p.details = document.getElementById('preset-details').value; 
+      p.tags = tags;
+      p.classAssoc = classAssoc;
     } else {
-      state.presets.push({ id: generateId(), name, duration: parseInt(document.getElementById('preset-duration').value), details: document.getElementById('preset-details').value, tags, classAssoc: document.getElementById('preset-class-assoc').value });
+      state.presets.push({ 
+        id: generateId(), 
+        name, 
+        duration: parseInt(document.getElementById('preset-duration').value), 
+        details: document.getElementById('preset-details').value, 
+        tags,
+        classAssoc
+      });
     }
-    saveData(); document.getElementById('preset-dialog').close(); renderApp();
+    saveData(); 
+    document.getElementById('preset-dialog').close(); 
+    if (state.currentView === 'presets') renderPresets();
   }
-  function deletePreset(id) { if(!requireClicks('pr_'+id, 1)) return; state.presets = state.presets.filter(p => p.id !== id); saveData(); renderApp(); }
-
-  // ==========================================
-  // ADD ACTIVITY TO PLAN (NEW/LIST/RANDOM)
-  // ==========================================
-  function toggleActivity(cid, pid, aid) {
-    const a = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid).activities.find(x => x.id === aid);
-    a.isDone = !a.isDone; saveData(); const item = document.getElementById(`act-item-${aid}`);
-    if(item) { if(a.isDone) item.classList.add('is-done'); else item.classList.remove('is-done'); }
+  
+  function deletePreset(id) { 
+    if(requireClicks('pr_'+id, 1)) { 
+      state.presets = state.presets.filter(p => p.id !== id); 
+      saveData(); 
+      if (state.currentView === 'presets') renderPresets(); 
+    } 
   }
 
   function toggleAddActMode() {
@@ -806,8 +985,8 @@
       const pId = document.getElementById('add-act-preset-select').value; if (!pId) return alert("Select an activity from the list.");
       const pr = state.presets.find(p => p.id === pId); if (pr) plan.activities.push({ id: generateId(), text: pr.name, duration: pr.duration, details: pr.details, isDone: false, tags: pr.tags || [] });
     } else if (mode === 'random') {
-      let available = state.presets.filter(pr => !pr.classAssoc || pr.classAssoc === 'all' || pr.classAssoc === cls.name);
-      if (available.length === 0) available = state.presets; if (available.length === 0) return alert("Your inventory is empty!");
+      let available = state.presets;
+      if (available.length === 0) return alert("Your inventory is empty!");
       const pr = available[Math.floor(Math.random() * available.length)];
       plan.activities.push({ id: generateId(), text: pr.name, duration: pr.duration, details: pr.details, isDone: false, tags: pr.tags || [] });
     }
@@ -828,10 +1007,8 @@
     saveData(); document.getElementById('edit-act-dialog').close(); renderApp();
   }
 
-  function deleteActivity(cid, pid, aid) { if(!requireClicks('a_'+aid, 1)) return; const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); plan.activities = plan.activities.filter(a => a.id !== aid); saveData(); renderApp(); }
-
   // ==========================================
-  // RENDERING 
+  // RENDERING
   // ==========================================
   function renderApp() {
     if (state.currentView === 'presets') { renderPresets(); return; }
@@ -859,15 +1036,37 @@
   }
 
   function renderPresets() {
-    document.getElementById('presets-container').innerHTML = state.presets.map(p => `
+    const term = (document.getElementById('preset-search')?.value || '').toLowerCase();
+    const sortType = document.getElementById('preset-sort')?.value || 'newest';
+    
+    let filtered = state.presets.filter(p => p.name.toLowerCase().includes(term));
+    
+    if (sortType === 'name') {
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortType === 'tag') {
+      filtered.sort((a, b) => {
+        const tagA = (a.tags && a.tags.length > 0) ? a.tags[0].toLowerCase() : '\\uFFFF';
+        const tagB = (b.tags && b.tags.length > 0) ? b.tags[0].toLowerCase() : '\\uFFFF';
+        if (tagA === tagB) {
+          return a.name.localeCompare(b.name);
+        }
+        return tagA.localeCompare(tagB);
+      });
+    } else { 
+      filtered = [...filtered].reverse(); 
+    }
+    
+    document.getElementById('presets-container').innerHTML = filtered.map(p => `
       <div class="class-card">
         <div class="class-header">
           <div class="class-title">${p.name} <span class="badge" style="background:#e2e8f0;">${p.duration}m</span></div>
-          <div><button class="small" onclick="openPresetDialog('${p.id}')">✎</button><button class="small danger" onclick="deletePreset('${p.id}')">✕</button></div>
+          <div>
+            <button class="small" onclick="openPresetDialog('${p.id}')">✎ Edit</button>
+            <button class="small danger" onclick="deletePreset('${p.id}')">✕</button>
+          </div>
         </div>
         <div style="margin-top:5px;">
           ${(p.tags||[]).map(t => `<span class="tag-pill">${t}</span>`).join('')}
-          ${p.classAssoc && p.classAssoc !== 'all' ? `<span class="tag-pill tag-class">📍 ${p.classAssoc}</span>` : ''}
         </div>
       </div>
     `).join('');
@@ -876,7 +1075,6 @@
   function generateClassHTML(cls, plans, isHist) {
     if (isHist && plans.length === 0) return '';
     let pHTML = plans.map(p => {
-      const empty = !p.activities || p.activities.length === 0;
       return `
       <div class="plan-block">
         <div class="plan-header">
@@ -890,23 +1088,31 @@
             <button class="small primary" onclick="openAddActDialog('${cls.id}','${p.id}')">+ act</button>
           </div>
         </div>
-        ${empty ? `<button class="expand-btn" onclick="togglePlanCollapse('${p.id}')">Expand Empty Plan</button>` : ''}
-        <div id="p-${p.id}" class="${empty ? 'plan-collapsed' : ''}">
+        <div id="p-${p.id}">
           <div class="activity-list" style="margin-top:8px;">
-            ${(p.activities||[]).map(a => `
+            ${(p.activities||[]).map(a => {
+              const presetMatch = state.presets.find(pr => pr.name === a.text);
+              const actualTags = (a.tags && a.tags.length > 0) ? a.tags : (presetMatch && presetMatch.tags ? presetMatch.tags : []);
+              const hasDetailsOrTags = a.details || actualTags.length > 0;
+              
+              return `
               <div id="act-item-${a.id}" class="activity-item ${a.isDone ? 'is-done' : ''}" draggable="true" ondragstart="actDragStart(event, '${cls.id}', '${p.id}', '${a.id}')" ondragover="actDragOver(event)" ondrop="actDrop(event, '${cls.id}', '${p.id}', '${a.id}')">
                 <div class="activity-main">
                   <span class="drag-handle" ontouchstart="actTouchStart(event, '${cls.id}', '${p.id}', '${a.id}')">☰</span>
                   <input type="checkbox" ${a.isDone ? 'checked' : ''} onchange="toggleActivity('${cls.id}', '${p.id}', '${a.id}')">
                   <span class="activity-text">${a.text}</span>
                   <span class="minutes-badge">${a.duration}m</span>
-                  ${a.details ? `<button class="small" onclick="toggleDetails('det-${a.id}')">⌄</button>` : ''}
+                  ${hasDetailsOrTags ? `<button class="small" onclick="toggleDetails('det-${a.id}')">⌄</button>` : ''}
                   <button class="small" onclick="openEditActDialog('${cls.id}', '${p.id}', '${a.id}')">✎</button>
                   <button class="small danger" onclick="deleteActivity('${cls.id}', '${p.id}', '${a.id}')">✕</button>
                 </div>
-                ${a.details ? `<div id="det-${a.id}" class="activity-details">${a.details}</div>` : ''}
+                ${hasDetailsOrTags ? `
+                <div id="det-${a.id}" class="activity-details">
+                  ${actualTags.length > 0 ? `<div style="margin-bottom: 6px;">${actualTags.map(t => `<span class="tag-pill">${t}</span>`).join('')}</div>` : ''}
+                  ${a.details ? `<div>${a.details}</div>` : ''}
+                </div>` : ''}
               </div>
-            `).join('')}
+            `}).join('')}
           </div>
           <div id="notes-${p.id}" class="plan-notes-container" style="display:none;">
             <textarea class="plan-notes-textarea" rows="2" placeholder="Notes..." onchange="savePlanNotes('${cls.id}','${p.id}',this.value)">${p.notes || ''}</textarea>
@@ -917,12 +1123,22 @@
 
     return `
       <div class="class-card">
-        <div class="class-header"><div class="class-title"><span>${cls.name}</span><span class="badge">${cls.type}</span></div>${!isHist?`<button class="small warning" onclick="deleteClass('${cls.id}')">🗑</button>`:''}</div>
+        <div class="class-header"><div class="class-title"><span>${cls.name}</span><span class="badge">${cls.type}</span></div>${!isHist?`<div><button class="small" onclick="openEditClassDialog('${cls.id}')">✎ Edit</button> <button class="small warning" onclick="deleteClass('${cls.id}')">🗑</button></div>`:''}</div>
         <div class="meta">${cls.day} · ${cls.time}</div>
         <div>${pHTML}</div>
         ${!isHist ? `<button class="small primary" style="width:100%; margin-top:0.5rem;" onclick="addPlan('${cls.id}')">➕ add plan</button>` : ''}
       </div>
     `;
+  }
+  
+  function toggleActivity(cid, pid, aid) {
+    const a = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid).activities.find(x => x.id === aid);
+    a.isDone = !a.isDone; saveData(); renderApp();
+  }
+  function deleteActivity(cid, pid, aid) { 
+    if(!requireClicks('a_'+aid, 1)) return; 
+    const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); 
+    plan.activities = plan.activities.filter(a => a.id !== aid); saveData(); renderApp(); 
   }
 
   // --- DRAG AND DROP (ACTIVITIES) ---

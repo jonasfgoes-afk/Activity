@@ -1,36 +1,3 @@
-Testar uma mudança por vêz. 
-
-Adicionar tags nas atividades
-Algumas atividade são apropriadas para algumas turmas mme não para outras. Quero criar tipos dois diferentes de tags, tags de associação atividade e turma e tag de tipo de atividade. As tags padrão de tipo de atidade devem ser: Ice breaker, JW (Jonas Way)
-Deve ser possível adicionar outras tags.
-Adicionar um menu de configuração que ofereça
-- Sorteio automático on/off
-Dentro de sorteio automático:
-* Número de atividades adicionadas no sorteio.
-* Atividades por tag (para cada tag, número de atividades que podem aparecer com a tag )
-* Não repetir atividades dos últimos 7 dias da turma
-* Não repetir atividades dos últimos 14 dias da turma
-* Não repetir atividades dos últimos 21 dias da turma
-
-Os planejamentos mais recentes movidos para o histórico devem permanecer no topo do histórico e os mais antigos no final da lista.
-No menu principal que contém 
-All
-School
-Home
-Individual
-By day
-Presets
-History ⬇
-
-School e home são dois lugares diferentes em que eu ministro as aulas. Eu quero que Individual e By day estejam subordinados a School, Home e All, de maneira que quando eu selecionar home, eu possa em seguida selecionar By day ou By class (Individual) e visualizar apenas as turmas e planejamentos home. de maneira que quando eu selecionar school, eu possa em seguida selecionar By day ou By class (Individual) e visualizar apenas as turmas e planejamentos school.
-
-Eu quero que seja possível adicionar novos lugares em que ministro aulas para que eu possa adicionar planejamentos posteriormente.
-
-Mude "individual" para "By class"
-
-Algumas datas estão apresentando erro, on class 3t, por exemplo, temos - 2026-02-25 when tuesday was actually 2026-02-24
-
-Eu quero que os planejamentos criados que não têm ainda atividades adicionadas fiquem retraídos e haja um botão para expandí-los
 
 ===============================================================================================
 Test one change at a time.
@@ -92,20 +59,19 @@ I want plans that have been created but do not yet have activities added to be c
 
 ===================================================================================================================
 
-Removal of "Class Association": Removed the field from the activity inventory to simplify the bank and make all activities globally available.
+On "Class Association" settings, inside "activity edit", make it possible to associate with multiple classes.
 
-Auto-Draw Logic Clarification: Explained the behavior of the selection engine when untagged activities are missing and tag limits are reached (prioritizing limits over draw count).
+Auto-Draw Logic Clarification: Add expandable info button to explain the behavior of the selection engine when untagged activities are missing and tag limits are reached (prioritizing limits over draw count).
 
-Instructional Info Sections: Added two "Info Notes" to the settings menu—one explaining the draw logic and another clarifying that classes can only be assigned to one profile at a time.
+Instructional Info Sections: Add two expandable "Info buttons" into the settings menu explaining the draw logic and another clarifying that classes can only be assigned to one profile at a time. 
 
-Untagged Activity Behavior: Clarified the specific conditions under which untagged activities are selected (acting as fillers that bypass tag limits).
+In the "activity inventory, add a search bar that allows to search for specific activities
 
-Initial User Manual: Created a foundational guide for the app's core functions and navigation.
+Removal of "Expand Empty Plan": Remove the button and logic that hides empty plans,
 
-Removal of "Expand Empty Plan": Removed the button and logic that hid empty plans, making all plans visible by default.
 
-Tag Limit Verification: Confirmed that setting a tag limit to "0" effectively bans those tagged activities from being drawn.
+Enhanced Repeat Logic: Add an "Avoid repeats" on/off toggle and expanded the repeat cycle options to include 7, 14, 21, and 28 days.
 
-Detailed User Manual: Produced a specific, in-depth manual covering all technical functions, including data synchronization and Auto-Draw selection logic.
+Right when I open the app, when I click on "Home" and the tab "By day" is selected, the plans are not displayed. If I click on activities and back on by day, the classes are displayed
 
-Enhanced Repeat Logic: Added an "Avoid repeats" on/off toggle and expanded the repeat cycle options to include 7, 14, 21, and 28 days.
+Detailed User Manual: Produce a specific, in-depth manual covering all technical functions, including data synchronization and Auto-Draw selection logic.
