@@ -244,46 +244,16 @@
     <h3>Add New Class</h3>
     <label>Location:<select id="new-class-type"></select></label>
     <label>Class Name:<input type="text" id="new-class-name" placeholder="e.g. Mathematics"></label>
-    <label>Days of the Week:
-      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:5px; background: #f0f4fa; padding: 10px; border-radius: 8px;">
-        <label style="font-weight:normal; font-size: 0.9rem;"><input type="checkbox" value="Monday" class="new-class-day-cb"> Mon</label>
-        <label style="font-weight:normal; font-size: 0.9rem;"><input type="checkbox" value="Tuesday" class="new-class-day-cb"> Tue</label>
-        <label style="font-weight:normal; font-size: 0.9rem;"><input type="checkbox" value="Wednesday" class="new-class-day-cb"> Wed</label>
-        <label style="font-weight:normal; font-size: 0.9rem;"><input type="checkbox" value="Thursday" class="new-class-day-cb"> Thu</label>
-        <label style="font-weight:normal; font-size: 0.9rem;"><input type="checkbox" value="Friday" class="new-class-day-cb"> Fri</label>
-        <label style="font-weight:normal; font-size: 0.9rem;"><input type="checkbox" value="Saturday" class="new-class-day-cb"> Sat</label>
-        <label style="font-weight:normal; font-size: 0.9rem;"><input type="checkbox" value="Sunday" class="new-class-day-cb"> Sun</label>
-      </div>
+    <label>Day of the Week:
+      <select id="new-class-day">
+        <option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option>
+        <option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="Sunday">Sunday</option>
+      </select>
     </label>
     <label>Start Time:<input type="time" id="new-class-time" required></label>
     <div class="dialog-actions">
       <button class="danger" onclick="document.getElementById('class-dialog').close()">Cancel</button>
       <button class="primary" onclick="addClass()">Add Class</button>
-    </div>
-  </div>
-</dialog>
-
-<dialog id="edit-class-dialog">
-  <div class="dialog-form">
-    <h3>Edit Class</h3>
-    <input type="hidden" id="edit-class-id">
-    <label>Location:<select id="edit-class-type"></select></label>
-    <label>Class Name:<input type="text" id="edit-class-name"></label>
-    <label>Days of the Week:
-      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:5px; background: #f0f4fa; padding: 10px; border-radius: 8px;">
-        <label style="font-weight:normal; font-size: 0.9rem;"><input type="checkbox" value="Monday" class="edit-class-day-cb"> Mon</label>
-        <label style="font-weight:normal; font-size: 0.9rem;"><input type="checkbox" value="Tuesday" class="edit-class-day-cb"> Tue</label>
-        <label style="font-weight:normal; font-size: 0.9rem;"><input type="checkbox" value="Wednesday" class="edit-class-day-cb"> Wed</label>
-        <label style="font-weight:normal; font-size: 0.9rem;"><input type="checkbox" value="Thursday" class="edit-class-day-cb"> Thu</label>
-        <label style="font-weight:normal; font-size: 0.9rem;"><input type="checkbox" value="Friday" class="edit-class-day-cb"> Fri</label>
-        <label style="font-weight:normal; font-size: 0.9rem;"><input type="checkbox" value="Saturday" class="edit-class-day-cb"> Sat</label>
-        <label style="font-weight:normal; font-size: 0.9rem;"><input type="checkbox" value="Sunday" class="edit-class-day-cb"> Sun</label>
-      </div>
-    </label>
-    <label>Start Time:<input type="time" id="edit-class-time" required></label>
-    <div class="dialog-actions">
-      <button class="danger" onclick="document.getElementById('edit-class-dialog').close()">Cancel</button>
-      <button class="primary" onclick="saveEditClass()">Save</button>
     </div>
   </div>
 </dialog>
@@ -389,19 +359,7 @@
   
   let currentProfileId = 'default';
 
-  function migrateData(data) {
-    if (!data) return data;
-    
-    // Migrate single day strings to days arrays
-    if (data.classes) {
-      data.classes.forEach(c => {
-        if (c.day && (!c.days || c.days.length === 0)) {
-          c.days = [c.day];
-          delete c.day;
-        }
-      });
-    }
-    
+  function ensureDrawProfiles(data) {
     if (!data.drawProfiles || data.drawProfiles.length === 0) {
       data.drawProfiles = [{
         id: 'default',
@@ -423,11 +381,11 @@
   function loadLocal() {
     const saved = localStorage.getItem('weekly_classes_v7');
     if (saved) {
-      state = migrateData({...state, ...JSON.parse(saved)});
+      state = ensureDrawProfiles({...state, ...JSON.parse(saved)});
     } else {
       const old = localStorage.getItem('weekly_classes_v6');
-      if (old) { state = migrateData({...state, ...JSON.parse(old)}); saveData(); }
-      else { state = migrateData(state); }
+      if (old) { state = ensureDrawProfiles({...state, ...JSON.parse(old)}); saveData(); }
+      else { state = ensureDrawProfiles(state); }
     }
     
     currentProfileId = state.drawProfiles[0].id;
@@ -452,7 +410,7 @@
       state.locations = cloud.locations || ['all', 'school', 'home'];
       state.activityTags = cloud.activityTags || ['Ice breaker', 'JW'];
       
-      const migratedCloud = migrateData(cloud);
+      const migratedCloud = ensureDrawProfiles(cloud);
       state.drawProfiles = migratedCloud.drawProfiles;
       
       renderNav(); renderApp(); renderSettings();
@@ -474,11 +432,11 @@
       if (btn) { 
         d.origHTML = btn.innerHTML; d.origBg = btn.style.background; 
         if (totalClicks === 2) { btn.innerHTML = "Confirm!"; btn.style.background = "#dc2626"; btn.style.color = "white"; } 
-        else if (totalClicks === 3) { btn.innerHTML = "Confirm!"; btn.style.background = "#dc2626"; btn.style.color = "white"; }
+        else if (totalClicks === 3) { btn.innerHTML = "Sure?"; btn.style.background = "#fca5a5"; btn.style.color = "#7f1d1d"; }
       }
       d.step++; d.timer = setTimeout(() => resetDelete(id, btn), 3000); return false;
     } else if (d.step === 2 && totalClicks === 3) { 
-      if (btn) { btn.innerHTML = "Sure?"; btn.style.background = "#991b1b"; btn.style.color = "white"; }
+      if (btn) { btn.innerHTML = "Confirm!"; btn.style.background = "#dc2626"; btn.style.color = "white"; }
       d.step++; d.timer = setTimeout(() => resetDelete(id, btn), 3000); return false;
     } else { resetDelete(id, btn); return true; }
   }
@@ -562,37 +520,12 @@
         return `<div class="settings-row"><span>${tag}:</span><input type="number" id="set-limit-${safeId}" value="${prof.tagLimits[tag] || ''}" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()"></div>`;
       }).join('') + `<div class="settings-row"><span>No Tag:</span><input type="number" id="set-limit-notag" value="${prof.untaggedCount || ''}" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ccc;" onchange="updateProfile()"></div>`;
 
-      // --- GROUP CLASSES BY LOCATION ---
-      let classListHTML = '<span style="font-size:0.85rem; color:#666;">No classes added yet.</span>';
-      if (state.classes.length > 0) {
-        const classesByLoc = {};
-        state.classes.forEach(c => {
-          if (!classesByLoc[c.type]) classesByLoc[c.type] = [];
-          classesByLoc[c.type].push(c);
-        });
-        
-        classListHTML = Object.keys(classesByLoc).map(loc => {
-          const locClasses = classesByLoc[loc];
-          const classItems = locClasses.map(c => {
-            const isAssigned = (c.drawProfileId === prof.id) || (!c.drawProfileId && prof.id === state.drawProfiles[0].id);
-            return `<label style="display:inline-flex; align-items:center; gap:5px; font-size:0.9rem; font-weight:500; cursor:pointer; background:white; padding:5px 10px; border-radius:8px; border:1px solid #ccc; white-space:nowrap;">
-                      <input type="checkbox" style="width:16px; height:16px; accent-color:#1e3c72;" ${isAssigned ? 'checked' : ''} onchange="toggleProfileClass('${c.id}', this.checked)"> ${c.name}
-                    </label>`;
-          }).join('');
-          
-          return `
-            <details style="background:white; border:1px solid #d4e0ec; border-radius:10px; margin-bottom:8px; overflow:hidden;" open>
-              <summary style="background:#eaf0f9; padding:8px 12px; font-weight:bold; cursor:pointer; color:#1e3c72; user-select:none; outline:none;">
-                🏫 ${loc.toUpperCase()}
-              </summary>
-              <div style="padding:10px; display:flex; flex-wrap:wrap; gap:8px;">
-                ${classItems}
-              </div>
-            </details>
-          `;
-        }).join('');
-      }
-      document.getElementById('profile-class-list').innerHTML = classListHTML;
+      document.getElementById('profile-class-list').innerHTML = state.classes.length > 0 ? state.classes.map(c => {
+         const isAssigned = (c.drawProfileId === prof.id) || (!c.drawProfileId && prof.id === state.drawProfiles[0].id);
+         return `<label style="display:flex; align-items:center; gap:8px; font-size:0.95rem; font-weight:500; cursor:pointer;">
+                   <input type="checkbox" style="width:18px; height:18px; accent-color:#1e3c72;" ${isAssigned ? 'checked' : ''} onchange="toggleProfileClass('${c.id}', this.checked)"> ${c.name}
+                 </label>`;
+      }).join('') : '<span style="font-size:0.85rem; color:#666;">No classes added yet.</span>';
     }
   }
 
@@ -662,7 +595,7 @@
       try {
         const importedState = JSON.parse(e.target.result);
         if (confirm("This will replace all your current classes, plans, and settings with the imported file. Are you sure you want to proceed?")) {
-          state = migrateData({
+          state = ensureDrawProfiles({
             classes: importedState.classes || [], presets: importedState.presets || [], locations: importedState.locations || ['all', 'school', 'home'], activityTags: importedState.activityTags || ['Ice breaker', 'JW'], drawProfiles: importedState.drawProfiles || [], currentLoc: 'all', currentView: 'day'
           });
           currentProfileId = state.drawProfiles[0].id;
@@ -681,15 +614,8 @@
       if (!state.locations.includes(clean)) { state.locations.push(clean); saveData(); renderNav(); renderSettings(); }
     }
   }
-  
-  // NEW DELETION METHOD FOR LOCATIONS
   function removeLocation(loc) {
-    const confirmation = prompt(`To remove the location "${loc}", type DELETE below:`);
-    if (confirmation === "DELETE") { 
-      state.locations = state.locations.filter(l => l !== loc); 
-      if(state.currentLoc === loc) state.currentLoc = 'all'; 
-      saveData(); renderNav(); renderSettings(); renderApp(); 
-    }
+    if(confirm(`Remove "${loc}"?`)) { state.locations = state.locations.filter(l => l !== loc); if(state.currentLoc === loc) state.currentLoc = 'all'; saveData(); renderNav(); renderSettings(); renderApp(); }
   }
 
   function addActivityTag() {
@@ -739,40 +665,29 @@
   
   function getNextPlanDate(cls) {
     const dayMap = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const targetDayIndex = dayMap.indexOf(cls.day);
     
-    // Find valid numeric indices for selected days
-    let validIndices = (cls.days || [cls.day]).map(d => dayMap.indexOf(d)).filter(i => i !== -1);
-    if (validIndices.length === 0) validIndices = [1]; // Fallback to Monday if data is weird
-    
+    // Start from today
     let d = new Date();
+    // Normalize to start of day in local time to avoid timezone drifting issues
     d.setHours(0,0,0,0);
     
-    // If plans exist, jump to the day AFTER the latest plan to start searching
+    // Find how many days until the next occurrence (0 = today, 1 = tomorrow, etc)
+    let diff = (targetDayIndex - d.getDay() + 7) % 7;
+    
+    // If we want the NEXT occurrence and not today, if diff is 0, add 7
+    // But typically in this app, if today is the day, you want to plan for today
+    d.setDate(d.getDate() + diff);
+    
+    // Final check against class history to ensure we don't duplicate
     if (cls.plans && cls.plans.length > 0) {
-        const latestStr = cls.plans.map(p => p.date).sort().pop();
-        d = new Date(latestStr + "T00:00:00");
-        d.setDate(d.getDate() + 1); 
-    }
-    
-    // Advance date until we hit an approved day of the week
-    while (!validIndices.includes(d.getDay())) {
-        d.setDate(d.getDate() + 1);
-    }
-    
-    // Final check against class history to ensure absolutely no duplicate dates
-    let safeStr = d.toISOString().split('T')[0];
-    if (cls.plans) {
-        let existingDates = cls.plans.map(p => p.date);
-        while (existingDates.includes(safeStr)) {
-            d.setDate(d.getDate() + 1);
-            while (!validIndices.includes(d.getDay())) {
-                d.setDate(d.getDate() + 1);
-            }
-            safeStr = d.toISOString().split('T')[0];
+        const dates = cls.plans.map(p => p.date);
+        while (dates.includes(d.toISOString().split('T')[0])) {
+            d.setDate(d.getDate() + 7);
         }
     }
     
-    return safeStr;
+    return d.toISOString().split('T')[0];
   }
 
   function runAutoDraw(cid, pid) {
@@ -867,7 +782,6 @@
   function openClassDialog() {
     document.getElementById('new-class-type').innerHTML = state.locations.filter(l => l !== 'all').map(l => `<option value="${l}">${l.toUpperCase()}</option>`).join('');
     document.getElementById('new-class-name').value = '';
-    document.querySelectorAll('.new-class-day-cb').forEach(cb => cb.checked = false);
     document.getElementById('new-class-time').value = '';
     document.getElementById('class-dialog').showModal();
   }
@@ -875,77 +789,20 @@
   function addClass() {
     const type = document.getElementById('new-class-type').value; 
     const name = document.getElementById('new-class-name').value.trim();
+    const day = document.getElementById('new-class-day').value;
     const time = document.getElementById('new-class-time').value;
     
-    const dayCbs = document.querySelectorAll('.new-class-day-cb:checked');
-    const days = Array.from(dayCbs).map(cb => cb.value);
-    
     if (!name) return alert("Please enter a class name.");
-    if (days.length === 0) return alert("Please select at least one day of the week.");
     if (!time) return alert("Please select a start time.");
 
-    state.classes.push({ id: generateId(), type, name, days, time, plans: [], drawProfileId: state.drawProfiles[0].id });
+    state.classes.push({ id: generateId(), type, name, day, time, plans: [], drawProfileId: state.drawProfiles[0].id });
     saveData(); 
     document.getElementById('class-dialog').close(); 
-    
-    if(state.currentView === 'day' && days.includes(document.getElementById('daySelect').value) === false) {
-       document.getElementById('daySelect').value = days[0];
-    }
-    renderApp();
-  }
-
-  function openEditClassDialog(classId) {
-    const cls = state.classes.find(c => c.id === classId);
-    if(!cls) return;
-    document.getElementById('edit-class-id').value = cls.id;
-    document.getElementById('edit-class-type').innerHTML = state.locations.filter(l => l !== 'all').map(l => `<option value="${l}">${l.toUpperCase()}</option>`).join('');
-    document.getElementById('edit-class-type').value = cls.type;
-    document.getElementById('edit-class-name').value = cls.name;
-    
-    const validDays = cls.days || [cls.day];
-    document.querySelectorAll('.edit-class-day-cb').forEach(cb => {
-      cb.checked = validDays.includes(cb.value);
-    });
-    
-    document.getElementById('edit-class-time').value = cls.time;
-    document.getElementById('edit-class-dialog').showModal();
-  }
-
-  function saveEditClass() {
-    const id = document.getElementById('edit-class-id').value;
-    const cls = state.classes.find(c => c.id === id);
-    const name = document.getElementById('edit-class-name').value.trim();
-    const time = document.getElementById('edit-class-time').value;
-    
-    const dayCbs = document.querySelectorAll('.edit-class-day-cb:checked');
-    const days = Array.from(dayCbs).map(cb => cb.value);
-    
-    if (!name) return alert("Please enter a class name.");
-    if (days.length === 0) return alert("Please select at least one day of the week.");
-    if (!time) return alert("Please select a start time.");
-
-    cls.type = document.getElementById('edit-class-type').value;
-    cls.name = name;
-    cls.days = days;
-    cls.time = time;
-    delete cls.day; // Clean up old string format if present
-
-    saveData();
-    document.getElementById('edit-class-dialog').close();
+    if(state.currentView === 'day') document.getElementById('daySelect').value = day;
     renderApp();
   }
   
-  // NEW DELETION METHOD FOR CLASSES
-  function deleteClass(classId) { 
-    const cls = state.classes.find(c => c.id === classId);
-    if(!cls) return;
-    const confirmation = prompt(`To delete the class "${cls.name}", type DELETE below:`);
-    if (confirmation === "DELETE") {
-      state.classes = state.classes.filter(c => c.id !== classId); 
-      saveData(); 
-      renderApp(); 
-    }
-  }
+  function deleteClass(classId) { if(!requireClicks('c_'+classId, 3)) return; state.classes = state.classes.filter(c => c.id !== classId); saveData(); renderApp(); }
 
   function addPlan(cid) {
     const cls = state.classes.find(c => c.id === cid); if (!cls.plans) cls.plans = [];
@@ -954,9 +811,7 @@
     runAutoDraw(cid, newPlanId); saveData(); renderApp();
   }
   
-  // THREE STEP DELETE FOR PLANS
-  function deletePlan(cid, pid) { if(!requireClicks('p_'+pid, 3)) return; const cls = state.classes.find(c => c.id === cid); cls.plans = (cls.plans || []).filter(p => p.id !== pid); saveData(); renderApp(); }
-  
+  function deletePlan(cid, pid) { if(!requireClicks('p_'+pid, 2)) return; const cls = state.classes.find(c => c.id === cid); cls.plans = (cls.plans || []).filter(p => p.id !== pid); saveData(); renderApp(); }
   function archivePlan(cid, pid) { const p = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); if(p && confirm("Archive?")) { p.isArchived = true; saveData(); renderApp(); } }
   function unarchivePlan(cid, pid) { const p = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); if(p && confirm("Unarchive?")) { p.isArchived = false; saveData(); renderApp(); } }
 
@@ -1115,10 +970,7 @@
       sel.innerHTML = filtered.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
       if (cur && filtered.some(c=>c.id===cur)) sel.value = cur;
       filtered = filtered.filter(c => c.id === sel.value);
-    } else if (state.currentView === 'day') { 
-      const selectedDay = document.getElementById('daySelect').value;
-      filtered = filtered.filter(c => (c.days && c.days.includes(selectedDay)) || c.day === selectedDay); 
-    }
+    } else if (state.currentView === 'day') { filtered = filtered.filter(c => c.day === document.getElementById('daySelect').value); }
 
     const curCont = document.getElementById('current-classes'); const histCont = document.getElementById('history-content');
     curCont.innerHTML = ''; histCont.innerHTML = '';
@@ -1172,13 +1024,10 @@
   function generateClassHTML(cls, plans, isHist) {
     if (isHist && plans.length === 0) return '';
     let pHTML = plans.map(p => {
-      const pDateObj = new Date(p.date + "T12:00:00");
-      const pDayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][pDateObj.getDay()];
-      
       return `
       <div class="plan-block">
         <div class="plan-header">
-          <span style="font-weight:700;">📅 ${p.date} (${pDayName}) ${isHist ? '<span class="badge" style="background:#b9d1e9;">Archived</span>' : ''}</span>
+          <span style="font-weight:700;">📅 ${p.date} ${isHist ? '<span class="badge" style="background:#b9d1e9;">Archived</span>' : ''}</span>
           <div class="plan-actions">
             ${!isHist ? `<button class="small" onclick="archivePlan('${cls.id}','${p.id}')">📥 arch</button>` : `<button class="small" onclick="unarchivePlan('${cls.id}','${p.id}')">📤 unarch</button>`}
             <button class="small" onclick="copyPlan('${cls.id}','${p.id}')">📄 copy</button>
@@ -1221,12 +1070,10 @@
       </div>
     `}).join('');
 
-    const displayDays = (cls.days || [cls.day]).map(d => d.slice(0,3)).join(', ');
-
     return `
       <div class="class-card">
-        <div class="class-header"><div class="class-title"><span>${cls.name}</span><span class="badge">${cls.type}</span></div>${!isHist?`<div><button class="small" onclick="openEditClassDialog('${cls.id}')">✎ Edit</button> <button class="small warning" onclick="deleteClass('${cls.id}')">🗑</button></div>`:''}</div>
-        <div class="meta">${displayDays} · ${cls.time}</div>
+        <div class="class-header"><div class="class-title"><span>${cls.name}</span><span class="badge">${cls.type}</span></div>${!isHist?`<button class="small warning" onclick="deleteClass('${cls.id}')">🗑</button>`:''}</div>
+        <div class="meta">${cls.day} · ${cls.time}</div>
         <div>${pHTML}</div>
         ${!isHist ? `<button class="small primary" style="width:100%; margin-top:0.5rem;" onclick="addPlan('${cls.id}')">➕ add plan</button>` : ''}
       </div>
