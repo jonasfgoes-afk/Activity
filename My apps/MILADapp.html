@@ -46,6 +46,7 @@
     .badge { font-size: 0.75rem; background: #ccc; padding: 0.25rem 0.9rem; border-radius: 30px; text-transform: uppercase; font-weight: 600; }
     .badge.ensaiado { background: #2b6f9b; color: white; }
     .badge.novo { background: #c95d0e; color: white; }
+    .tag-badge { background: #d9e2ed; color: #1e3c72; font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 12px; white-space: nowrap; }
     .meta { color: #2c3e50; font-weight: 500; font-size: 0.95rem; margin: 0.5rem 0; }
     
     .plan-block { background: #f8fcff; border-radius: 18px; padding: 0.9rem; margin: 0.9rem 0; border: 1px solid #d4e0ec; }
@@ -60,6 +61,7 @@
     .activity-main input[type="checkbox"] { width: 1.3rem; height: 1.3rem; accent-color: #1e3c72; }
     .activity-text { flex: 1; font-size: 0.95rem; min-width: 100px; font-weight: 500; }
     .key-badge { background: #d9e2ed; border-radius: 30px; padding: 0.2rem 0.7rem; font-size: 0.8rem; font-weight: 600; color: #1e3c72; }
+    .tags-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
     .activity-details { padding: 0.5rem 0.8rem; background: #f0f4fa; font-size: 0.85rem; color: #444; border-top: 1px solid #e0eaf2; white-space: pre-wrap; display: none; }
     
     .plan-notes-container { margin-top: 8px; border-top: 1px dashed #b0c9e0; padding-top: 8px; }
@@ -637,6 +639,7 @@
           duration: escolhido.duration,
           categoria: escolhido.categoria,
           details: escolhido.details,
+          tags: escolhido.tags,  // copy tags
           completed: false
         });
         
@@ -668,6 +671,7 @@
           duration: escolhido.duration,
           categoria: escolhido.categoria,
           details: escolhido.details,
+          tags: escolhido.tags,
           completed: false
         });
         
@@ -733,6 +737,7 @@
         duration: act.duration || act.tonalidade, 
         categoria: act.categoria || "ensaiados",
         details: act.details || "",
+        tags: act.tags || [],   // preserve tags
         completed: false
       });
     });
@@ -801,7 +806,11 @@
       const sortedPlans = cls.plans ? [...cls.plans].sort((a, b) => new Date(b.date) - new Date(a.date)) : [];
 
       sortedPlans.forEach((plan) => {
-        let activitiesHTML = plan.activities ? plan.activities.map((act) => `
+        let activitiesHTML = plan.activities ? plan.activities.map((act) => {
+          const tagsHtml = act.tags && act.tags.length 
+            ? `<div class="tags-row">${act.tags.map(t => `<span class="tag-badge">${t}</span>`).join('')}</div>`
+            : '';
+          return `
           <div class="activity-item" data-act-id="${act.id}" data-plan-id="${plan.id}" data-class-id="${cls.id}">
             <div class="activity-main">
               <span class="drag-handle" onmousedown="initDrag(event)" ontouchstart="initTouch(event)">☰</span>
@@ -809,11 +818,12 @@
               <span class="activity-text" style="${act.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${act.name}</span>
               <span class="badge ${act.categoria === 'ensaiados' ? 'ensaiado' : 'novo'}">${act.categoria === 'ensaiados' ? 'Ensaiado' : 'Novo'}</span>
               <span class="key-badge">${act.duration || '-'}</span>
+              ${tagsHtml}
               <button class="small" onclick="toggleDetails('${act.id}')">▼</button>
             </div>
             <div id="details-${act.id}" class="activity-details">${linkify(act.details) || 'Sem detalhes.'}</div>
           </div>
-        `).join('') : '<div style="font-size:0.85rem; color:#888; text-align:center;">Nenhum louvor.</div>';
+        `}).join('') : '<div style="font-size:0.85rem; color:#888; text-align:center;">Nenhum louvor.</div>';
 
         const planBlock = `
           <div class="plan-block">
@@ -1152,18 +1162,26 @@
     const planId = document.getElementById('add-act-plan-id').value;
     const mode = document.querySelector('input[name="actSource"]:checked').value;
     
-    let activity = { id: generateId(), completed: false };
+    let activity = { id: generateId(), completed: false, tags: [] }; // tags array for manual
 
     if (mode === 'preset') {
       const presetId = document.getElementById('add-act-preset-select').value;
       const preset = bancoLouvores.find(p => p.id === presetId);
       if(!preset) return alert("Selecione um louvor do banco.");
-      activity = { ...activity, name: preset.name, duration: preset.duration, categoria: preset.categoria, details: preset.details };
+      activity = { 
+        ...activity, 
+        name: preset.name, 
+        duration: preset.duration, 
+        categoria: preset.categoria, 
+        details: preset.details,
+        tags: preset.tags || []   // copy tags
+      };
     } else {
       activity.name = document.getElementById('add-act-name').value;
       activity.duration = document.getElementById('add-act-duration').value;
       activity.categoria = document.getElementById('add-act-categoria').value;
       activity.details = document.getElementById('add-act-details').value;
+      // manual entries have no tags (could be added later)
     }
 
     if (activity.name) {
