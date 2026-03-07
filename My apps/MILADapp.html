@@ -10,7 +10,9 @@
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1e3c72">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  
+  <!-- Apple Touch Icon (base64 embedded) -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231e3c72'/%3E%3Ctext x='50' y='70' font-size='70' text-anchor='middle' fill='white' font-family='Arial, sans-serif'%3E♪%3C/text%3E%3C/svg%3E">
 
   <title>Gestão de Louvores - MILAD</title>
   
@@ -18,6 +20,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
   <style>
+    /* ... (all existing styles, unchanged) ... */
     * { box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
     body { background: #f5f7fb; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; padding-bottom: 90px; overscroll-behavior-y: none; }
     #app { max-width: 600px; width: 100%; background: white; box-shadow: 0 0 30px rgba(0,0,0,0.05); padding: 1.5rem 1rem; margin: 0; min-height: 100vh; position: relative; }
@@ -62,6 +65,7 @@
     .activity-text { flex: 1; font-size: 0.95rem; min-width: 100px; font-weight: 500; }
     .key-badge { background: #d9e2ed; border-radius: 30px; padding: 0.2rem 0.7rem; font-size: 0.8rem; font-weight: 600; color: #1e3c72; }
     .tags-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+    .activity-actions { display: flex; gap: 2px; margin-left: auto; }
     .activity-details { padding: 0.5rem 0.8rem; background: #f0f4fa; font-size: 0.85rem; color: #444; border-top: 1px solid #e0eaf2; white-space: pre-wrap; display: none; }
     
     .plan-notes-container { margin-top: 8px; border-top: 1px dashed #b0c9e0; padding-top: 8px; }
@@ -106,6 +110,9 @@
     .search-sort-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
     .search-input { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid #b0c4de; font-size: 1rem; }
     #add-act-preset-select { width: 100%; padding: 8px; border-radius: 12px; border: 1px solid #b0c4de; background: white; min-height: 120px; }
+    
+    /* Confirm delete style */
+    .delete-confirm { background: #b91c1c; color: white; }
   </style>
 </head>
 <body>
@@ -312,6 +319,31 @@
     <div class="dialog-actions">
       <button class="danger" onclick="document.getElementById('add-act-dialog').close()">Cancelar</button>
       <button class="primary" onclick="saveNewActivity()">Adicionar</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- NEW: Edit Activity Dialog -->
+<dialog id="edit-activity-dialog">
+  <div class="dialog-form">
+    <h3>Editar Louvor</h3>
+    <input type="hidden" id="edit-act-class-id">
+    <input type="hidden" id="edit-act-plan-id">
+    <input type="hidden" id="edit-act-id">
+    <label>Nome:<input type="text" id="edit-act-name"></label>
+    <label>Tom:<input type="text" id="edit-act-duration"></label>
+    <label>Categoria:
+      <select id="edit-act-categoria">
+        <option value="ensaiados">Ensaiado</option>
+        <option value="novos">Novo</option>
+      </select>
+    </label>
+    <label>Tags:</label>
+    <div id="edit-act-tags-container" class="tags-container" style="margin-bottom: 5px;"></div>
+    <label>Detalhes:<textarea id="edit-act-details" rows="3"></textarea></label>
+    <div class="dialog-actions">
+      <button class="danger" onclick="document.getElementById('edit-activity-dialog').close()">Cancelar</button>
+      <button class="primary" onclick="saveEditedActivity()">Salvar</button>
     </div>
   </div>
 </dialog>
@@ -769,6 +801,91 @@
   }
 
   // ==========================================
+  // NOVAS FUNÇÕES: EDITAR E DELETAR ACTIVITY
+  // ==========================================
+  function openEditActivityDialog(classId, planId, actId) {
+    const cls = cultos.find(c => c.id === classId);
+    const plan = cls.plans.find(p => p.id === planId);
+    const act = plan.activities.find(a => a.id === actId);
+    if (!act) return;
+
+    document.getElementById('edit-act-class-id').value = classId;
+    document.getElementById('edit-act-plan-id').value = planId;
+    document.getElementById('edit-act-id').value = actId;
+    document.getElementById('edit-act-name').value = act.name || '';
+    document.getElementById('edit-act-duration').value = act.duration || '';
+    document.getElementById('edit-act-categoria').value = act.categoria || 'ensaiados';
+    document.getElementById('edit-act-details').value = act.details || '';
+
+    // Render tags
+    const container = document.getElementById('edit-act-tags-container');
+    container.innerHTML = configSorteio.tagsDisponiveis.map(tag => {
+      const isSelected = act.tags && act.tags.includes(tag);
+      return `<div class="tag-chip-selectable ${isSelected ? 'selected' : ''}" onclick="toggleEditActTag('${tag}')">${tag}</div>`;
+    }).join('');
+
+    document.getElementById('edit-activity-dialog').showModal();
+  }
+
+  function toggleEditActTag(tag) {
+    // Get current selected tags from the UI state (we'll store them in a data attribute or global)
+    // For simplicity, we'll rely on the class toggling and read from UI when saving.
+    const chips = document.querySelectorAll('#edit-act-tags-container .tag-chip-selectable');
+    chips.forEach(chip => {
+      if (chip.textContent === tag) {
+        chip.classList.toggle('selected');
+      }
+    });
+  }
+
+  function saveEditedActivity() {
+    const classId = document.getElementById('edit-act-class-id').value;
+    const planId = document.getElementById('edit-act-plan-id').value;
+    const actId = document.getElementById('edit-act-id').value;
+    const cls = cultos.find(c => c.id === classId);
+    const plan = cls.plans.find(p => p.id === planId);
+    const act = plan.activities.find(a => a.id === actId);
+    if (!act) return;
+
+    act.name = document.getElementById('edit-act-name').value;
+    act.duration = document.getElementById('edit-act-duration').value;
+    act.categoria = document.getElementById('edit-act-categoria').value;
+    act.details = document.getElementById('edit-act-details').value;
+
+    // Collect selected tags
+    const selectedTags = [];
+    document.querySelectorAll('#edit-act-tags-container .tag-chip-selectable.selected').forEach(chip => {
+      selectedTags.push(chip.textContent);
+    });
+    act.tags = selectedTags;
+
+    saveData();
+    document.getElementById('edit-activity-dialog').close();
+    renderApp();
+  }
+
+  function deleteActivity(btn, classId, planId, actId) {
+    // Two-click confirmation
+    if (btn.classList.contains('delete-confirm')) {
+      // Second click: actually delete
+      const cls = cultos.find(c => c.id === classId);
+      const plan = cls.plans.find(p => p.id === planId);
+      plan.activities = plan.activities.filter(a => a.id !== actId);
+      saveData();
+      renderApp();
+    } else {
+      // First click: mark for confirmation
+      btn.classList.add('delete-confirm');
+      btn.textContent = 'Confirmar?';
+      // Reset after 3 seconds
+      setTimeout(() => {
+        btn.classList.remove('delete-confirm');
+        btn.textContent = '🗑️';
+      }, 3000);
+    }
+  }
+
+  // ==========================================
   // RENDERIZAÇÃO
   // ==========================================
   function setView(view) {
@@ -819,6 +936,10 @@
               <span class="badge ${act.categoria === 'ensaiados' ? 'ensaiado' : 'novo'}">${act.categoria === 'ensaiados' ? 'Ensaiado' : 'Novo'}</span>
               <span class="key-badge">${act.duration || '-'}</span>
               ${tagsHtml}
+              <div class="activity-actions">
+                <button class="small" onclick="openEditActivityDialog('${cls.id}', '${plan.id}', '${act.id}')" title="Editar">✏️</button>
+                <button class="small" onclick="deleteActivity(this, '${cls.id}', '${plan.id}', '${act.id}')" title="Excluir">🗑️</button>
+              </div>
               <button class="small" onclick="toggleDetails('${act.id}')">▼</button>
             </div>
             <div id="details-${act.id}" class="activity-details">${linkify(act.details) || 'Sem detalhes.'}</div>
