@@ -20,7 +20,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
   <style>
-    /* (all existing styles – unchanged) */
+    /* ... (all existing styles, unchanged) ... */
     * { box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
     body { background: #f5f7fb; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; padding-bottom: 90px; overscroll-behavior-y: none; }
     #app { max-width: 600px; width: 100%; background: white; box-shadow: 0 0 30px rgba(0,0,0,0.05); padding: 1.5rem 1rem; margin: 0; min-height: 100vh; position: relative; }
@@ -384,59 +384,23 @@
     appId: "1:177251519785:web:b6a8ea76cf7f4689d4fb38"
   };
 
-  let db, dbRef;
-  try {
-    if(firebaseConfig.apiKey !== "SUA_API_KEY_AQUI") {
+  if(firebaseConfig.apiKey !== "SUA_API_KEY_AQUI") {
       firebase.initializeApp(firebaseConfig);
-      db = firebase.database();
-      dbRef = db.ref('igreja_louvores_data');
-    } else {
+  } else {
       console.warn("Firebase não configurado. A executar localmente.");
-      db = null;
-      dbRef = null;
-    }
-  } catch (e) {
-    console.warn("Erro ao inicializar Firebase:", e);
-    db = null;
-    dbRef = null;
   }
+  const db = firebaseConfig.apiKey !== "SUA_API_KEY_AQUI" ? firebase.database() : null;
+  const dbRef = db ? db.ref('igreja_louvores_data') : null;
 
-  // ==========================================
   // ESTADO GLOBAL
-  // ==========================================
   let localData = JSON.parse(localStorage.getItem('igreja_louvores_hybrid')) || { cultos: [], bancoLouvores: [] };
   let cultos = localData.cultos || [];
   
-  // Converter dados antigos (text, tonalidade, isDone) para novo formato
-  function convertActivity(act) {
-    if (!act) return act;
-    const newAct = { ...act };
-    if (act.text && !act.name) newAct.name = act.text;
-    if (act.tonalidade && !act.duration) newAct.duration = act.tonalidade;
-    if (act.isDone !== undefined && act.completed === undefined) newAct.completed = act.isDone;
-    if (act.completed === undefined) newAct.completed = false;
-    if (!act.tags) newAct.tags = [];
-    if (!act.bankId) delete newAct.bankId; // não forçar
-    return newAct;
-  }
-
-  function convertCulto(c) {
-    if (c.plans) {
-      c.plans.forEach(p => {
-        if (p.activities) {
-          p.activities = p.activities.map(convertActivity);
-        }
-      });
-    }
-    return c;
-  }
-
-  cultos = cultos.map(convertCulto);
-  
+  // ADAPTADOR LOCAL PARA BANCO DE LOUVORES
   let bancoLouvores = (localData.bancoLouvores || []).map(l => {
-    if (l.text && !l.name) l.name = l.text;
-    if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
-    return l;
+      if (l.text && !l.name) l.name = l.text;
+      if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
+      return l;
   });
   
   let currentView = 'all';
@@ -488,62 +452,52 @@
 
   renderApp();
 
-  // ==========================================
-  // CLOUD SYNC (com try/catch para evitar travamentos)
-  // ==========================================
+  // CLOUD SYNC
   let isFirstLoad = true;
   if(dbRef) {
-    try {
       dbRef.on('value', (snapshot) => {
-        try {
-          const cloudData = snapshot.val();
-          if (cloudData) {
-            cultos = (cloudData.cultos || []).map(convertCulto);
-            
-            bancoLouvores = (cloudData.bancoLouvores || []).map(l => {
+        const cloudData = snapshot.val();
+        if (cloudData) {
+          cultos = (cloudData.cultos || []).map(cls => {
+             if(cls.plans) {
+                 cls.plans.forEach(p => {
+                     if(p.activities) {
+                         p.activities.forEach(a => {
+                             if(a.text && !a.name) a.name = a.text;
+                             if(a.tonalidade && !a.duration) a.duration = a.tonalidade;
+                             if(a.isDone !== undefined && a.completed === undefined) a.completed = a.isDone;
+                         });
+                     }
+                 });
+             }
+             return cls;
+          });
+          
+          bancoLouvores = (cloudData.bancoLouvores || []).map(l => {
               if (l.text && !l.name) l.name = l.text;
               if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
               return l;
-            });
+          });
 
-            if(cloudData.configSorteio) {
+          if(cloudData.configSorteio) {
               configSorteio = cloudData.configSorteio;
-              sanitizeProfiles();
-            }
-            
-            localStorage.setItem('igreja_louvores_hybrid', JSON.stringify({ cultos, bancoLouvores }));
-            localStorage.setItem('milad_settings', JSON.stringify(configSorteio));
-            renderApp();
-          } else if (isFirstLoad && (cultos.length > 0 || bancoLouvores.length > 0)) {
-            saveData();
+              sanitizeProfiles(); // garante que todos os perfis tenham regras e novosCount, e que o default exista
           }
-          isFirstLoad = false;
-        } catch (e) {
-          console.warn("Erro ao processar dados do Firebase:", e);
-          alert("Erro ao sincronizar com o Firebase. Os dados locais ainda estão disponíveis.");
+          
+          localStorage.setItem('igreja_louvores_hybrid', JSON.stringify({ cultos, bancoLouvores }));
+          localStorage.setItem('milad_settings', JSON.stringify(configSorteio));
+          renderApp();
+        } else if (isFirstLoad && (cultos.length > 0 || bancoLouvores.length > 0)) {
+          saveData();
         }
-      }, (error) => {
-        console.warn("Erro no Firebase:", error);
+        isFirstLoad = false;
       });
-    } catch (e) {
-      console.warn("Erro ao configurar Firebase listener:", e);
-    }
   }
 
-  // saveData agora tenta escrever, mas não interrompe o fluxo se falhar
   function saveData() {
     localStorage.setItem('igreja_louvores_hybrid', JSON.stringify({ cultos, bancoLouvores }));
     localStorage.setItem('milad_settings', JSON.stringify(configSorteio));
-    if(dbRef) {
-      try {
-        dbRef.set({ cultos, bancoLouvores, configSorteio }).catch(err => {
-          console.warn("Erro ao salvar no Firebase:", err);
-          // Não alertamos para não incomodar o usuário – os dados já estão no localStorage
-        });
-      } catch (e) {
-        console.warn("Erro ao tentar salvar no Firebase:", e);
-      }
-    }
+    if(dbRef) dbRef.set({ cultos, bancoLouvores, configSorteio });
   }
 
   function generateId() { return Date.now().toString() + Math.random().toString(36).substr(2, 5); }
@@ -749,12 +703,7 @@
     const perfilId = cls.perfilId || (configSorteio.perfisSorteio[0] ? configSorteio.perfisSorteio[0].id : null);
     const perfil = configSorteio.perfisSorteio.find(p => p.id === perfilId);
     
-    if(!perfil) {
-      // Se o perfil não existir, usa o default
-      const defaultProfile = configSorteio.perfisSorteio.find(p => p.id === 'default');
-      if (!defaultProfile) return;
-      perfil = defaultProfile;
-    }
+    if(!perfil) return;
 
     const nomesProibidos = obterNomesRecentes(configSorteio.evitarRepeticaoDias);
     let pool = [...bancoLouvores].filter(l => !nomesProibidos.includes(l.name.toLowerCase().trim()));
@@ -879,8 +828,8 @@
       const cls = cultos.find(c => c.id === classId);
       const plan = cls.plans.find(p => p.id === planId);
       plan.isArchived = true;
-      renderApp();
       saveData();
+      renderApp();
     }
   }
 
@@ -913,8 +862,8 @@
         completed: false
       });
     });
-    renderApp();
     saveData();
+    renderApp();
   }
 
   function togglePlanNotes(planId) {
@@ -997,8 +946,9 @@
     });
     act.tags = selectedTags;
 
-    renderApp();
     saveData();
+    document.getElementById('edit-activity-dialog').close();
+    renderApp();
 
     // After saving, ask if user wants to update the bank (if this activity has a bankId)
     if (act.bankId) {
@@ -1016,7 +966,6 @@
         }
       }
     }
-    document.getElementById('edit-activity-dialog').close();
   }
 
   function deleteActivity(btn, classId, planId, actId) {
@@ -1026,8 +975,8 @@
       const cls = cultos.find(c => c.id === classId);
       const plan = cls.plans.find(p => p.id === planId);
       plan.activities = plan.activities.filter(a => a.id !== actId);
-      renderApp();
       saveData();
+      renderApp();
     } else {
       // First click: mark for confirmation
       btn.classList.add('delete-confirm');
@@ -1137,7 +1086,7 @@
           <div class="class-title"><span>⛪</span> ${cls.name}</div>
           <div style="display:flex; gap:5px;">
              <button class="small" onclick="editClass('${cls.id}')" title="Editar Culto">✏️</button>
-             <button class="small danger" onclick="deleteClass('${cls.id}')" title="Excluir Culto Inteiro">❌</button>
+             <button class="small danger" onclick="deleteClass('${cls.id}')" title="Excluir Culto Inteiro">🗑️</button>
           </div>
         </div>
         <div class="meta">📍 Dia: ${cls.day} | ⏰ ${cls.time}</div>
@@ -1216,9 +1165,9 @@
       cultos.push({ id: generateId(), name, day, time, perfilId, plans: [] });
     }
 
-    renderApp();
     saveData();
     document.getElementById('class-dialog').close();
+    renderApp();
   }
 
   function deleteClass(classId) {
@@ -1232,21 +1181,16 @@
     
     if (passo3 === "EXCLUIR") {
       cultos = cultos.filter(c => c.id !== classId);
-      renderApp();
       saveData();
+      renderApp();
       alert("Culto excluído com sucesso.");
     } else {
       alert("Palavra incorreta. A exclusão foi cancelada por segurança.");
     }
   }
 
-  // *** FUNÇÃO CORRIGIDA: addPlan ***
   function addPlan(classId) {
     const cls = cultos.find(c => c.id === classId);
-    if (!cls) {
-      alert("Culto não encontrado.");
-      return;
-    }
     let nextDate = getNextPlanDate(cls);
     
     const planId = generateId();
@@ -1256,9 +1200,8 @@
       sortearParaPlano(classId, planId);
     }
 
-    // Renderiza imediatamente, depois tenta salvar
-    renderApp();
     saveData();
+    renderApp();
   }
 
   function getNextPlanDate(cls) {
@@ -1283,8 +1226,8 @@
     if(confirm("Excluir esta data?")) {
       const cls = cultos.find(c => c.id === classId);
       cls.plans = cls.plans.filter(p => p.id !== planId);
-      renderApp();
       saveData();
+      renderApp();
     }
   }
 
@@ -1301,54 +1244,45 @@
     renderLouvores();
   }
 
-function renderLouvores() {
-  const searchTerm = document.getElementById('bank-search')?.value.toLowerCase() || '';
-  let filtered = bancoLouvores.filter(l => {
-    const nameMatch = l.name.toLowerCase().includes(searchTerm);
-    const tagMatch = (l.tags || []).some(t => t.toLowerCase().includes(searchTerm));
-    return nameMatch || tagMatch;
-  });
-
-  // Sort
-  if (currentSort === 'name') {
-    filtered.sort((a, b) => a.name.localeCompare(b.name));
-  } else if (currentSort === 'duration') {
-    filtered.sort((a, b) => (a.duration || '').localeCompare(b.duration || ''));
-  } else if (currentSort === 'tag') {
-    filtered.sort((a, b) => {
-      const tagA = a.tags && a.tags[0] ? a.tags[0] : 'zzzz';
-      const tagB = b.tags && b.tags[0] ? b.tags[0] : 'zzzz';
-      return tagA.localeCompare(tagB);
+  function renderLouvores() {
+    const searchTerm = document.getElementById('bank-search')?.value.toLowerCase() || '';
+    let filtered = bancoLouvores.filter(l => {
+      const nameMatch = l.name.toLowerCase().includes(searchTerm);
+      const tagMatch = (l.tags || []).some(t => t.toLowerCase().includes(searchTerm));
+      return nameMatch || tagMatch;
     });
-  }
 
-  const container = document.getElementById('louvores-container');
-  container.innerHTML = filtered.map(l => {
-    const tagsHtml = (l.tags||[]).map(t => `<span class="tag-chip" style="font-size:0.6rem;">${t}</span>`).join('');
-    return `
+    // Sort
+    if (currentSort === 'name') {
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (currentSort === 'duration') {
+      filtered.sort((a, b) => (a.duration || '').localeCompare(b.duration || ''));
+    } else if (currentSort === 'tag') {
+      filtered.sort((a, b) => {
+        const tagA = a.tags && a.tags[0] ? a.tags[0] : 'zzzz';
+        const tagB = b.tags && b.tags[0] ? b.tags[0] : 'zzzz';
+        return tagA.localeCompare(tagB);
+      });
+    }
+
+    const container = document.getElementById('louvores-container');
+    container.innerHTML = filtered.map(l => {
+      const tagsHtml = (l.tags||[]).map(t => `<span class="tag-chip" style="font-size:0.6rem;">${t}</span>`).join('');
+      return `
       <div class="activity-item" style="margin-bottom: 8px;">
-        <div class="activity-main" style="justify-content: space-between; flex-wrap: wrap;">
-          <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
-            <div style="font-weight:600; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
-              ${l.name}
-              <span class="badge ${l.categoria === 'ensaiados' ? 'ensaiado' : 'novo'}">${l.categoria === 'ensaiados' ? 'Ensaiado' : 'Novo'}</span>
-              <span class="key-badge">${l.duration || '-'}</span>
-            </div>
+        <div class="activity-main" style="justify-content:space-between;">
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <div style="font-weight:600;">${l.name} <span class="key-badge">${l.duration || '-'}</span></div>
             <div style="display:flex; gap:3px;">${tagsHtml}</div>
           </div>
-          <div class="activity-actions" style="display: flex; gap: 4px;">
-            <button class="small" onclick="editPreset('${l.id}')" title="Editar">✏️</button>
-            <button class="small danger" onclick="deletePreset('${l.id}')" title="Excluir">❌</button>
-            <button class="small" onclick="toggleDetails('${l.id}')" title="Detalhes">▼</button>
+          <div>
+            <button class="small" onclick="editPreset('${l.id}')">✏️</button>
+            <button class="small danger" onclick="deletePreset('${l.id}')">🗑️</button>
           </div>
         </div>
-        <div id="details-${l.id}" class="activity-details" style="display: none;">
-          ${linkify(l.details) || 'Sem detalhes.'}
-        </div>
       </div>
-    `;
-  }).join('');
-}
+    `}).join('');
+  }
 
   function openLouvorDialog() {
     document.getElementById('preset-id').value = '';
@@ -1406,17 +1340,17 @@ function renderLouvores() {
       if(index >= 0) bancoLouvores[index] = obj;
       else bancoLouvores.push(obj);
       
-      if (currentView === 'louvores') renderLouvores();
       saveData();
       document.getElementById('preset-dialog').close();
+      if(currentView === 'louvores') renderLouvores();
     }
   }
 
   function deletePreset(id) {
     if(confirm('Excluir este louvor do banco?')) {
       bancoLouvores = bancoLouvores.filter(b => b.id !== id);
-      renderLouvores();
       saveData();
+      renderLouvores();
     }
   }
 
@@ -1467,12 +1401,8 @@ function renderLouvores() {
 
     if (mode === 'preset') {
       const presetId = document.getElementById('add-act-preset-select').value;
-      if (!presetId) {
-        alert("Selecione um louvor do banco.");
-        return;
-      }
       const preset = bancoLouvores.find(p => p.id === presetId);
-      if(!preset) return alert("Louvor não encontrado no banco.");
+      if(!preset) return alert("Selecione um louvor do banco.");
       activity = { 
         ...activity, 
         name: preset.name, 
@@ -1538,6 +1468,7 @@ function renderLouvores() {
         };
         bancoLouvores.push(newBankEntry);
         activity.bankId = bankId;
+        saveData(); // salva imediatamente para incluir o novo banco
         if (currentView === 'louvores') renderLouvores();
       }
     }
@@ -1546,9 +1477,9 @@ function renderLouvores() {
       const cls = cultos.find(c => c.id === classId);
       const plan = cls.plans.find(p => p.id === planId);
       plan.activities.push(activity);
-      renderApp();
       saveData();
       document.getElementById('add-act-dialog').close();
+      renderApp();
     }
   }
 
@@ -1557,8 +1488,8 @@ function renderLouvores() {
     const plan = cls.plans.find(p => p.id === planId);
     const act = plan.activities.find(a => a.id === actId);
     act.completed = !act.completed;
-    renderApp();
     saveData();
+    renderApp();
   }
 
   function toggleDetails(id) {
@@ -1592,18 +1523,14 @@ function renderLouvores() {
       reader.onload = function(e) {
         try {
           const data = JSON.parse(e.target.result);
-          cultos = (data.cultos || []).map(convertCulto);
-          bancoLouvores = (data.bancoLouvores || []).map(l => {
-            if (l.text && !l.name) l.name = l.text;
-            if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
-            return l;
-          });
+          cultos = data.cultos || [];
+          bancoLouvores = data.bancoLouvores || [];
           if(data.configSorteio) {
             configSorteio = data.configSorteio;
             sanitizeProfiles(); // garante que todos os perfis tenham regras e novosCount, e que o default exista
           }
-          renderApp();
           saveData();
+          renderApp();
           alert("Backup importado com sucesso!");
         } catch (err) { alert("Erro ao ler o ficheiro."); }
       };
@@ -1626,8 +1553,8 @@ function renderLouvores() {
     const [moved] = plan.activities.splice(fromIndex, 1);
     plan.activities.splice(toIndex, 0, moved);
     
-    renderApp();
     saveData();
+    renderApp();
   }
 
   function initDrag(e) {
@@ -1748,4 +1675,3 @@ function renderLouvores() {
 
 </body>
 </html>
-

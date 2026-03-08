@@ -1137,7 +1137,7 @@
           <div class="class-title"><span>⛪</span> ${cls.name}</div>
           <div style="display:flex; gap:5px;">
              <button class="small" onclick="editClass('${cls.id}')" title="Editar Culto">✏️</button>
-             <button class="small danger" onclick="deleteClass('${cls.id}')" title="Excluir Culto Inteiro">❌</button>
+             <button class="small danger" onclick="deleteClass('${cls.id}')" title="Excluir Culto Inteiro">🗑️</button>
           </div>
         </div>
         <div class="meta">📍 Dia: ${cls.day} | ⏰ ${cls.time}</div>
@@ -1301,54 +1301,45 @@
     renderLouvores();
   }
 
-function renderLouvores() {
-  const searchTerm = document.getElementById('bank-search')?.value.toLowerCase() || '';
-  let filtered = bancoLouvores.filter(l => {
-    const nameMatch = l.name.toLowerCase().includes(searchTerm);
-    const tagMatch = (l.tags || []).some(t => t.toLowerCase().includes(searchTerm));
-    return nameMatch || tagMatch;
-  });
-
-  // Sort
-  if (currentSort === 'name') {
-    filtered.sort((a, b) => a.name.localeCompare(b.name));
-  } else if (currentSort === 'duration') {
-    filtered.sort((a, b) => (a.duration || '').localeCompare(b.duration || ''));
-  } else if (currentSort === 'tag') {
-    filtered.sort((a, b) => {
-      const tagA = a.tags && a.tags[0] ? a.tags[0] : 'zzzz';
-      const tagB = b.tags && b.tags[0] ? b.tags[0] : 'zzzz';
-      return tagA.localeCompare(tagB);
+  function renderLouvores() {
+    const searchTerm = document.getElementById('bank-search')?.value.toLowerCase() || '';
+    let filtered = bancoLouvores.filter(l => {
+      const nameMatch = l.name.toLowerCase().includes(searchTerm);
+      const tagMatch = (l.tags || []).some(t => t.toLowerCase().includes(searchTerm));
+      return nameMatch || tagMatch;
     });
-  }
 
-  const container = document.getElementById('louvores-container');
-  container.innerHTML = filtered.map(l => {
-    const tagsHtml = (l.tags||[]).map(t => `<span class="tag-chip" style="font-size:0.6rem;">${t}</span>`).join('');
-    return `
+    // Sort
+    if (currentSort === 'name') {
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (currentSort === 'duration') {
+      filtered.sort((a, b) => (a.duration || '').localeCompare(b.duration || ''));
+    } else if (currentSort === 'tag') {
+      filtered.sort((a, b) => {
+        const tagA = a.tags && a.tags[0] ? a.tags[0] : 'zzzz';
+        const tagB = b.tags && b.tags[0] ? b.tags[0] : 'zzzz';
+        return tagA.localeCompare(tagB);
+      });
+    }
+
+    const container = document.getElementById('louvores-container');
+    container.innerHTML = filtered.map(l => {
+      const tagsHtml = (l.tags||[]).map(t => `<span class="tag-chip" style="font-size:0.6rem;">${t}</span>`).join('');
+      return `
       <div class="activity-item" style="margin-bottom: 8px;">
-        <div class="activity-main" style="justify-content: space-between; flex-wrap: wrap;">
-          <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
-            <div style="font-weight:600; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
-              ${l.name}
-              <span class="badge ${l.categoria === 'ensaiados' ? 'ensaiado' : 'novo'}">${l.categoria === 'ensaiados' ? 'Ensaiado' : 'Novo'}</span>
-              <span class="key-badge">${l.duration || '-'}</span>
-            </div>
+        <div class="activity-main" style="justify-content:space-between;">
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <div style="font-weight:600;">${l.name} <span class="key-badge">${l.duration || '-'}</span></div>
             <div style="display:flex; gap:3px;">${tagsHtml}</div>
           </div>
-          <div class="activity-actions" style="display: flex; gap: 4px;">
-            <button class="small" onclick="editPreset('${l.id}')" title="Editar">✏️</button>
-            <button class="small danger" onclick="deletePreset('${l.id}')" title="Excluir">❌</button>
-            <button class="small" onclick="toggleDetails('${l.id}')" title="Detalhes">▼</button>
+          <div>
+            <button class="small" onclick="editPreset('${l.id}')">✏️</button>
+            <button class="small danger" onclick="deletePreset('${l.id}')">🗑️</button>
           </div>
         </div>
-        <div id="details-${l.id}" class="activity-details" style="display: none;">
-          ${linkify(l.details) || 'Sem detalhes.'}
-        </div>
       </div>
-    `;
-  }).join('');
-}
+    `}).join('');
+  }
 
   function openLouvorDialog() {
     document.getElementById('preset-id').value = '';
@@ -1748,4 +1739,3 @@ function renderLouvores() {
 
 </body>
 </html>
-

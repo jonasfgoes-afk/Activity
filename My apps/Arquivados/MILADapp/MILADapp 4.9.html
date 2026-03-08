@@ -20,7 +20,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
   <style>
-    /* (all existing styles – unchanged) */
+    /* ... (all existing styles, unchanged) ... */
     * { box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
     body { background: #f5f7fb; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; padding-bottom: 90px; overscroll-behavior-y: none; }
     #app { max-width: 600px; width: 100%; background: white; box-shadow: 0 0 30px rgba(0,0,0,0.05); padding: 1.5rem 1rem; margin: 0; min-height: 100vh; position: relative; }
@@ -228,9 +228,7 @@
     <input type="hidden" id="edit-profile-id">
     <label>Nome do Perfil:<input type="text" id="edit-profile-name"></label>
     
-    <!-- Quantidade de louvores (total) -->
-    <label>Quantidade de louvores (0 para usar regras individuais):<input type="number" id="profile-total-count" value="0" min="0"></label>
-
+    <!-- Novo campo: quantidade de Novos -->
     <label>Quantidade de Novos:<input type="number" id="profile-novos-count" value="0" min="0"></label>
 
     <label>Regras de Sorteio (Quantidade por Tag):</label>
@@ -384,59 +382,23 @@
     appId: "1:177251519785:web:b6a8ea76cf7f4689d4fb38"
   };
 
-  let db, dbRef;
-  try {
-    if(firebaseConfig.apiKey !== "SUA_API_KEY_AQUI") {
+  if(firebaseConfig.apiKey !== "SUA_API_KEY_AQUI") {
       firebase.initializeApp(firebaseConfig);
-      db = firebase.database();
-      dbRef = db.ref('igreja_louvores_data');
-    } else {
+  } else {
       console.warn("Firebase não configurado. A executar localmente.");
-      db = null;
-      dbRef = null;
-    }
-  } catch (e) {
-    console.warn("Erro ao inicializar Firebase:", e);
-    db = null;
-    dbRef = null;
   }
+  const db = firebaseConfig.apiKey !== "SUA_API_KEY_AQUI" ? firebase.database() : null;
+  const dbRef = db ? db.ref('igreja_louvores_data') : null;
 
-  // ==========================================
   // ESTADO GLOBAL
-  // ==========================================
   let localData = JSON.parse(localStorage.getItem('igreja_louvores_hybrid')) || { cultos: [], bancoLouvores: [] };
   let cultos = localData.cultos || [];
   
-  // Converter dados antigos (text, tonalidade, isDone) para novo formato
-  function convertActivity(act) {
-    if (!act) return act;
-    const newAct = { ...act };
-    if (act.text && !act.name) newAct.name = act.text;
-    if (act.tonalidade && !act.duration) newAct.duration = act.tonalidade;
-    if (act.isDone !== undefined && act.completed === undefined) newAct.completed = act.isDone;
-    if (act.completed === undefined) newAct.completed = false;
-    if (!act.tags) newAct.tags = [];
-    if (!act.bankId) delete newAct.bankId; // não forçar
-    return newAct;
-  }
-
-  function convertCulto(c) {
-    if (c.plans) {
-      c.plans.forEach(p => {
-        if (p.activities) {
-          p.activities = p.activities.map(convertActivity);
-        }
-      });
-    }
-    return c;
-  }
-
-  cultos = cultos.map(convertCulto);
-  
+  // ADAPTADOR LOCAL PARA BANCO DE LOUVORES
   let bancoLouvores = (localData.bancoLouvores || []).map(l => {
-    if (l.text && !l.name) l.name = l.text;
-    if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
-    return l;
+      if (l.text && !l.name) l.name = l.text;
+      if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
+      return l;
   });
   
   let currentView = 'all';
@@ -448,102 +410,80 @@
     evitarRepeticaoDias: 7, 
     tagsDisponiveis: ["Adoração", "Celebração", "Apelo", "Abertura"],
     perfisSorteio: [
-      { id: 'p1', nome: 'Culto Padrão', regras: { "Celebração": 2, "Adoração": 2 }, novosCount: 0, totalCount: 0 }
+      { id: 'p1', nome: 'Culto Padrão', regras: { "Celebração": 2, "Adoração": 2 }, novosCount: 0 }
     ]
   };
 
-  // ===== FUNÇÃO DE SEGURANÇA PARA PERFIS =====
-  function sanitizeProfiles() {
-    if (!configSorteio.perfisSorteio) configSorteio.perfisSorteio = [];
-    
-    // Garantir que o perfil padrão (id 'default') exista e seja não deletável
-    const defaultProfile = configSorteio.perfisSorteio.find(p => p.id === 'default');
-    if (!defaultProfile) {
-      configSorteio.perfisSorteio.unshift({
-        id: 'default',
-        nome: 'Perfil Padrão',
-        regras: {},
-        novosCount: 0,
-        totalCount: 5   // 5 louvores aleatórios
-      });
-    } else {
-      // Assegurar que o default tenha totalCount = 5 (se não existir, define)
-      if (defaultProfile.totalCount === undefined) defaultProfile.totalCount = 5;
-    }
-
-    configSorteio.perfisSorteio = configSorteio.perfisSorteio.map(p => ({
-      id: p.id || generateId(),
-      nome: p.nome || 'Sem nome',
-      regras: p.regras || {},
-      novosCount: p.novosCount !== undefined ? p.novosCount : 0,
-      totalCount: p.totalCount !== undefined ? p.totalCount : 0
-    }));
+  // ⚠️ TRAVA DE SEGURANÇA LOCAL
+  if (!configSorteio.perfisSorteio || configSorteio.perfisSorteio.length === 0) {
+    configSorteio.perfisSorteio = [{ id: 'p1', nome: 'Culto Padrão', regras: { "Celebração": 2, "Adoração": 2 }, novosCount: 0 }];
   }
-
-  // Aplicar sanitização inicial
-  sanitizeProfiles();
+  // Garantir que perfis antigos tenham novosCount
+  configSorteio.perfisSorteio = configSorteio.perfisSorteio.map(p => ({
+    ...p,
+    novosCount: p.novosCount !== undefined ? p.novosCount : 0
+  }));
 
   let tempProfileRules = {};
   let currentSort = 'name'; // 'name', 'duration', 'tag'
 
   renderApp();
 
-  // ==========================================
-  // CLOUD SYNC (com try/catch para evitar travamentos)
-  // ==========================================
+  // CLOUD SYNC
   let isFirstLoad = true;
   if(dbRef) {
-    try {
       dbRef.on('value', (snapshot) => {
-        try {
-          const cloudData = snapshot.val();
-          if (cloudData) {
-            cultos = (cloudData.cultos || []).map(convertCulto);
-            
-            bancoLouvores = (cloudData.bancoLouvores || []).map(l => {
+        const cloudData = snapshot.val();
+        if (cloudData) {
+          cultos = (cloudData.cultos || []).map(cls => {
+             if(cls.plans) {
+                 cls.plans.forEach(p => {
+                     if(p.activities) {
+                         p.activities.forEach(a => {
+                             if(a.text && !a.name) a.name = a.text;
+                             if(a.tonalidade && !a.duration) a.duration = a.tonalidade;
+                             if(a.isDone !== undefined && a.completed === undefined) a.completed = a.isDone;
+                         });
+                     }
+                 });
+             }
+             return cls;
+          });
+          
+          bancoLouvores = (cloudData.bancoLouvores || []).map(l => {
               if (l.text && !l.name) l.name = l.text;
               if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
               return l;
-            });
+          });
 
-            if(cloudData.configSorteio) {
+          if(cloudData.configSorteio) {
               configSorteio = cloudData.configSorteio;
-              sanitizeProfiles();
-            }
-            
-            localStorage.setItem('igreja_louvores_hybrid', JSON.stringify({ cultos, bancoLouvores }));
-            localStorage.setItem('milad_settings', JSON.stringify(configSorteio));
-            renderApp();
-          } else if (isFirstLoad && (cultos.length > 0 || bancoLouvores.length > 0)) {
-            saveData();
+              
+              // ⚠️ TRAVA DE SEGURANÇA NUVEM
+              if (!configSorteio.perfisSorteio || configSorteio.perfisSorteio.length === 0) {
+                  configSorteio.perfisSorteio = [{ id: 'p1', nome: 'Culto Padrão', regras: { "Celebração": 2, "Adoração": 2 }, novosCount: 0 }];
+              }
+              // Garantir novosCount
+              configSorteio.perfisSorteio = configSorteio.perfisSorteio.map(p => ({
+                ...p,
+                novosCount: p.novosCount !== undefined ? p.novosCount : 0
+              }));
           }
-          isFirstLoad = false;
-        } catch (e) {
-          console.warn("Erro ao processar dados do Firebase:", e);
-          alert("Erro ao sincronizar com o Firebase. Os dados locais ainda estão disponíveis.");
+          
+          localStorage.setItem('igreja_louvores_hybrid', JSON.stringify({ cultos, bancoLouvores }));
+          localStorage.setItem('milad_settings', JSON.stringify(configSorteio));
+          renderApp();
+        } else if (isFirstLoad && (cultos.length > 0 || bancoLouvores.length > 0)) {
+          saveData();
         }
-      }, (error) => {
-        console.warn("Erro no Firebase:", error);
+        isFirstLoad = false;
       });
-    } catch (e) {
-      console.warn("Erro ao configurar Firebase listener:", e);
-    }
   }
 
-  // saveData agora tenta escrever, mas não interrompe o fluxo se falhar
   function saveData() {
     localStorage.setItem('igreja_louvores_hybrid', JSON.stringify({ cultos, bancoLouvores }));
     localStorage.setItem('milad_settings', JSON.stringify(configSorteio));
-    if(dbRef) {
-      try {
-        dbRef.set({ cultos, bancoLouvores, configSorteio }).catch(err => {
-          console.warn("Erro ao salvar no Firebase:", err);
-          // Não alertamos para não incomodar o usuário – os dados já estão no localStorage
-        });
-      } catch (e) {
-        console.warn("Erro ao tentar salvar no Firebase:", e);
-      }
-    }
+    if(dbRef) dbRef.set({ cultos, bancoLouvores, configSorteio });
   }
 
   function generateId() { return Date.now().toString() + Math.random().toString(36).substr(2, 5); }
@@ -593,31 +533,20 @@
     const container = document.getElementById('profiles-admin-list');
     container.innerHTML = '';
     configSorteio.perfisSorteio.forEach(p => {
-      let descricao = '';
-      if (p.id === 'default') {
-        descricao = `${p.totalCount} louvores aleatórios`;
-      } else {
-        const regras = p.regras || {};
-        let regrasStr = Object.entries(regras).map(([t,q]) => `${q}x ${t}`).join(', ');
-        if (p.novosCount > 0) {
-          regrasStr += (regrasStr ? ', ' : '') + `${p.novosCount}x Novos`;
-        }
-        if (p.totalCount > 0) {
-          descricao = `${p.totalCount} louvores (total)`;
-        } else {
-          descricao = regrasStr || "Sem regras";
-        }
+      let regrasStr = Object.entries(p.regras).map(([t,q]) => `${q}x ${t}`).join(', ');
+      if (p.novosCount > 0) {
+        regrasStr += (regrasStr ? ', ' : '') + `${p.novosCount}x Novos`;
       }
-
+      if(!regrasStr) regrasStr = "Sem regras";
       container.innerHTML += `
         <div class="profile-item">
           <div>
             <strong>${p.nome}</strong>
-            <div style="font-size:0.8rem; color:#555;">${descricao}</div>
+            <div style="font-size:0.8rem; color:#555;">${regrasStr}</div>
           </div>
           <div style="display:flex; gap:5px;">
-            ${p.id === 'default' ? '' : `<button class="small" onclick="editProfile('${p.id}')" title="Editar Perfil">✏️</button>`}
-            ${p.id === 'default' ? '' : `<button class="small danger" onclick="deleteProfile('${p.id}')">Excluir</button>`}
+            <button class="small" onclick="editProfile('${p.id}')" title="Editar Perfil">✏️</button>
+            <button class="small danger" onclick="deleteProfile('${p.id}')">Excluir</button>
           </div>
         </div>
       `;
@@ -627,7 +556,6 @@
   function abrirNovoPerfilDialog() {
     document.getElementById('edit-profile-id').value = '';
     document.getElementById('edit-profile-name').value = '';
-    document.getElementById('profile-total-count').value = 0;
     document.getElementById('profile-novos-count').value = 0;
     tempProfileRules = {};
     renderProfileRules();
@@ -641,9 +569,8 @@
 
     document.getElementById('edit-profile-id').value = profile.id;
     document.getElementById('edit-profile-name').value = profile.nome;
-    document.getElementById('profile-total-count').value = profile.totalCount || 0;
     document.getElementById('profile-novos-count').value = profile.novosCount || 0;
-    tempProfileRules = { ...(profile.regras || {}) };
+    tempProfileRules = { ...profile.regras }; // copy rules
     renderProfileRules();
     atualizarSelectTagsPerfil();
     document.getElementById('profile-dialog').showModal();
@@ -681,14 +608,13 @@
   function saveProfile() {
     const id = document.getElementById('edit-profile-id').value || generateId();
     const nome = document.getElementById('edit-profile-name').value.trim() || 'Novo Perfil';
-    const totalCount = parseInt(document.getElementById('profile-total-count').value) || 0;
     const novosCount = parseInt(document.getElementById('profile-novos-count').value) || 0;
     
     const index = configSorteio.perfisSorteio.findIndex(p => p.id === id);
     if(index >= 0) {
-      configSorteio.perfisSorteio[index] = { id, nome, regras: {...tempProfileRules}, novosCount, totalCount };
+      configSorteio.perfisSorteio[index] = { id, nome, regras: {...tempProfileRules}, novosCount };
     } else {
-      configSorteio.perfisSorteio.push({ id, nome, regras: {...tempProfileRules}, novosCount, totalCount });
+      configSorteio.perfisSorteio.push({ id, nome, regras: {...tempProfileRules}, novosCount });
     }
     
     renderProfilesAdmin();
@@ -697,24 +623,10 @@
   }
 
   function deleteProfile(id) {
-    if (id === 'default') {
-      alert("O perfil padrão não pode ser excluído.");
-      return;
-    }
     if(confirm("Excluir este perfil?")) {
-      // Remove o perfil da lista
       configSorteio.perfisSorteio = configSorteio.perfisSorteio.filter(p => p.id !== id);
-      
-      // Atualiza todos os cultos que usavam esse perfil para o perfil padrão
-      cultos.forEach(cls => {
-        if (cls.perfilId === id) {
-          cls.perfilId = 'default';
-        }
-      });
-
       renderProfilesAdmin();
       saveData();
-      renderApp(); // re-renderiza para mostrar as alterações nos cultos
     }
   }
 
@@ -749,12 +661,7 @@
     const perfilId = cls.perfilId || (configSorteio.perfisSorteio[0] ? configSorteio.perfisSorteio[0].id : null);
     const perfil = configSorteio.perfisSorteio.find(p => p.id === perfilId);
     
-    if(!perfil) {
-      // Se o perfil não existir, usa o default
-      const defaultProfile = configSorteio.perfisSorteio.find(p => p.id === 'default');
-      if (!defaultProfile) return;
-      perfil = defaultProfile;
-    }
+    if(!perfil) return;
 
     const nomesProibidos = obterNomesRecentes(configSorteio.evitarRepeticaoDias);
     let pool = [...bancoLouvores].filter(l => !nomesProibidos.includes(l.name.toLowerCase().trim()));
@@ -762,15 +669,54 @@
     let selecionados = [];
     let tonsUsados = [];
 
-    // Se totalCount > 0, ele sobrepõe todas as outras regras
-    const quantidade = perfil.totalCount > 0 ? perfil.totalCount : null;
+    // Selecionar por tags
+    for (const [tag, qtd] of Object.entries(perfil.regras)) {
+      let candidatos = pool.filter(l => l.tags && l.tags.includes(tag));
+      
+      for (let i = 0; i < qtd; i++) {
+        if (candidatos.length === 0) break;
+        
+        candidatos = candidatos.sort(() => Math.random() - 0.5);
 
-    if (quantidade !== null) {
-      // Desenha exatamente 'quantidade' louvores aleatórios do pool
-      for (let i = 0; i < quantidade; i++) {
-        if (pool.length === 0) break;
-        pool = pool.sort(() => Math.random() - 0.5);
-        const escolhido = pool[0];
+        let escolhido;
+        if (!configSorteio.ignorarTons) {
+           escolhido = candidatos.find(l => !tonsUsados.includes(l.duration));
+        }
+        
+        if(!escolhido) escolhido = candidatos[0];
+
+        selecionados.push({
+          id: generateId(),
+          name: escolhido.name,
+          duration: escolhido.duration,
+          categoria: escolhido.categoria,
+          details: escolhido.details,
+          tags: escolhido.tags,  // copy tags
+          completed: false
+        });
+        
+        pool = pool.filter(p => p.name !== escolhido.name);
+        candidatos = candidatos.filter(c => c.name !== escolhido.name);
+        tonsUsados.push(escolhido.duration);
+      }
+    }
+
+    // Selecionar Novos adicionais
+    if (perfil.novosCount > 0) {
+      let novosCandidatos = pool.filter(l => l.categoria === 'novos');
+      let selecionadosNovos = 0;
+      for (let i = 0; i < perfil.novosCount; i++) {
+        if (novosCandidatos.length === 0) break;
+        
+        novosCandidatos = novosCandidatos.sort(() => Math.random() - 0.5);
+
+        let escolhido;
+        if (!configSorteio.ignorarTons) {
+           escolhido = novosCandidatos.find(l => !tonsUsados.includes(l.duration));
+        }
+        
+        if(!escolhido) escolhido = novosCandidatos[0];
+
         selecionados.push({
           id: generateId(),
           name: escolhido.name,
@@ -778,85 +724,20 @@
           categoria: escolhido.categoria,
           details: escolhido.details,
           tags: escolhido.tags,
-          bankId: escolhido.id,
           completed: false
         });
-        pool = pool.filter(p => p.name !== escolhido.name);
-      }
-    } else {
-      // Usa regras tradicionais
-      const regras = perfil.regras || {};
-      for (const [tag, qtd] of Object.entries(regras)) {
-        let candidatos = pool.filter(l => l.tags && l.tags.includes(tag));
         
-        for (let i = 0; i < qtd; i++) {
-          if (candidatos.length === 0) break;
-          
-          candidatos = candidatos.sort(() => Math.random() - 0.5);
-
-          let escolhido;
-          if (!configSorteio.ignorarTons) {
-             escolhido = candidatos.find(l => !tonsUsados.includes(l.duration));
-          }
-          
-          if(!escolhido) escolhido = candidatos[0];
-
-          selecionados.push({
-            id: generateId(),
-            name: escolhido.name,
-            duration: escolhido.duration,
-            categoria: escolhido.categoria,
-            details: escolhido.details,
-            tags: escolhido.tags,
-            bankId: escolhido.id,
-            completed: false
-          });
-          
-          pool = pool.filter(p => p.name !== escolhido.name);
-          candidatos = candidatos.filter(c => c.name !== escolhido.name);
-          tonsUsados.push(escolhido.duration);
-        }
-      }
-
-      // Selecionar Novos adicionais
-      if (perfil.novosCount > 0) {
-        let novosCandidatos = pool.filter(l => l.categoria === 'novos');
-        let selecionadosNovos = 0;
-        for (let i = 0; i < perfil.novosCount; i++) {
-          if (novosCandidatos.length === 0) break;
-          
-          novosCandidatos = novosCandidatos.sort(() => Math.random() - 0.5);
-
-          let escolhido;
-          if (!configSorteio.ignorarTons) {
-             escolhido = novosCandidatos.find(l => !tonsUsados.includes(l.duration));
-          }
-          
-          if(!escolhido) escolhido = novosCandidatos[0];
-
-          selecionados.push({
-            id: generateId(),
-            name: escolhido.name,
-            duration: escolhido.duration,
-            categoria: escolhido.categoria,
-            details: escolhido.details,
-            tags: escolhido.tags,
-            bankId: escolhido.id,
-            completed: false
-          });
-          
-          pool = pool.filter(p => p.name !== escolhido.name);
-          novosCandidatos = novosCandidatos.filter(c => c.name !== escolhido.name);
-          tonsUsados.push(escolhido.duration);
-          selecionadosNovos++;
-        }
+        pool = pool.filter(p => p.name !== escolhido.name);
+        novosCandidatos = novosCandidatos.filter(c => c.name !== escolhido.name);
+        tonsUsados.push(escolhido.duration);
+        selecionadosNovos++;
       }
     }
 
     plan.activities = selecionados;
 
-    // Verificar se conseguimos preencher a quantidade desejada
-    const totalNeeded = quantidade !== null ? quantidade : Object.values(perfil.regras || {}).reduce((a, b) => a + b, 0) + perfil.novosCount;
+    // Verificar se conseguimos preencher todas as regras
+    const totalNeeded = Object.values(perfil.regras).reduce((a, b) => a + b, 0) + perfil.novosCount;
     if (selecionados.length < totalNeeded) {
       alert("Não há louvores suficientes para atender as condições de sorteio em vigor.");
     }
@@ -879,8 +760,8 @@
       const cls = cultos.find(c => c.id === classId);
       const plan = cls.plans.find(p => p.id === planId);
       plan.isArchived = true;
-      renderApp();
       saveData();
+      renderApp();
     }
   }
 
@@ -908,13 +789,12 @@
         duration: act.duration || act.tonalidade, 
         categoria: act.categoria || "ensaiados",
         details: act.details || "",
-        tags: act.tags || [],
-        bankId: act.bankId,   // preserve bankId if present
+        tags: act.tags || [],   // preserve tags
         completed: false
       });
     });
-    renderApp();
     saveData();
+    renderApp();
   }
 
   function togglePlanNotes(planId) {
@@ -941,7 +821,7 @@
   }
 
   // ==========================================
-  // FUNÇÕES: EDITAR E DELETAR ACTIVITY
+  // NOVAS FUNÇÕES: EDITAR E DELETAR ACTIVITY
   // ==========================================
   function openEditActivityDialog(classId, planId, actId) {
     const cls = cultos.find(c => c.id === classId);
@@ -997,26 +877,9 @@
     });
     act.tags = selectedTags;
 
-    renderApp();
     saveData();
-
-    // After saving, ask if user wants to update the bank (if this activity has a bankId)
-    if (act.bankId) {
-      if (confirm("Adicionar mudanças ao banco de dados?")) {
-        const bankEntry = bancoLouvores.find(b => b.id === act.bankId);
-        if (bankEntry) {
-          bankEntry.name = act.name;
-          bankEntry.duration = act.duration;
-          bankEntry.categoria = act.categoria;
-          bankEntry.details = act.details;
-          bankEntry.tags = act.tags.slice(); // copy
-          saveData();
-          if (currentView === 'louvores') renderLouvores();
-          alert("Banco atualizado com sucesso.");
-        }
-      }
-    }
     document.getElementById('edit-activity-dialog').close();
+    renderApp();
   }
 
   function deleteActivity(btn, classId, planId, actId) {
@@ -1026,8 +889,8 @@
       const cls = cultos.find(c => c.id === classId);
       const plan = cls.plans.find(p => p.id === planId);
       plan.activities = plan.activities.filter(a => a.id !== actId);
-      renderApp();
       saveData();
+      renderApp();
     } else {
       // First click: mark for confirmation
       btn.classList.add('delete-confirm');
@@ -1035,7 +898,7 @@
       // Reset after 3 seconds
       setTimeout(() => {
         btn.classList.remove('delete-confirm');
-        btn.textContent = '✕';
+        btn.textContent = '🗑️';
       }, 3000);
     }
   }
@@ -1093,7 +956,7 @@
               ${tagsHtml}
               <div class="activity-actions">
                 <button class="small" onclick="openEditActivityDialog('${cls.id}', '${plan.id}', '${act.id}')" title="Editar">✏️</button>
-                <button class="small" onclick="deleteActivity(this, '${cls.id}', '${plan.id}', '${act.id}')" title="Excluir">✕</button>
+                <button class="small" onclick="deleteActivity(this, '${cls.id}', '${plan.id}', '${act.id}')" title="Excluir">🗑️</button>
               </div>
               <button class="small" onclick="toggleDetails('${act.id}')">▼</button>
             </div>
@@ -1137,7 +1000,7 @@
           <div class="class-title"><span>⛪</span> ${cls.name}</div>
           <div style="display:flex; gap:5px;">
              <button class="small" onclick="editClass('${cls.id}')" title="Editar Culto">✏️</button>
-             <button class="small danger" onclick="deleteClass('${cls.id}')" title="Excluir Culto Inteiro">❌</button>
+             <button class="small danger" onclick="deleteClass('${cls.id}')" title="Excluir Culto Inteiro">🗑️</button>
           </div>
         </div>
         <div class="meta">📍 Dia: ${cls.day} | ⏰ ${cls.time}</div>
@@ -1216,9 +1079,9 @@
       cultos.push({ id: generateId(), name, day, time, perfilId, plans: [] });
     }
 
-    renderApp();
     saveData();
     document.getElementById('class-dialog').close();
+    renderApp();
   }
 
   function deleteClass(classId) {
@@ -1232,21 +1095,16 @@
     
     if (passo3 === "EXCLUIR") {
       cultos = cultos.filter(c => c.id !== classId);
-      renderApp();
       saveData();
+      renderApp();
       alert("Culto excluído com sucesso.");
     } else {
       alert("Palavra incorreta. A exclusão foi cancelada por segurança.");
     }
   }
 
-  // *** FUNÇÃO CORRIGIDA: addPlan ***
   function addPlan(classId) {
     const cls = cultos.find(c => c.id === classId);
-    if (!cls) {
-      alert("Culto não encontrado.");
-      return;
-    }
     let nextDate = getNextPlanDate(cls);
     
     const planId = generateId();
@@ -1256,9 +1114,8 @@
       sortearParaPlano(classId, planId);
     }
 
-    // Renderiza imediatamente, depois tenta salvar
-    renderApp();
     saveData();
+    renderApp();
   }
 
   function getNextPlanDate(cls) {
@@ -1283,8 +1140,8 @@
     if(confirm("Excluir esta data?")) {
       const cls = cultos.find(c => c.id === classId);
       cls.plans = cls.plans.filter(p => p.id !== planId);
-      renderApp();
       saveData();
+      renderApp();
     }
   }
 
@@ -1301,54 +1158,45 @@
     renderLouvores();
   }
 
-function renderLouvores() {
-  const searchTerm = document.getElementById('bank-search')?.value.toLowerCase() || '';
-  let filtered = bancoLouvores.filter(l => {
-    const nameMatch = l.name.toLowerCase().includes(searchTerm);
-    const tagMatch = (l.tags || []).some(t => t.toLowerCase().includes(searchTerm));
-    return nameMatch || tagMatch;
-  });
-
-  // Sort
-  if (currentSort === 'name') {
-    filtered.sort((a, b) => a.name.localeCompare(b.name));
-  } else if (currentSort === 'duration') {
-    filtered.sort((a, b) => (a.duration || '').localeCompare(b.duration || ''));
-  } else if (currentSort === 'tag') {
-    filtered.sort((a, b) => {
-      const tagA = a.tags && a.tags[0] ? a.tags[0] : 'zzzz';
-      const tagB = b.tags && b.tags[0] ? b.tags[0] : 'zzzz';
-      return tagA.localeCompare(tagB);
+  function renderLouvores() {
+    const searchTerm = document.getElementById('bank-search')?.value.toLowerCase() || '';
+    let filtered = bancoLouvores.filter(l => {
+      const nameMatch = l.name.toLowerCase().includes(searchTerm);
+      const tagMatch = (l.tags || []).some(t => t.toLowerCase().includes(searchTerm));
+      return nameMatch || tagMatch;
     });
-  }
 
-  const container = document.getElementById('louvores-container');
-  container.innerHTML = filtered.map(l => {
-    const tagsHtml = (l.tags||[]).map(t => `<span class="tag-chip" style="font-size:0.6rem;">${t}</span>`).join('');
-    return `
+    // Sort
+    if (currentSort === 'name') {
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (currentSort === 'duration') {
+      filtered.sort((a, b) => (a.duration || '').localeCompare(b.duration || ''));
+    } else if (currentSort === 'tag') {
+      filtered.sort((a, b) => {
+        const tagA = a.tags && a.tags[0] ? a.tags[0] : 'zzzz';
+        const tagB = b.tags && b.tags[0] ? b.tags[0] : 'zzzz';
+        return tagA.localeCompare(tagB);
+      });
+    }
+
+    const container = document.getElementById('louvores-container');
+    container.innerHTML = filtered.map(l => {
+      const tagsHtml = (l.tags||[]).map(t => `<span class="tag-chip" style="font-size:0.6rem;">${t}</span>`).join('');
+      return `
       <div class="activity-item" style="margin-bottom: 8px;">
-        <div class="activity-main" style="justify-content: space-between; flex-wrap: wrap;">
-          <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
-            <div style="font-weight:600; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
-              ${l.name}
-              <span class="badge ${l.categoria === 'ensaiados' ? 'ensaiado' : 'novo'}">${l.categoria === 'ensaiados' ? 'Ensaiado' : 'Novo'}</span>
-              <span class="key-badge">${l.duration || '-'}</span>
-            </div>
+        <div class="activity-main" style="justify-content:space-between;">
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <div style="font-weight:600;">${l.name} <span class="key-badge">${l.duration || '-'}</span></div>
             <div style="display:flex; gap:3px;">${tagsHtml}</div>
           </div>
-          <div class="activity-actions" style="display: flex; gap: 4px;">
-            <button class="small" onclick="editPreset('${l.id}')" title="Editar">✏️</button>
-            <button class="small danger" onclick="deletePreset('${l.id}')" title="Excluir">❌</button>
-            <button class="small" onclick="toggleDetails('${l.id}')" title="Detalhes">▼</button>
+          <div>
+            <button class="small" onclick="editPreset('${l.id}')">✏️</button>
+            <button class="small danger" onclick="deletePreset('${l.id}')">🗑️</button>
           </div>
         </div>
-        <div id="details-${l.id}" class="activity-details" style="display: none;">
-          ${linkify(l.details) || 'Sem detalhes.'}
-        </div>
       </div>
-    `;
-  }).join('');
-}
+    `}).join('');
+  }
 
   function openLouvorDialog() {
     document.getElementById('preset-id').value = '';
@@ -1406,17 +1254,17 @@ function renderLouvores() {
       if(index >= 0) bancoLouvores[index] = obj;
       else bancoLouvores.push(obj);
       
-      if (currentView === 'louvores') renderLouvores();
       saveData();
       document.getElementById('preset-dialog').close();
+      if(currentView === 'louvores') renderLouvores();
     }
   }
 
   function deletePreset(id) {
     if(confirm('Excluir este louvor do banco?')) {
       bancoLouvores = bancoLouvores.filter(b => b.id !== id);
-      renderLouvores();
       saveData();
+      renderLouvores();
     }
   }
 
@@ -1467,20 +1315,15 @@ function renderLouvores() {
 
     if (mode === 'preset') {
       const presetId = document.getElementById('add-act-preset-select').value;
-      if (!presetId) {
-        alert("Selecione um louvor do banco.");
-        return;
-      }
       const preset = bancoLouvores.find(p => p.id === presetId);
-      if(!preset) return alert("Louvor não encontrado no banco.");
+      if(!preset) return alert("Selecione um louvor do banco.");
       activity = { 
         ...activity, 
         name: preset.name, 
         duration: preset.duration, 
         categoria: preset.categoria, 
         details: preset.details,
-        tags: preset.tags || [],
-        bankId: preset.id   // store bankId
+        tags: preset.tags || []
       };
     } else if (mode === 'random') {
       const tag = document.getElementById('random-tag').value;
@@ -1510,8 +1353,7 @@ function renderLouvores() {
         duration: random.duration,
         categoria: random.categoria,
         details: random.details,
-        tags: random.tags || [],
-        bankId: random.id   // store bankId
+        tags: random.tags || []
       };
     } else {
       // manual
@@ -1519,36 +1361,17 @@ function renderLouvores() {
       activity.duration = document.getElementById('add-act-duration').value;
       activity.categoria = document.getElementById('add-act-categoria').value;
       activity.details = document.getElementById('add-act-details').value;
-
-      if (!activity.name) {
-        alert("O nome do louvor é obrigatório.");
-        return;
-      }
-
-      // Perguntar se quer adicionar ao banco
-      if (confirm("Adicionar este louvor ao banco de dados?")) {
-        const bankId = generateId();
-        const newBankEntry = {
-          id: bankId,
-          name: activity.name,
-          duration: activity.duration,
-          categoria: activity.categoria,
-          details: activity.details,
-          tags: []  // sem tags por enquanto
-        };
-        bancoLouvores.push(newBankEntry);
-        activity.bankId = bankId;
-        if (currentView === 'louvores') renderLouvores();
-      }
     }
 
     if (activity.name) {
       const cls = cultos.find(c => c.id === classId);
       const plan = cls.plans.find(p => p.id === planId);
       plan.activities.push(activity);
-      renderApp();
       saveData();
       document.getElementById('add-act-dialog').close();
+      renderApp();
+    } else {
+      alert("O nome do louvor é obrigatório.");
     }
   }
 
@@ -1557,8 +1380,8 @@ function renderLouvores() {
     const plan = cls.plans.find(p => p.id === planId);
     const act = plan.activities.find(a => a.id === actId);
     act.completed = !act.completed;
-    renderApp();
     saveData();
+    renderApp();
   }
 
   function toggleDetails(id) {
@@ -1592,18 +1415,16 @@ function renderLouvores() {
       reader.onload = function(e) {
         try {
           const data = JSON.parse(e.target.result);
-          cultos = (data.cultos || []).map(convertCulto);
-          bancoLouvores = (data.bancoLouvores || []).map(l => {
-            if (l.text && !l.name) l.name = l.text;
-            if (l.tonalidade && !l.duration) l.duration = l.tonalidade;
-            return l;
-          });
-          if(data.configSorteio) {
-            configSorteio = data.configSorteio;
-            sanitizeProfiles(); // garante que todos os perfis tenham regras e novosCount, e que o default exista
-          }
-          renderApp();
+          cultos = data.cultos || [];
+          bancoLouvores = data.bancoLouvores || [];
+          if(data.configSorteio) configSorteio = data.configSorteio;
+          // Ensure novosCount exists
+          configSorteio.perfisSorteio = (configSorteio.perfisSorteio || []).map(p => ({
+            ...p,
+            novosCount: p.novosCount !== undefined ? p.novosCount : 0
+          }));
           saveData();
+          renderApp();
           alert("Backup importado com sucesso!");
         } catch (err) { alert("Erro ao ler o ficheiro."); }
       };
@@ -1626,8 +1447,8 @@ function renderLouvores() {
     const [moved] = plan.activities.splice(fromIndex, 1);
     plan.activities.splice(toIndex, 0, moved);
     
-    renderApp();
     saveData();
+    renderApp();
   }
 
   function initDrag(e) {
@@ -1748,4 +1569,3 @@ function renderLouvores() {
 
 </body>
 </html>
-
