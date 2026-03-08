@@ -153,14 +153,13 @@
     </div>
   </div>
 
-    <div id="louvores-view" style="display: none;">
+  <div id="louvores-view" style="display: none;">
     <h2 style="color: #1e3c72; text-align: center;">Banco de Louvores</h2>
     <p style="text-align: center; font-size: 0.9rem; color: #555;">Faça a gestão dos louvores e atribua as suas tags.</p>
     <button class="primary" style="width: 100%; margin-bottom: 15px;" onclick="openLouvorDialog()">+ Adicionar Novo Louvor</button>
-    <button class="primary" style="width: 100%; margin-bottom: 15px;" onclick="openBulkImportDialog()">📦 Importar em Massa</button>
     
-       <!-- Search + sort row -->
-    <div class="search-sort-row">
+    <!-- Search + sort row -->
+        <div class="search-sort-row">
       <input type="text" id="bank-search" class="search-input" placeholder="Buscar por nome ou tag..." onkeyup="renderLouvores()">
       <div style="position: relative;">
         <button id="sort-toggle" class="small" onclick="toggleSortMenu()" style="white-space: nowrap;">Ordenar ▼</button>
@@ -171,10 +170,9 @@
           <div style="padding: 8px; cursor: pointer;" onclick="setSort('novos')">Novos</div>
         </div>
       </div>
-    </div>
+    </div>    
     <div id="louvores-container"></div>
   </div>
-
 
   <div class="import-export">
     <button onclick="document.getElementById('import-file').click()">📤 Importar Backup</button>
@@ -375,28 +373,6 @@
     <div class="dialog-actions">
       <button class="danger" onclick="document.getElementById('edit-activity-dialog').close()">Cancelar</button>
       <button class="primary" onclick="saveEditedActivity()">Salvar</button>
-    </div>
-  </div>
-</dialog>
-
-<!-- Bulk Import Dialog -->
-<dialog id="bulk-import-dialog">
-  <div class="dialog-form">
-    <h3>Importar Louvores em Massa</h3>
-    <p style="font-size: 0.9rem; color: #555;">Insira os louvores no formato abaixo, separando cada campo por linha e cada louvor por uma linha em branco:</p>
-    <pre style="background: #f0f4fa; padding: 10px; border-radius: 8px; font-size: 0.8rem;">
-Título: Nome do Louvor
-Artista: Nome do Artista
-Youtube: https://youtube.com/...
-Letra: https://letras.mus.br/...
-Cifra: https://cifraclub.com.br/...
-Tom:
-
-    </pre>
-    <textarea id="bulk-import-text" rows="10" style="width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #ccc; font-family: monospace;"></textarea>
-    <div class="dialog-actions">
-      <button class="danger" onclick="document.getElementById('bulk-import-dialog').close()">Cancelar</button>
-      <button class="primary" onclick="saveBulkImport()">Importar</button>
     </div>
   </div>
 </dialog>
@@ -1401,7 +1377,7 @@ function renderLouvores() {
     `;
   }).join('');
 }
-    function openLouvorDialog() {
+  function openLouvorDialog() {
     document.getElementById('preset-id').value = '';
     document.getElementById('preset-name').value = '';
     document.getElementById('preset-duration').value = '';
@@ -1410,64 +1386,6 @@ function renderLouvores() {
     selectedTagsForPreset = [];
     renderTagsForPreset();
     document.getElementById('preset-dialog').showModal();
-  }
-
-  function openBulkImportDialog() {
-    document.getElementById('bulk-import-text').value = '';
-    document.getElementById('bulk-import-dialog').showModal();
-  }
-
-    function saveBulkImport() {
-    const text = document.getElementById('bulk-import-text').value.trim();
-    if (!text) {
-      alert("Nenhum dado para importar.");
-      return;
-    }
-    // Split by blank lines (one or more empty lines)
-    const entries = text.split(/\n\s*\n/);
-    let importedCount = 0;
-    entries.forEach(entry => {
-      entry = entry.trim();
-      if (!entry) return;
-      const lines = entry.split('\n');
-      let title = '', artist = '', youtube = '', letra = '', cifra = '', tom = '';
-      lines.forEach(line => {
-        line = line.trim();
-        if (line.startsWith('Título:')) title = line.substring(7).trim();
-        else if (line.startsWith('Artista:')) artist = line.substring(8).trim();
-        else if (line.startsWith('Youtube:')) youtube = line.substring(8).trim();
-        else if (line.startsWith('Letra:')) letra = line.substring(6).trim();
-        else if (line.startsWith('Cifra:')) cifra = line.substring(6).trim();
-        else if (line.startsWith('Tom:')) tom = line.substring(4).trim();
-      });
-      if (!title) return; // skip if no title
-      // Build details string
-      let details = '';
-      if (artist) details += `Artista: ${artist}\n`;
-      if (youtube) details += `Vídeo: ${youtube}\n`;
-      if (letra) details += `Letra: ${letra}\n`;
-      if (cifra) details += `Cifra: ${cifra}\n`;
-      // Create bank entry
-      const newId = generateId();
-      const newEntry = {
-        id: newId,
-        name: title,
-        duration: tom,
-        categoria: 'ensaiados', // default
-        details: details.trim(),
-        tags: []
-      };
-      bancoLouvores.push(newEntry);
-      importedCount++;
-    });
-    if (importedCount > 0) {
-      renderLouvores();
-      saveData();
-      alert(`${importedCount} louvore(s) importado(s) com sucesso!`);
-    } else {
-      alert("Nenhum louvor válido encontrado.");
-    }
-    document.getElementById('bulk-import-dialog').close();
   }
 
   function editPreset(id) {
@@ -1857,4 +1775,3 @@ function renderLouvores() {
 
 </body>
 </html>
-
