@@ -1178,9 +1178,8 @@ Tom:
 
       const addPlanBtn = `<button class="primary" style="width: 100%; margin-top: 10px; border-radius: 12px; padding: 12px;" onclick="addPlan('${cls.id}')">+ Adicionar plano de culto</button>`;
 
-      if (hasActivePlans || (!hasActivePlans && historyPlansHTML === '')) {
-        container.innerHTML += `<div class="class-card">${classHeader}${activePlansHTML}${addPlanBtn}</div>`;
-      }
+           // Always show the culto card in main view, even if all plans are archived.
+      container.innerHTML += `<div class="class-card">${classHeader}${activePlansHTML}${addPlanBtn}</div>`;
 
       if (historyPlansHTML !== '') {
         historyCount++;
