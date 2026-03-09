@@ -1583,7 +1583,7 @@
             }));
         }
 
-                        // ---------- LESSON DETAIL (back button at top, clickable names with blue dot, observation management) ----------
+        // ---------- LESSON DETAIL (unchanged) ----------
         function renderLessonDetail(container, data) {
             const effective = getEffectiveSettings(data, state.institutionId, state.classId);
             const limit = effective.limit;
@@ -1601,8 +1601,7 @@
             lessonBehaviors.forEach(be => {
                 if (studentMap[be.studentId]) {
                     if (be.type === 'appropriate') studentMap[be.studentId].appropriate.push(be);
-                    else if (be.type === 'inappropriate') studentMap[be.studentId].inappropriate.push(be);
-                    // observations are stored with type 'observation' and are not counted in these arrays
+                    else studentMap[be.studentId].inappropriate.push(be);
                 }
             });
 
@@ -1628,13 +1627,12 @@
                 }
             });
 
-            // Back button now inside header
             let headerHtml = `<div class="lesson-header">
                 <button class="btn btn-sm" id="closeLesson"><i class="fas fa-arrow-left"></i> Back</button>
                 <span><strong>🏫 Institution:</strong> ${escapeHtml(state.institutionName)}</span>
                 <span><strong>📚 Class:</strong> ${escapeHtml(state.className)}</span>
                 <span><strong>📅 Date:</strong> ${escapeHtml(lessonDate)}</span>
-                <span class="dice-button" id="drawStudentBtn" title="Draw a student to participate"><i class="fas fa-dice"></i></span>
+                <span class="dice-button" id="drawStudentBtn" title="Draw a student with fewest appropriate behaviors"><i class="fas fa-dice"></i></span>
             </div>`;
 
             let tableHtml = `<div class="table-container"><div class="lesson-table">
@@ -1650,8 +1648,6 @@
                 const behaviorTexts = [...rec.appropriate.map(b => escapeHtml(b.description)), ...rec.inappropriate.map(b => escapeHtml(b.description))].join(', ');
                 const timer = timers[state.lessonId][studentId];
                 const hasTimer = !!timer;
-                // Check if this student has any observations in this lesson
-                const hasObservations = data.behaviorEvents.some(be => be.lessonId === state.lessonId && be.studentId === studentId && be.type === 'observation');
 
                 const smileHtml = `
                     <div class="smile-with-count">
@@ -1687,10 +1683,7 @@
                 }
 
                 tableHtml += `
-                    <div class="table-cell student-name-cell" data-student="${studentId}" style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                        ${escapeHtml(rec.name)}
-                        ${hasObservations ? '<span class="observation-dot" style="width: 10px; height: 10px; background-color: #3498db; border-radius: 50%; display: inline-block;"></span>' : ''}
-                    </div>
+                    <div class="table-cell student-name-cell">${escapeHtml(rec.name)}</div>
                     <div class="table-cell">${smileHtml}</div>
                     <div class="table-cell">${behaviorTexts}</div>
                     <div class="table-cell">
@@ -1706,114 +1699,6 @@
 
             tableHtml += '</div></div>';
             container.innerHTML = headerHtml + tableHtml;
-
-            // Click on student name to manage observations
-            document.querySelectorAll('.student-name-cell').forEach(cell => {
-                cell.addEventListener('click', async (e) => {
-                    const studentId = e.currentTarget.dataset.student;
-                    const studentName = studentMap[studentId]?.name || 'Student';
-                    
-                    // Get existing observations for this student in this lesson
-                    const observations = data.behaviorEvents.filter(be => be.lessonId === state.lessonId && be.studentId === studentId && be.type === 'observation');
-                    
-                    // Build modal content
-                    let modalBodyHtml = `<div style="max-height: 400px; overflow-y: auto;">`;
-                    if (observations.length === 0) {
-                        modalBodyHtml += `<p>No observations yet.</p>`;
-                    } else {
-                        observations.forEach(obs => {
-                            modalBodyHtml += `
-                                <div class="behavior-item" style="margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
-                                    <span>${escapeHtml(obs.description)}</span>
-                                    <div>
-                                        <button class="icon-btn edit-observation" data-id="${obs.id}" title="Edit"><i class="fas fa-edit"></i></button>
-                                        <button class="icon-btn delete-observation" data-id="${obs.id}" title="Delete"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                    }
-                    modalBodyHtml += `
-                        <hr>
-                        <textarea id="newObservationText" rows="3" placeholder="New observation..." style="width:100%; margin-bottom:0.5rem;"></textarea>
-                        <button class="btn btn-sm btn-primary" id="addObservationBtn">Add Observation</button>
-                    </div>`;
-                    
-                    // Show modal
-                    const modalResult = await new Promise((resolve) => {
-                        const modalDiv = document.getElementById('customModal');
-                        document.getElementById('modalTitle').innerText = `Observations for ${studentName}`;
-                        document.getElementById('modalBody').innerHTML = modalBodyHtml;
-                        const actionsDiv = document.getElementById('modalActions');
-                        actionsDiv.innerHTML = '<button class="btn" id="closeObsModal">Close</button>';
-                        
-                        document.getElementById('closeObsModal').onclick = () => { closeModal(); resolve('close'); };
-                        
-                        // Attach event listeners after modal is shown
-                        setTimeout(() => {
-                            // Edit buttons
-                            document.querySelectorAll('.edit-observation').forEach(btn => {
-                                btn.addEventListener('click', async (e) => {
-                                    e.stopPropagation();
-                                    const obsId = e.currentTarget.dataset.id;
-                                    const obs = observations.find(o => o.id === obsId);
-                                    if (!obs) return;
-                                    const newDesc = await showModal({
-                                        title: 'Edit observation',
-                                        bodyHtml: `<input id="modalInput" value="${escapeHtml(obs.description)}">`,
-                                        input: true,
-                                        showCancel: true,
-                                        confirmText: 'Save',
-                                        cancelText: 'Cancel'
-                                    });
-                                    if (newDesc && newDesc.trim()) {
-                                        obs.description = newDesc.trim();
-                                        saveData(data);
-                                        closeModal();
-                                        render(); // re-render lesson to update
-                                    }
-                                });
-                            });
-                            // Delete buttons
-                            document.querySelectorAll('.delete-observation').forEach(btn => {
-                                btn.addEventListener('click', async (e) => {
-                                    e.stopPropagation();
-                                    const obsId = e.currentTarget.dataset.id;
-                                    if (await showModal({ title: 'Confirm delete', bodyHtml: '<p>Delete this observation?</p>', confirmText: 'Delete', cancelText: 'Cancel' })) {
-                                        data.behaviorEvents = data.behaviorEvents.filter(be => be.id !== obsId);
-                                        saveData(data);
-                                        closeModal();
-                                        render();
-                                    }
-                                });
-                            });
-                            // Add button
-                            document.getElementById('addObservationBtn')?.addEventListener('click', async () => {
-                                const textarea = document.getElementById('newObservationText');
-                                const newText = textarea.value.trim();
-                                if (newText) {
-                                    const newObservation = {
-                                        id: generateId(),
-                                        lessonId: state.lessonId,
-                                        studentId,
-                                        type: 'observation',
-                                        description: newText,
-                                        timestamp: new Date().toISOString()
-                                    };
-                                    data.behaviorEvents.push(newObservation);
-                                    saveData(data);
-                                    closeModal();
-                                    render();
-                                } else {
-                                    showAlert('Please enter some text.');
-                                }
-                            });
-                        }, 50);
-                        
-                        modalDiv.classList.add('active');
-                    });
-                });
-            });
 
             document.getElementById('drawStudentBtn')?.addEventListener('click', () => {
                 const students = Object.entries(studentMap).map(([id, rec]) => ({
@@ -1974,8 +1859,8 @@
                 });
             });
         }
-                
-                // ---------- BEHAVIOR HISTORY (with Faced consequence count and observations) ----------
+
+        // ---------- BEHAVIOR HISTORY (unchanged) ----------
         function renderBehaviorHistory(container, data) {
             const student = data.students.find(s => s.id === state.studentId);
             if (!student) {
@@ -2027,7 +1912,6 @@
                     const events = eventsByLesson[lesson.id] || [];
                     const positiveEvents = events.filter(e => e.type === 'appropriate');
                     const negativeEvents = events.filter(e => e.type === 'inappropriate');
-                    const observations = events.filter(e => e.type === 'observation');
                     const reachedLimit = negativeEvents.length >= limit;
 
                     html += `<div class="history-day">`;
@@ -2047,13 +1931,6 @@
                         });
                         html += `</div>`;
                     }
-                    if (observations.length > 0) {
-                        html += `<div><strong>📝 Observations:</strong> `;
-                        observations.forEach(e => {
-                            html += `<span class="history-behavior">${escapeHtml(e.description)}</span>`;
-                        });
-                        html += `</div>`;
-                    }
                     if (events.length === 0) {
                         html += `<p>No behaviors recorded.</p>`;
                     }
@@ -2064,7 +1941,7 @@
             container.innerHTML = html;
             document.getElementById('backToReports')?.addEventListener('click', () => setView('reports'));
         }
-        
+
         // ---------- REPORTS (unchanged) ----------
         function renderReports(container, data) {
             const classStudents = data.students.filter(s => s.classId === state.classId);
