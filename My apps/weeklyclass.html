@@ -698,15 +698,18 @@
   }
   
   // NEW DELETION METHOD FOR LOCATIONS
-  function removeLocation(loc) {
-    const confirmation = prompt(`To remove the location "${loc}", type DELETE below:`);
-    if (confirmation === "DELETE") { 
-      state.locations = state.locations.filter(l => l !== loc); 
-      if(state.currentLoc === loc) state.currentLoc = 'all'; 
-      saveData(); renderNav(); renderSettings(); renderApp(); 
+    function removeLocation(loc) {
+    const confirmation = prompt(`To remove the location "${loc}", type "delete" below:`);
+    if (confirmation === "DELETE") {
+      state.locations = state.locations.filter(l => l !== loc);
+      if(state.currentLoc === loc) state.currentLoc = 'all';
+      saveData();
+      renderNav();
+      renderSettings();
+      renderApp();
     }
   }
-
+  
   function addActivityTag() {
     const input = document.getElementById('new-tag-name'); const val = input.value.trim();
     if (val && !state.activityTags.includes(val)) { state.activityTags.push(val); saveData(); input.value = ''; renderSettings(); }
@@ -951,17 +954,15 @@
   }
   
   // NEW DELETION METHOD FOR CLASSES
-  function deleteClass(classId) { 
-    const cls = state.classes.find(c => c.id === classId);
-    if(!cls) return;
-    const confirmation = prompt(`To delete the class "${cls.name}", type DELETE below:`);
+      function deleteClass(classId) {
+    const confirmation = prompt(`To delete this class, type "delete" below:`);
     if (confirmation === "DELETE") {
-      state.classes = state.classes.filter(c => c.id !== classId); 
-      saveData(); 
-      renderApp(); 
+      state.classes = state.classes.filter(c => c.id !== classId);
+      saveData();
+      renderApp();
     }
   }
-
+    
   function addPlan(cid) {
     const cls = state.classes.find(c => c.id === cid); if (!cls.plans) cls.plans = [];
     const newPlanId = generateId();
@@ -1184,7 +1185,7 @@
     `).join('');
   }
 
-  function generateClassHTML(cls, plans, isHist) {
+    function generateClassHTML(cls, plans, isHist) {
     if (isHist && plans.length === 0) return '';
     let pHTML = plans.map(p => {
       const pDateObj = new Date(p.date + "T12:00:00");
@@ -1238,16 +1239,16 @@
 
     const displayDays = (cls.days || [cls.day]).map(d => d.slice(0,3)).join(', ');
 
-    return `
+            return `
       <div class="class-card">
-        <div class="class-header"><div class="class-title"><span>${cls.name}</span><span class="badge">${cls.type}</span></div>${!isHist?`<div><button class="small" onclick="openEditClassDialog('${cls.id}')">✎ Edit</button> <button class="small warning" onclick="deleteClass('${cls.id}')">🗑</button></div>`:''}</div>
+        <div class="class-header"><div class="class-title"><span>${cls.name}</span><span class="badge">${cls.type}</span></div><div><button class="small" onclick="openEditClassDialog('${cls.id}')">✎ Edit</button> <button class="small warning" onclick="deleteClass('${cls.id}')">🗑</button></div></div>
         <div class="meta">${displayDays} · ${cls.time}</div>
         <div>${pHTML}</div>
         ${!isHist ? `<button class="small primary" style="width:100%; margin-top:0.5rem;" onclick="addPlan('${cls.id}')">➕ add plan</button>` : ''}
       </div>
     `;
-  }
-  
+   }
+    
   function toggleActivity(cid, pid, aid) {
     const a = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid).activities.find(x => x.id === aid);
     a.isDone = !a.isDone; saveData(); renderApp();
