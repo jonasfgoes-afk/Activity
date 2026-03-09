@@ -399,6 +399,13 @@
           c.days = [c.day];
           delete c.day;
         }
+        // Ensure plans have activities and notes
+        if (c.plans) {
+          c.plans.forEach(p => {
+            if (!p.activities) p.activities = [];
+            if (!p.notes) p.notes = '';
+          });
+        }
       });
     }
     
@@ -418,7 +425,7 @@
       if (typeof p.untaggedCount === 'undefined') p.untaggedCount = '';
     });
     return data;
-  }
+}
 
   function loadLocal() {
     const saved = localStorage.getItem('weekly_classes_v7');
@@ -441,24 +448,32 @@
 
   function saveData() {
     localStorage.setItem('weekly_classes_v7', JSON.stringify(state));
-    dbRef.set({ classes: state.classes, presets: state.presets, locations: state.locations, activityTags: state.activityTags, drawProfiles: state.drawProfiles });
-  }
+    dbRef.set({ 
+        classes: state.classes, 
+        presets: state.presets, 
+        locations: state.locations, 
+        activityTags: state.activityTags, 
+        drawProfiles: state.drawProfiles 
+    }).catch(error => {
+        console.error("Firebase write failed:", error);
+        alert("Failed to save data to cloud. Your changes are saved locally but may not sync across devices. Error: " + error.message);
+    });
+}
 
   dbRef.on('value', (snapshot) => {
     const cloud = snapshot.val();
     if (cloud) {
-      state.classes = cloud.classes || [];
-      state.presets = cloud.presets || [];
-      state.locations = cloud.locations || ['all', 'school', 'home'];
-      state.activityTags = cloud.activityTags || ['Ice breaker', 'JW'];
-      
       const migratedCloud = migrateData(cloud);
-      state.drawProfiles = migratedCloud.drawProfiles;
+      state.classes = migratedCloud.classes || [];
+      state.presets = migratedCloud.presets || [];
+      state.locations = migratedCloud.locations || ['all', 'school', 'home'];
+      state.activityTags = migratedCloud.activityTags || ['Ice breaker', 'JW'];
+      state.drawProfiles = migratedCloud.drawProfiles || [];
       
       renderNav(); renderApp(); renderSettings();
     }
   });
-
+  
   // ==========================================
   // CONFIRMATION LOGIC
   // ==========================================
@@ -1287,3 +1302,4 @@
 </script>
 </body>
 </html>
+
