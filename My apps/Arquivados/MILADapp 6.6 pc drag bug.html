@@ -1757,78 +1757,44 @@ function renderLouvores() {
     saveData();
   }
 
-    function initDrag(e) {
-    const handle = e.target.closest('.drag-handle');
-    if (!handle) return;
-    const item = handle.closest('.activity-item');
+  function initDrag(e) {
+    const item = e.target.closest('.activity-item');
     if (!item) return;
-    e.preventDefault(); // prevent text selection
-
-    // Get initial positions
-    const rect = item.getBoundingClientRect();
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const offsetX = startX - rect.left;
-    const offsetY = startY - rect.top;
-
-    // Create a clone for visual feedback
-    const clone = item.cloneNode(true);
-    clone.style.position = 'fixed';
-    clone.style.top = rect.top + 'px';
-    clone.style.left = rect.left + 'px';
-    clone.style.width = rect.width + 'px';
-    clone.style.zIndex = '9999';
-    clone.style.opacity = '0.8';
-    clone.style.pointerEvents = 'none';
-    document.body.appendChild(clone);
-
-    // Store drag data
-    const dragInfo = {
-      actId: item.getAttribute('data-act-id'),
-      planId: item.getAttribute('data-plan-id'),
-      classId: item.getAttribute('data-class-id'),
-      item: item,
-      clone: clone,
-      offsetX: offsetX,
-      offsetY: offsetY
+    
+    item.setAttribute('draggable', true);
+    
+    item.ondragstart = (ev) => {
+        dragData = {
+            actId: item.getAttribute('data-act-id'),
+            planId: item.getAttribute('data-plan-id'),
+            classId: item.getAttribute('data-class-id')
+        };
+        ev.dataTransfer.effectAllowed = 'move';
+        item.style.opacity = '0.5';
     };
-
-    // Dim original
-    item.style.opacity = '0.3';
-
-    function mouseMove(ev) {
-      ev.preventDefault();
-      clone.style.top = (ev.clientY - offsetY) + 'px';
-      clone.style.left = (ev.clientX - offsetX) + 'px';
-    }
-
-    function mouseUp(ev) {
-      // Remove clone and restore original
-      clone.remove();
-      item.style.opacity = '1';
-
-      // Find drop target
-      const dropTarget = document.elementFromPoint(ev.clientX, ev.clientY);
-      const dropItem = dropTarget ? dropTarget.closest('.activity-item') : null;
-
-      if (dropItem && dropItem !== item) {
-        const targetActId = dropItem.getAttribute('data-act-id');
-        const targetPlanId = dropItem.getAttribute('data-plan-id');
-        const targetClassId = dropItem.getAttribute('data-class-id');
-        if (targetPlanId === dragInfo.planId && targetClassId === dragInfo.classId && dragInfo.actId !== targetActId) {
-          reorderActivity(dragInfo.classId, dragInfo.planId, dragInfo.actId, targetActId);
+    
+    item.ondragover = (ev) => { ev.preventDefault(); };
+    
+    item.ondrop = (ev) => {
+        ev.preventDefault();
+        const dropItem = ev.target.closest('.activity-item');
+        if (dropItem && dragData) {
+            const targetActId = dropItem.getAttribute('data-act-id');
+            const targetPlanId = dropItem.getAttribute('data-plan-id');
+            const targetClassId = dropItem.getAttribute('data-class-id');
+            if (targetPlanId === dragData.planId && targetClassId === dragData.classId && dragData.actId !== targetActId) {
+                reorderActivity(dragData.classId, dragData.planId, dragData.actId, targetActId);
+            }
         }
-      }
-
-      // Clean up listeners
-      document.removeEventListener('mousemove', mouseMove);
-      document.removeEventListener('mouseup', mouseUp);
-    }
-
-    document.addEventListener('mousemove', mouseMove);
-    document.addEventListener('mouseup', mouseUp);
+    };
+    
+    item.ondragend = () => {
+        item.removeAttribute('draggable');
+        item.style.opacity = '1';
+        dragData = null;
+    };
   }
-  
+
   function initTouch(e) {
     const targetItem = e.target.closest('.activity-item');
     if (!targetItem) return;
