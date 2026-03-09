@@ -564,26 +564,21 @@ Tom:
   }
 
   // saveData agora tenta escrever, mas não interrompe o fluxo se falhar
-    function saveData() {
-    // Cria cópias profundas para evitar referências circulares
-    const dataToSave = {
-      cultos: JSON.parse(JSON.stringify(cultos)),
-      bancoLouvores: JSON.parse(JSON.stringify(bancoLouvores)),
-      configSorteio: JSON.parse(JSON.stringify(configSorteio))
-    };
-    localStorage.setItem('igreja_louvores_hybrid', JSON.stringify(dataToSave));
-    localStorage.setItem('milad_settings', JSON.stringify(dataToSave.configSorteio));
+  function saveData() {
+    localStorage.setItem('igreja_louvores_hybrid', JSON.stringify({ cultos, bancoLouvores }));
+    localStorage.setItem('milad_settings', JSON.stringify(configSorteio));
     if(dbRef) {
       try {
-        dbRef.set(dataToSave).catch(err => {
+        dbRef.set({ cultos, bancoLouvores, configSorteio }).catch(err => {
           console.warn("Erro ao salvar no Firebase:", err);
+          // Não alertamos para não incomodar o usuário – os dados já estão no localStorage
         });
       } catch (e) {
         console.warn("Erro ao tentar salvar no Firebase:", e);
       }
     }
   }
-  
+
   function generateId() { return Date.now().toString() + Math.random().toString(36).substr(2, 5); }
 
   // ==========================================
@@ -1875,4 +1870,3 @@ function renderLouvores() {
 
 </body>
 </html>
-
