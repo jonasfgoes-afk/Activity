@@ -1688,10 +1688,9 @@
                     timerCell = '<span class="timer-placeholder">—</span>';
                 }
 
-                                tableHtml += `
+                tableHtml += `
                     <div class="table-cell student-name-cell" data-student="${studentId}" style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
                         ${escapeHtml(rec.name)}
-                        <span style="font-size:0.9rem; color:#888; margin-left:2px;">📝</span>
                         ${hasObservations ? '<span class="observation-dot" style="width: 10px; height: 10px; background-color: #3498db; border-radius: 50%; display: inline-block;"></span>' : ''}
                     </div>
                     <div class="table-cell">${smileHtml}</div>
