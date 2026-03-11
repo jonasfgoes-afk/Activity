@@ -1188,21 +1188,18 @@
     function generateClassHTML(cls, plans, isHist) {
     if (isHist && plans.length === 0) return '';
     let pHTML = plans.map(p => {
+      const pDateObj = new Date(p.date + "T12:00:00");
+      const pDayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][pDateObj.getDay()];
+      
       return `
       <div class="plan-block">
         <div class="plan-header">
-          <span style="font-weight:700;">📅 ${p.date} ${isHist ? '<span class="badge" style="background:#b9d1e9;">Archived</span>' : ''}</span>
+          <span style="font-weight:700;">📅 ${p.date} (${pDayName}) ${isHist ? '<span class="badge" style="background:#b9d1e9;">Archived</span>' : ''}</span>
           <div class="plan-actions">
             ${!isHist ? `<button class="small" onclick="archivePlan('${cls.id}','${p.id}')">📥 arch</button>` : `<button class="small" onclick="unarchivePlan('${cls.id}','${p.id}')">📤 unarch</button>`}
             <button class="small" onclick="copyPlan('${cls.id}','${p.id}')">📄 copy</button>
             <button class="small" onclick="pastePlan('${cls.id}','${p.id}')">📋 paste</button>
-            ${p.notes && p.notes.trim() !== '' 
-              ? `<span style="position:relative; display:inline-block;">
-                  <button class="small" onclick="toggleDetails('notes-${p.id}')">📝 notes</button>
-                  <span style="position:absolute; top:-2px; right:-2px; width:10px; height:10px; background:red; border-radius:50%;"></span>
-                </span>`
-              : `<button class="small" onclick="toggleDetails('notes-${p.id}')">📝 notes</button>`
-            }
+            <button class="small" onclick="toggleDetails('notes-${p.id}')">📝 notes</button>
             <button class="small danger" onclick="deletePlan('${cls.id}','${p.id}')">✖ del</button>
             <button class="small primary" onclick="openAddActDialog('${cls.id}','${p.id}')">+ act</button>
           </div>
@@ -1240,31 +1237,18 @@
       </div>
     `}).join('');
 
-    const studentListHTML = cls.students && cls.students.length > 0 ? 
-      `<div id="students-${cls.id}" class="student-list" style="display:none; margin-top:10px; padding:8px; background:#f0f4fa; border-radius:8px;">
-        ${cls.students.map(s => `<div>👤 ${s}</div>`).join('')}
-       </div>` : '';
+    const displayDays = (cls.days || [cls.day]).map(d => d.slice(0,3)).join(', ');
 
-    return `
+            return `
       <div class="class-card">
-        <div class="class-header">
-          <div class="class-title">
-            <span style="background:${cls.color}; color:white; padding:0.3rem 1rem; border-radius:40px; cursor:pointer;" onclick="openEditClassDialog('${cls.id}')">${cls.name}</span>
-            <span class="badge">${cls.type}</span>
-          </div>
-          <div>
-            ${!isHist ? `<button class="small" onclick="document.getElementById('students-${cls.id}').style.display = document.getElementById('students-${cls.id}').style.display === 'block' ? 'none' : 'block'">👥</button>` : ''}
-            ${!isHist ? `<button class="small" onclick="openEditClassDialog('${cls.id}')">✎ Edit</button>` : ''}
-            ${!isHist ? `<button class="small warning" onclick="deleteClass('${cls.id}')">🗑</button>` : ''}
-          </div>
-        </div>
-        ${studentListHTML}
-        <div class="meta">${cls.day} · ${cls.time}</div>
+        <div class="class-header"><div class="class-title"><span>${cls.name}</span><span class="badge">${cls.type}</span></div><div><button class="small" onclick="openEditClassDialog('${cls.id}')">✎ Edit</button> <button class="small warning" onclick="deleteClass('${cls.id}')">🗑</button></div></div>
+        <div class="meta">${displayDays} · ${cls.time}</div>
         <div>${pHTML}</div>
         ${!isHist ? `<button class="small primary" style="width:100%; margin-top:0.5rem;" onclick="addPlan('${cls.id}')">➕ add plan</button>` : ''}
       </div>
     `;
-  }    
+   }
+    
   function toggleActivity(cid, pid, aid) {
     const a = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid).activities.find(x => x.id === aid);
     a.isDone = !a.isDone; saveData(); renderApp();
