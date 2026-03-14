@@ -1,0 +1,32 @@
+I want to crete a html file that helps me organize my finances
+
+I organize my finances periaodially, usually, once a month.
+The title of the app should me Moneyman
+Right above the title, there should be a button that allows me to create a month plan
+When I click on the button, a plan section should be created.
+This section should have a title and the title should be the name of current month.
+Right under the name of the month, the app should display the date of creation of the plan.
+Under the the date of creation I want the period of the plan to be displayed.
+If there is no created plan and I click on "create plan", I want the app to prompt "inform period of the plan."
+I should input the period of the first plan.
+From the second plan created on, I want the app to automatically fill the period. Auto fill period should follow these rules:
+- Beginning of period must be equal to date of the next day after date of end of previous period.
+- End of period should be equal to date of day before current day.
+There must be a settings menu that should contain:
+A button to add "Income" and it should be possible to add multiple incomes.
+Each income should have a name and a number field.
+It should be possible to edit and delete incomes.
+When clicking on "add income", It should be possible to select "Insert tax"?
+If user chooses "yes", there should be a field asking the percentage of the tax.
+In th plan, when user informs gross value of and income that has tax, the app should fill the total value of the income with net value.
+A button to add "Destination" and it should be possible to add multiple destinations.
+The destination is a percentage of the total of the sum of all incomes.
+It should be possible to edit and delete destinations.
+Each destination sould have a name, a percentage (to be filled by user) and a total field (that will display total percentage number).
+
+There should be an archive section and each plan should have an archive button on it.
+Archive section should allow visualizing all the information of the archived plan.
+There should be an unarchive button on the plan after it is archived.
+
+
+

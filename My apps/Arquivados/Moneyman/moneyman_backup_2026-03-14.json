@@ -1,0 +1,173 @@
+{
+  "incomes": [
+    {
+      "id": "1773432049476-2kl6vkxrd",
+      "name": "Caixa pessoal",
+      "taxRate": null
+    },
+    {
+      "id": "1773432083418-btxin7hj0",
+      "name": "Caixa corrente",
+      "taxRate": null
+    },
+    {
+      "id": "1773440944916-1rab1qacx",
+      "name": "T.I.",
+      "taxRate": null
+    },
+    {
+      "id": "1773432098774-4fevlohff",
+      "name": "Nu Jonas",
+      "taxRate": null
+    },
+    {
+      "id": "1773432111725-i8pb37gvg",
+      "name": "Nu Mai Pessoal",
+      "taxRate": null
+    },
+    {
+      "id": "1773432149166-wtysm0zwn",
+      "name": "Nu Mai PJ",
+      "taxRate": null
+    },
+    {
+      "id": "1773432168392-uqa65bw7u",
+      "name": "Rend Reserva Jonas",
+      "taxRate": 22.5
+    },
+    {
+      "id": "1773432177473-fbkijqu07",
+      "name": "Rend Cachê Jonas",
+      "taxRate": 22.5
+    },
+    {
+      "id": "1773432185697-ralaipgp9",
+      "name": "Rend Reserva Mai",
+      "taxRate": 22.5
+    }
+  ],
+  "destinations": [
+    {
+      "id": "1773432249874-02pp5gfu1",
+      "name": "Ibav",
+      "percentage": 6
+    },
+    {
+      "id": "1773432262438-dqjwh8w43",
+      "name": "Oasis",
+      "percentage": 1.5
+    },
+    {
+      "id": "1773432278194-sma6s12om",
+      "name": "Adoção Missionária",
+      "percentage": 1.5
+    },
+    {
+      "id": "1773432282888-pj88x70go",
+      "name": "Missões",
+      "percentage": 1.5
+    },
+    {
+      "id": "1773432288545-iainzs6za",
+      "name": "Savings",
+      "percentage": 4
+    }
+  ],
+  "plans": [
+    {
+      "id": "1773488160724-wefrcejlo",
+      "month": "fevereiro de 2026",
+      "creationDate": "2026-03-14",
+      "startDate": "2026-02-18",
+      "endDate": "2026-03-12",
+      "archived": false,
+      "incomeValues": {
+        "1773432049476-2kl6vkxrd": "4445",
+        "1773432083418-btxin7hj0": "1270",
+        "1773440944916-1rab1qacx": "400",
+        "1773432098774-4fevlohff": "",
+        "1773432111725-i8pb37gvg": "5290",
+        "1773432149166-wtysm0zwn": "640",
+        "1773432168392-uqa65bw7u": "123.09",
+        "1773432177473-fbkijqu07": "41.49",
+        "1773432185697-ralaipgp9": ""
+      },
+      "incomesMeta": [
+        {
+          "id": "1773432049476-2kl6vkxrd",
+          "name": "Caixa pessoal",
+          "taxRate": null
+        },
+        {
+          "id": "1773432083418-btxin7hj0",
+          "name": "Caixa corrente",
+          "taxRate": null
+        },
+        {
+          "id": "1773440944916-1rab1qacx",
+          "name": "T.I.",
+          "taxRate": null
+        },
+        {
+          "id": "1773432098774-4fevlohff",
+          "name": "Nu Jonas",
+          "taxRate": null
+        },
+        {
+          "id": "1773432111725-i8pb37gvg",
+          "name": "Nu Mai Pessoal",
+          "taxRate": null
+        },
+        {
+          "id": "1773432149166-wtysm0zwn",
+          "name": "Nu Mai PJ",
+          "taxRate": null
+        },
+        {
+          "id": "1773432168392-uqa65bw7u",
+          "name": "Rend Reserva Jonas",
+          "taxRate": 22.5
+        },
+        {
+          "id": "1773432177473-fbkijqu07",
+          "name": "Rend Cachê Jonas",
+          "taxRate": 22.5
+        },
+        {
+          "id": "1773432185697-ralaipgp9",
+          "name": "Rend Reserva Mai",
+          "taxRate": 22.5
+        }
+      ],
+      "destinationsMeta": [
+        {
+          "id": "1773432249874-02pp5gfu1",
+          "name": "Ibav",
+          "percentage": 6
+        },
+        {
+          "id": "1773432262438-dqjwh8w43",
+          "name": "Oasis",
+          "percentage": 1.5
+        },
+        {
+          "id": "1773432278194-sma6s12om",
+          "name": "Adoção Missionária",
+          "percentage": 1.5
+        },
+        {
+          "id": "1773432282888-pj88x70go",
+          "name": "Missões",
+          "percentage": 1.5
+        },
+        {
+          "id": "1773432288545-iainzs6za",
+          "name": "Savings",
+          "percentage": 4
+        }
+      ],
+      "destChecks": {}
+    }
+  ],
+  "dateFormat": "BR"
+}

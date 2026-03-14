@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moneyman · finance organizer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            background: #f7f9fc;
+            color: #1e293b;
+        }
+        button {
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 40px;
+            padding: 0.4rem 1.2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            transition: 0.15s;
+        }
+        button:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+        .primary-btn {
+            background: #1e3a5f;
+            border-color: #0f2b44;
+            color: white;
+        }
+        .primary-btn:hover {
+            background: #143150;
+        }
+        .archive-btn, .unarchive-btn, .delete-btn {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+        }
+        .archive-btn { background: #fef3c7; border-color: #fbbf24; }
+        .unarchive-btn { background: #e0f2fe; border-color: #38bdf8; }
+        .delete-btn { background: #fee2e2; border-color: #f87171; color: #991b1b; }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin: 0.25rem 0 1.5rem 0;
+            letter-spacing: -0.5px;
+            color: #0f2b44;
+        }
+        /* tabs */
+        .tab-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+        .tab {
+            background: transparent;
+            border: none;
+            border-radius: 30px 30px 0 0;
+            padding: 0.6rem 1.8rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #64748b;
+            transition: 0.1s;
+        }
+        .tab.active {
+            background: white;
+            color: #0f2b44;
+            border: 1px solid #cbd5e1;
+            border-bottom-color: white;
+            transform: translateY(2px);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* settings panel */
+        .settings-panel {
+            background: white;
+            border-radius: 28px;
+            padding: 1.8rem 2rem;
+            margin: 0 0 2.5rem 0;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.02);
+        }
+        .settings-section {
+            margin-bottom: 2rem;
+        }
+        .settings-section h3 {
+            font-weight: 500;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+        .item-card {
+            background: #f8fafc;
+            border-radius: 40px;
+            padding: 0.6rem 1.5rem;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .item-name {
+            font-weight: 500;
+            min-width: 140px;
+        }
+        .tax-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .tax-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .item-percent-input {
+            border: 1px solid #cbd5e1;
+            border-radius: 40px;
+            padding: 0.3rem 0.8rem;
+            width: 90px;
+            font-size: 0.9rem;
+            background: white;
+            text-align: right;
+        }
+        .percent-suffix {
+            margin-left: -0.5rem;
+            margin-right: 0.5rem;
+            color: #475569;
+        }
+        .item-actions {
+            display: flex;
+            gap: 0.2rem;
+            margin-left: auto;
+        }
+        .item-actions button {
+            padding: 0.2rem 0.6rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            background: transparent;
+            border-color: #cbd5e1;
+        }
+        .plan-card {
+            background: white;
+            border-radius: 32px;
+            padding: 1.8rem 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.02);
+        }
+        .plan-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 1.8rem;
+        }
+        .plan-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #0b2c4a;
+            margin: 0;
+        }
+        .plan-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            color: #475569;
+            font-size: 0.9rem;
+        }
+        .income-area, .dest-area {
+            margin: 1.8rem 0 1.2rem 0;
+        }
+        /* income rows (like destinations) */
+        .income-row, .dest-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            background: #f9f9fc;
+            padding: 0.6rem 1.2rem;
+            border-radius: 60px;
+            margin-bottom: 0.7rem;
+            border: 1px solid #e9eef3;
+        }
+        .income-label, .dest-label {
+            font-weight: 500;
+            min-width: 140px;
+        }
+        .income-input {
+            border: 1px solid #cbd5e1;
+            border-radius: 40px;
+            padding: 0.4rem 1rem;
+            width: 120px;
+            font-size: 0.9rem;
+            background: white;
+        }
+        .net-value {
+            background: #e6f7e6;
+            border-radius: 40px;
+            padding: 0.2rem 1rem;
+            font-weight: 500;
+            color: #0f5c0f;
+            margin-left: auto;
+        }
+        .dest-total {
+            background: #e9eef3;
+            border-radius: 40px;
+            padding: 0.2rem 1rem;
+            font-weight: 500;
+            min-width: 100px;
+            text-align: center;
+        }
+        .total-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            background: #e9eef3;
+            padding: 0.6rem 1.2rem;
+            border-radius: 60px;
+            margin-top: 1rem;
+            border: 1px solid #cbd5e1;
+            font-weight: 600;
+        }
+        .total-label {
+            min-width: 140px;
+        }
+        .total-value {
+            background: white;
+            border-radius: 40px;
+            padding: 0.2rem 1rem;
+            min-width: 100px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .readonly-value {
+            background: #f1f5f9;
+            border-radius: 40px;
+            padding: 0.2rem 1rem;
+            color: #334155;
+        }
+        .archive-section {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 2px dashed #cbd5e1;
+        }
+        .archived-plan {
+            background: #f1f5f9;
+            opacity: 0.9;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .gap-2 { gap: 0.8rem; }
+        .mt-4 { margin-top: 1.5rem; }
+        .text-sm { font-size: 0.85rem; }
+        .backup-buttons {
+            display: flex;
+            gap: 1rem;
+            margin: 2rem 0 0;
+        }
+        /* Hide number input spinners */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Drag and drop styles */
+        .item-card.dragging {
+            opacity: 0.5;
+            background: #e2e8f0;
+            border: 2px dashed #1e3a5f;
+        }
+        .item-card[draggable=true] {
+            cursor: grab;
+        }
+        .item-card[draggable=true]:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+<body>
+    <h1>Moneyman</h1>
+
+    <div class="tab-bar">
+        <button class="tab active" data-tab="plans">📅 Plans</button>
+        <button class="tab" data-tab="settings">⚙️ Settings</button>
+    </div>
+
+    <div id="plansTab" class="tab-content active">
+        <div class="flex-between" style="margin-bottom: 1.5rem;">
+            <button id="createPlanBtn" class="primary-btn">+ Create plan</button>
+            <span></span>
+        </div>
+        <div id="activePlans"></div>
+        <div class="archive-section">
+            <h2>📦 Archive</h2>
+            <div id="archivePlans"></div>
+        </div>
+    </div>
+
+    <div id="settingsTab" class="tab-content">
+        <div class="settings-panel">
+            <div class="settings-section">
+                <h3>💰 Income sources <span class="text-sm">(toggle tax on/off)</span></h3>
+                <div id="incomesList" class="item-list"></div>
+                <button id="addIncomeBtn">+ Add income</button>
+            </div>
+            <div class="settings-section">
+                <h3>🎯 Destinations (fixed percentages)</h3>
+                <div id="destinationsList" class="item-list"></div>
+                <button id="addDestinationBtn">+ Add destination</button>
+            </div>
+            <div class="settings-section">
+                <h3>📅 Preferences</h3>
+                <div class="item-card" style="justify-content: space-between;">
+                    <span class="item-name">Date Format</span>
+                    <select id="dateFormatSelect" style="border: 1px solid #cbd5e1; border-radius: 40px; padding: 0.3rem 0.8rem; background: white; outline: none; cursor: pointer;">
+                        <option value="US">YYYY-MM-DD</option>
+                        <option value="BR">DD/MM/YYYY</option>
+                    </select>
+                </div>
+            </div>
+            <div class="backup-buttons">
+                <button id="exportDataBtn">📤 Export data</button>
+                <button id="importDataBtn">📥 Import data</button>
+                <input type="file" id="importFile" accept="application/json" style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- storage ----------
+         const STORAGE_KEY = 'moneyman_data';
+            let appData = {
+                incomes: [],        // { id, name, taxRate } (taxRate number or null)
+                destinations: [],   // { id, name, percentage }
+                plans: [],          // { id, month, creationDate, startDate, endDate (null if ongoing), archived, incomeValues }
+                dateFormat: 'US'    // Display preference
+            };
+
+            function loadData() {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        appData.incomes = parsed.incomes || [];
+                        appData.destinations = parsed.destinations || [];
+                        appData.plans = parsed.plans || [];
+                        appData.dateFormat = parsed.dateFormat || 'US';
+                        appData.plans.forEach(p => {
+                            if (p.endDate === '') p.endDate = null;
+                            // Migrate old plans: add incomesMeta and destinationsMeta if missing
+                            if (!p.incomesMeta) {
+                                p.incomesMeta = appData.incomes.map(inc => ({ id: inc.id, name: inc.name, taxRate: inc.taxRate }));
+                            }
+                            if (!p.destinationsMeta) {
+                                p.destinationsMeta = appData.destinations.map(dest => ({ id: dest.id, name: dest.name, percentage: dest.percentage }));
+                            }
+                        });
+                    } catch (e) { console.warn('parse error', e); }
+                }
+            }
+
+            let undoStack = [];
+            let redoStack = [];
+            const MAX_UNDO = 30; // Keeps track of the last 30 actions
+
+            function saveData() {
+                const currentState = localStorage.getItem(STORAGE_KEY);
+                if (currentState) {
+                    // Only push to history if the state actually changed
+                    if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== currentState) {
+                        undoStack.push(currentState);
+                        if (undoStack.length > MAX_UNDO) undoStack.shift();
+                        // Clear redo stack whenever a new action is performed
+                        redoStack = [];
+                    }
+                }
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            }
+
+            function triggerUndo() {
+                if (undoStack.length === 0) return; // Nothing to undo
+                const currentState = localStorage.getItem(STORAGE_KEY);
+                redoStack.push(currentState);
+                const previousState = undoStack.pop();
+                localStorage.setItem(STORAGE_KEY, previousState);
+                loadData();
+                renderAll();
+            }
+
+            function triggerRedo() {
+                if (redoStack.length === 0) return; // Nothing to redo
+                const currentState = localStorage.getItem(STORAGE_KEY);
+                undoStack.push(currentState);
+                const nextState = redoStack.pop();
+                localStorage.setItem(STORAGE_KEY, nextState);
+                loadData();
+                renderAll();
+            }
+
+            function genId() { return Date.now() + '-' + Math.random().toString(36).substr(2, 9); }
+
+            function todayStr() {
+                const d = new Date();
+                return d.toISOString().split('T')[0];
+            }
+
+            function getMonthName(dateStr) {
+                const d = new Date(dateStr + 'T12:00:00');
+                return d.toLocaleString('default', { month: 'long', year: 'numeric' });
+            }
+
+            function getYesterday() {
+                const d = new Date();
+                d.setDate(d.getDate() - 1);
+                return d.toISOString().split('T')[0];
+            }
+
+            function formatDateForDisplay(dateStr) {
+                if (!dateStr) return dateStr;
+                if (appData.dateFormat === 'BR') {
+                    const parts = dateStr.split('-');
+                    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                return dateStr;
+            }
+
+           // Syncs the current active plan's metadata with global settings
+            function syncOngoingPlanMeta() {
+                const ongoingPlan = appData.plans.find(p => p.endDate === null);
+                if (ongoingPlan) {
+                    ongoingPlan.incomesMeta = appData.incomes.map(inc => ({ id: inc.id, name: inc.name, taxRate: inc.taxRate }));
+                    ongoingPlan.destinationsMeta = appData.destinations.map(dest => ({ id: dest.id, name: dest.name, percentage: dest.percentage }));
+                    
+                    // Ensure incomeValues object has keys for newly added incomes
+                    appData.incomes.forEach(inc => {
+                        if (typeof ongoingPlan.incomeValues[inc.id] === 'undefined') {
+                            ongoingPlan.incomeValues[inc.id] = '';
+                        }
+                    });
+                }
+            }
+
+            // ---------- create new plan (3‑step) ----------
+            function createNewPlan() {
+                if (appData.plans.length === 0) {
+                    const startInput = prompt('Inform period of the plan.\nEnter start date (YYYY-MM-DD):', todayStr());
+                    if (!startInput) return;
+                    const endInput = prompt('Enter end date (YYYY-MM-DD):', todayStr());
+                    if (!endInput) return;
+
+                    const newPlan = {
+                        id: genId(),
+                        month: getMonthName(startInput),
+                        creationDate: todayStr(),
+                        startDate: startInput,
+                        endDate: endInput,
+                        archived: false,
+                        incomeValues: {},
+                        incomesMeta: appData.incomes.map(inc => ({ id: inc.id, name: inc.name, taxRate: inc.taxRate })),
+                        destinationsMeta: appData.destinations.map(dest => ({ id: dest.id, name: dest.name, percentage: dest.percentage }))
+                    };
+                    appData.incomes.forEach(inc => { newPlan.incomeValues[inc.id] = ''; });
+                    appData.plans.push(newPlan);
+                    saveData();
+                    renderAll();
+                    return;
+                }
+
+                // Logic for second plan onwards
+                const lastPlan = appData.plans[appData.plans.length - 1];
+                let nextStartDate = todayStr();
+                
+                if (lastPlan && lastPlan.endDate) {
+                    const prevEnd = new Date(lastPlan.endDate + 'T12:00:00');
+                    prevEnd.setDate(prevEnd.getDate() + 1);
+                    nextStartDate = prevEnd.toISOString().split('T')[0];
+                }
+
+                const nextEndDate = getYesterday();
+
+                const newPlan = {
+                    id: genId(),
+                    month: getMonthName(nextStartDate),
+                    creationDate: todayStr(),
+                    startDate: nextStartDate,
+                    endDate: nextEndDate,
+                    archived: false,
+                    incomeValues: {},
+                    incomesMeta: appData.incomes.map(inc => ({ id: inc.id, name: inc.name, taxRate: inc.taxRate })),
+                    destinationsMeta: appData.destinations.map(dest => ({ id: dest.id, name: dest.name, percentage: dest.percentage }))
+                };
+                appData.incomes.forEach(inc => { newPlan.incomeValues[inc.id] = ''; });
+                appData.plans.push(newPlan);
+                saveData();
+                renderAll();
+            }
+            
+            // ---------- delete plan with 3‑step ----------
+            function deletePlan(planId) {
+                const plan = appData.plans.find(p => p.id === planId);
+                if (!plan) return;
+                alert(`You are about to delete the plan "${plan.month}".`);
+                const confirmDelete = confirm('This action cannot be undone. Continue?');
+                if (!confirmDelete) return;
+                const code = prompt('Type "DELETE" to permanently remove this plan:');
+                if (code !== 'DELETE') {
+                    alert('Deletion cancelled.');
+                    return;
+                }
+                appData.plans = appData.plans.filter(p => p.id !== planId);
+                saveData();
+                renderAll();
+            }
+
+            function archivePlan(planId) {
+                const plan = appData.plans.find(p => p.id === planId);
+                if (plan) { plan.archived = true; saveData(); renderAll(); }
+            }
+            function unarchivePlan(planId) {
+                const plan = appData.plans.find(p => p.id === planId);
+                if (plan) { plan.archived = false; saveData(); renderAll(); }
+            }
+
+            // ---------- incomes with toggle + inline tax ----------
+            function addIncome() {
+                const name = prompt('Income name:');
+                if (!name) return;
+                const newIncome = { id: genId(), name, taxRate: null }; // default no tax
+                appData.incomes.push(newIncome);
+                syncOngoingPlanMeta();
+                saveData();
+                renderAll();
+            }
+
+            function editIncome(id) {
+                const inc = appData.incomes.find(i => i.id === id);
+                if (!inc) return;
+                const newName = prompt('Edit income name:', inc.name);
+                if (newName) { 
+                    inc.name = newName; 
+                    syncOngoingPlanMeta();
+                    saveData(); 
+                    renderAll(); 
+                }
+            }
+
+            function deleteIncome(id) {
+                if (!confirm('Delete this income source? It will no longer appear in new plans, but existing plans will retain their data.')) return;
+                appData.incomes = appData.incomes.filter(i => i.id !== id);
+                syncOngoingPlanMeta();
+                saveData();
+                renderAll();
+            }
+
+            function updateIncomeTax(id, enabled, taxValue) {
+                const inc = appData.incomes.find(i => i.id === id);
+                if (!inc) return;
+                if (!enabled) {
+                    inc.taxRate = null;
+                } else {
+                    const num = parseFloat(taxValue);
+                    inc.taxRate = isNaN(num) ? 0 : num;
+                }
+                syncOngoingPlanMeta();
+                saveData();
+                renderAll();
+            }
+
+            // ---------- destinations (fixed percentages) ----------
+            function addDestination() {
+                const name = prompt('Destination name:');
+                if (!name) return;
+                const newDest = { id: genId(), name, percentage: 0 };
+                appData.destinations.push(newDest);
+                syncOngoingPlanMeta();
+                saveData();
+                renderAll();
+            }
+
+            function editDestination(id) {
+                const dest = appData.destinations.find(d => d.id === id);
+                if (!dest) return;
+                const newName = prompt('Edit destination name:', dest.name);
+                if (newName) { 
+                    dest.name = newName; 
+                    syncOngoingPlanMeta();
+                    saveData(); 
+                    renderAll(); 
+                }
+            }
+
+            function deleteDestination(id) {
+                if (!confirm('Delete destination? It will no longer appear in new plans, but existing plans will retain their data.')) return;
+                appData.destinations = appData.destinations.filter(d => d.id !== id);
+                syncOngoingPlanMeta();
+                saveData();
+                renderAll();
+            }
+            
+            function updateDestinationPercentage(id, percentValue) {
+                const dest = appData.destinations.find(d => d.id === id);
+                if (dest) {
+                    const num = parseFloat(percentValue);
+                    dest.percentage = isNaN(num) ? 0 : num;
+                    syncOngoingPlanMeta();
+                    saveData();
+                    renderAll();
+                }
+            }
+
+            // ---------- export / import ----------
+            function exportData() {
+                const dataStr = JSON.stringify(appData, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `moneyman_backup_${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            function importData(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        if (!Array.isArray(imported.incomes) || !Array.isArray(imported.destinations) || !Array.isArray(imported.plans)) {
+                            throw new Error('Invalid format: missing required arrays');
+                        }
+                        appData = imported;
+                        saveData();
+                        renderAll();
+                        alert('Data imported successfully.');
+                    } catch (err) {
+                        alert('Import failed: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            // ---------- render all ----------
+            function renderAll() {
+                // Focus saving logic to prevent losing cursor on input changes
+                let focusedSelector = null;
+                const activeEl = document.activeElement;
+                if (activeEl && activeEl.tagName === 'INPUT') {
+                    if (activeEl.classList.contains('income-input')) {
+                        focusedSelector = `.income-input[data-plan="${activeEl.dataset.plan}"][data-income="${activeEl.dataset.income}"]`;
+                    } else if (activeEl.classList.contains('tax-percent')) {
+                        focusedSelector = `.tax-percent[data-id="${activeEl.dataset.id}"]`;
+                    } else if (activeEl.classList.contains('item-percent-input') && activeEl.dataset.type === 'dest') {
+                        focusedSelector = `.item-percent-input[data-type="dest"][data-id="${activeEl.dataset.id}"]`;
+                    } else if (activeEl.classList.contains('tax-checkbox')) {
+                        focusedSelector = `.tax-checkbox[data-id="${activeEl.dataset.id}"]`;
+                    } else if (activeEl.id) {
+                        focusedSelector = `#${activeEl.id}`;
+                    }
+                }
+
+                renderSettingsLists();
+                renderActivePlans();
+                renderArchive();
+
+                // Restore focus to the specific element
+                if (focusedSelector) {
+                    const elToFocus = document.querySelector(focusedSelector);
+                    if (elToFocus) {
+                        elToFocus.focus();
+                    }
+                }
+            }
+
+            function renderSettingsLists() {
+                const incList = document.getElementById('incomesList');
+                const destList = document.getElementById('destinationsList');
+                incList.innerHTML = '';
+                destList.innerHTML = '';
+
+                // Helper to handle drag start
+                function handleDragStart(e) {
+                    const card = e.target.closest('.item-card');
+                    if (!card) return;
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        type: card.dataset.type,
+                        id: card.dataset.id
+                    }));
+                    e.dataTransfer.effectAllowed = 'move';
+                    card.classList.add('dragging');
+                }
+
+                function handleDragOver(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                }
+
+                function handleDrop(e) {
+                    e.preventDefault();
+                    const targetCard = e.target.closest('.item-card');
+                    if (!targetCard) return;
+
+                    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    const sourceType = data.type;
+                    const sourceId = data.id;
+
+                    const targetType = targetCard.dataset.type;
+                    const targetId = targetCard.dataset.id;
+
+                    // Only allow reordering within the same list
+                    if (sourceType !== targetType) return;
+
+                    const list = sourceType === 'income' ? appData.incomes : appData.destinations;
+                    const sourceIndex = list.findIndex(item => item.id === sourceId);
+                    const targetIndex = list.findIndex(item => item.id === targetId);
+
+                    if (sourceIndex === -1 || targetIndex === -1) return;
+
+                    // Reorder array
+                    const [movedItem] = list.splice(sourceIndex, 1);
+                    list.splice(targetIndex, 0, movedItem);
+
+                    syncOngoingPlanMeta();
+                    saveData();
+                    renderAll();
+                }
+
+                function handleDragEnd(e) {
+                    document.querySelectorAll('.item-card').forEach(c => c.classList.remove('dragging'));
+                }
+
+                // Incomes with tax toggle
+                appData.incomes.forEach(inc => {
+                    const card = document.createElement('div');
+                    card.className = 'item-card';
+                    card.dataset.type = 'income';
+                    card.dataset.id = inc.id;
+                    card.draggable = true;
+
+                    const enabled = inc.taxRate !== null;
+                    const taxValue = enabled ? inc.taxRate : 0;
+                    card.innerHTML = `
+                        <span class="item-name">${inc.name}</span>
+                        <div class="tax-toggle">
+                            <input type="checkbox" class="tax-checkbox" data-id="${inc.id}" ${enabled ? 'checked' : ''}>
+                            <span>Tax</span>
+                        </div>
+                        <input type="number" class="item-percent-input tax-percent" data-id="${inc.id}" value="${taxValue}" step="0.01" min="0" max="100" style="${enabled ? '' : 'display:none;'}">
+                        <span class="percent-suffix" style="${enabled ? '' : 'display:none;'}">%</span>
+                        <div class="item-actions">
+                            <button class="edit-inc" data-id="${inc.id}">✎</button>
+                            <button class="delete-inc" data-id="${inc.id}">✕</button>
+                        </div>
+                    `;
+                    // Make buttons non-draggable
+                    card.querySelectorAll('button').forEach(btn => btn.draggable = false);
+                    card.addEventListener('dragstart', handleDragStart);
+                    card.addEventListener('dragover', handleDragOver);
+                    card.addEventListener('drop', handleDrop);
+                    card.addEventListener('dragend', handleDragEnd);
+                    incList.appendChild(card);
+                });
+
+                // Destinations
+                appData.destinations.forEach(dest => {
+                    const card = document.createElement('div');
+                    card.className = 'item-card';
+                    card.dataset.type = 'destination';
+                    card.dataset.id = dest.id;
+                    card.draggable = true;
+
+                    card.innerHTML = `
+                        <span class="item-name">${dest.name}</span>
+                        <input type="number" class="item-percent-input" data-id="${dest.id}" data-type="dest" value="${dest.percentage || 0}" step="0.01" min="0" max="100">
+                        <span class="percent-suffix">%</span>
+                        <div class="item-actions">
+                            <button class="edit-dest" data-id="${dest.id}">✎</button>
+                            <button class="delete-dest" data-id="${dest.id}">✕</button>
+                        </div>
+                    `;
+                    card.querySelectorAll('button').forEach(btn => btn.draggable = false);
+                    card.addEventListener('dragstart', handleDragStart);
+                    card.addEventListener('dragover', handleDragOver);
+                    card.addEventListener('drop', handleDrop);
+                    card.addEventListener('dragend', handleDragEnd);
+                    destList.appendChild(card);
+                });
+
+                // Attach listeners for incomes (toggle + percent)
+                document.querySelectorAll('.tax-checkbox').forEach(cb => {
+                    cb.addEventListener('change', (e) => {
+                        const id = e.target.dataset.id;
+                        const percentInput = e.target.closest('.item-card').querySelector('.tax-percent');
+                        const suffix = e.target.closest('.item-card').querySelector('.percent-suffix');
+                        if (e.target.checked) {
+                            percentInput.style.display = '';
+                            suffix.style.display = '';
+                            updateIncomeTax(id, true, percentInput.value);
+                        } else {
+                            percentInput.style.display = 'none';
+                            suffix.style.display = 'none';
+                            updateIncomeTax(id, false, 0);
+                        }
+                    });
+                });
+                document.querySelectorAll('.tax-percent').forEach(inp => {
+                    inp.addEventListener('change', (e) => {
+                        const id = e.target.dataset.id;
+                        const cb = e.target.closest('.item-card').querySelector('.tax-checkbox');
+                        if (cb.checked) {
+                            updateIncomeTax(id, true, e.target.value);
+                        }
+                    });
+                });
+
+                // Destination percent listeners
+                document.querySelectorAll('.item-percent-input[data-type="dest"]').forEach(inp => {
+                    inp.addEventListener('change', (e) => {
+                        updateDestinationPercentage(e.target.dataset.id, e.target.value);
+                    });
+                });
+
+                // Edit/delete buttons
+                document.querySelectorAll('.edit-inc').forEach(b => b.addEventListener('click', e => editIncome(e.target.dataset.id)));
+                document.querySelectorAll('.delete-inc').forEach(b => b.addEventListener('click', e => deleteIncome(e.target.dataset.id)));
+                document.querySelectorAll('.edit-dest').forEach(b => b.addEventListener('click', e => editDestination(e.target.dataset.id)));
+                document.querySelectorAll('.delete-dest').forEach(b => b.addEventListener('click', e => deleteDestination(e.target.dataset.id)));
+            }
+
+            function computeTotalNet(plan) {
+                let total = 0;
+                const incomesList = plan.incomesMeta || appData.incomes; // fallback for old plans
+                for (let inc of incomesList) {
+                    const gross = parseFloat(plan.incomeValues[inc.id]) || 0;
+                    if (inc.taxRate !== null && !isNaN(inc.taxRate)) {
+                        total += gross * (1 - inc.taxRate / 100);
+                    } else {
+                        total += gross;
+                    }
+                }
+                return total;
+            }
+
+            function renderActivePlans() {
+                const container = document.getElementById('activePlans');
+                const active = appData.plans.filter(p => !p.archived);
+                if (active.length === 0) {
+                    container.innerHTML = '<p style="color: #64748b; padding: 2rem; text-align: center;">No active plans. Click "Create plan" to start.</p>';
+                    return;
+                }
+                container.innerHTML = '';
+                active.forEach(plan => renderOnePlan(plan, false, container));
+            }
+
+            function renderArchive() {
+                const container = document.getElementById('archivePlans');
+                const archived = appData.plans.filter(p => p.archived);
+                if (archived.length === 0) {
+                    container.innerHTML = '<p style="color: #94a3b8;">Empty archive.</p>';
+                    return;
+                }
+                container.innerHTML = '';
+                archived.forEach(plan => renderOnePlan(plan, true, container));
+            }
+
+            function renderOnePlan(plan, isArchived, container) {
+                const planDiv = document.createElement('div');
+                planDiv.className = `plan-card ${isArchived ? 'archived-plan' : ''}`;
+                const totalNet = computeTotalNet(plan);
+                const endDisplay = plan.endDate ? formatDateForDisplay(plan.endDate) : 'ongoing';
+
+                let headerHtml = `
+                    <div class="plan-header">
+                        <div>
+                            <div class="plan-title">${plan.month}</div>
+                            <div class="plan-meta">
+                                <span>📅 created: ${formatDateForDisplay(plan.creationDate)}</span>
+                                <span>📆 period: ${formatDateForDisplay(plan.startDate)} – ${endDisplay}</span>
+                            </div>
+                        </div>
+                        <div class="gap-2">
+                `;
+                                if (!isArchived) {
+                    headerHtml += `<button class="archive-btn" data-id="${plan.id}">Archive</button>`;
+                } else {
+                    headerHtml += `<button class="unarchive-btn" data-id="${plan.id}">Unarchive</button>`;
+                }
+                headerHtml += `<button class="delete-btn" data-id="${plan.id}">🗑 Delete</button>`;
+                headerHtml += `</div></div>`;
+
+                // incomes block
+                let incomesHtml = '<div class="income-area"><h4>📥 Incomes</h4>';
+                (plan.incomesMeta || []).forEach(inc => {
+                    const gross = plan.incomeValues[inc.id] || '';
+                    let netDisplay = '';
+                    if (inc.taxRate !== null && gross) {
+                        const g = parseFloat(gross) || 0;
+                        const net = g * (1 - inc.taxRate / 100);
+                        netDisplay = `<span class="net-value">net: ${net.toFixed(2)}</span>`;
+                    } else if (gross) {
+                        const g = parseFloat(gross) || 0;
+                        netDisplay = `<span class="net-value">net: ${g.toFixed(2)}</span>`;
+                    }
+
+                    incomesHtml += `
+                        <div class="income-row">
+                            <span class="income-label">${inc.name} ${inc.taxRate ? '('+inc.taxRate+'% tax)' : ''}</span>
+                            ${isArchived ? 
+                                `<span class="readonly-value">${gross || '—'}</span>` : 
+                                `<input type="number" class="income-input" data-plan="${plan.id}" data-income="${inc.id}" value="${gross}" placeholder="gross" step="0.01">`
+                            }
+                            ${netDisplay ? netDisplay : ''}
+                        </div>
+                    `;
+                });
+                incomesHtml += `<div style="text-align:right; font-weight:600; margin-top:1rem;">💰 total net: ${totalNet.toFixed(2)}</div>`;
+                incomesHtml += '</div>';
+
+                // destinations block (with total row styled like net)
+                let destHtml = '<div class="dest-area"><h4>🎯 Destinations</h4>';
+                let totalAllocated = 0;
+                (plan.destinationsMeta || []).forEach(dest => {
+                    const percNum = dest.percentage || 0;
+                    const allocated = totalNet * (percNum / 100);
+                    totalAllocated += allocated;
+                    
+                    // Initialize checks object if it doesn't exist to prevent errors
+                    if (!plan.destChecks) plan.destChecks = {};
+                    const isChecked = plan.destChecks[dest.id] ? 'checked' : '';
+
+                    destHtml += `
+                        <div class="dest-row">
+                            <span class="dest-label">${dest.name}</span>
+                            <span class="readonly-value">${percNum}%</span>
+                            <span class="dest-total">${allocated.toFixed(2)}</span>
+                            ${isArchived ? 
+                                `<input type="checkbox" disabled ${isChecked} style="width:18px; height:18px; margin-left:auto;">` : 
+                                `<input type="checkbox" class="dest-checkbox" data-plan="${plan.id}" data-dest="${dest.id}" ${isChecked} style="width:18px; height:18px; margin-left:auto; cursor:pointer;">`
+                            }
+                        </div>
+                    `;
+                });
+
+                destHtml += `<div style="text-align:right; font-weight:600; margin-top:1rem;">💰 total allocated: ${totalAllocated.toFixed(2)}</div>`;
+                destHtml += '</div>';
+
+                planDiv.innerHTML = headerHtml + incomesHtml + destHtml;
+                container.appendChild(planDiv);
+
+                if (!isArchived) {
+                    planDiv.querySelectorAll('.income-input').forEach(inp => {
+                        inp.addEventListener('change', function(e) {
+                            const planId = this.dataset.plan;
+                            const incId = this.dataset.income;
+                            const val = this.value;
+                            const targetPlan = appData.plans.find(p => p.id === planId);
+                            if (targetPlan) {
+                                targetPlan.incomeValues[incId] = val;
+                                saveData();
+                                renderAll();
+                            }
+                        });
+                    });
+
+                    // Event listener for the new destination checkboxes
+                    planDiv.querySelectorAll('.dest-checkbox').forEach(chk => {
+                        chk.addEventListener('change', function(e) {
+                            const planId = this.dataset.plan;
+                            const destId = this.dataset.dest;
+                            const isChecked = this.checked;
+                            const targetPlan = appData.plans.find(p => p.id === planId);
+                            if (targetPlan) {
+                                if (!targetPlan.destChecks) targetPlan.destChecks = {};
+                                targetPlan.destChecks[destId] = isChecked;
+                                saveData();
+                                // Note: intentionally omitting renderAll() here so the screen doesn't flicker when you check off an item
+                            }
+                        });
+                    });
+
+                    planDiv.querySelector('.archive-btn')?.addEventListener('click', (e) => {
+                        archivePlan(plan.id);
+                    });
+                } else {
+                                    planDiv.querySelector('.unarchive-btn')?.addEventListener('click', (e) => {
+                        unarchivePlan(plan.id);
+                    });
+                }
+                planDiv.querySelector('.delete-btn')?.addEventListener('click', (e) => {
+                    deletePlan(plan.id);
+                });
+            }
+
+            // ---------- tab switching ----------
+            function setupTabs() {
+                const tabs = document.querySelectorAll('.tab');
+                const contents = {
+                    plans: document.getElementById('plansTab'),
+                    settings: document.getElementById('settingsTab')
+                };
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const target = tab.dataset.tab;
+                        tabs.forEach(t => t.classList.remove('active'));
+                        Object.values(contents).forEach(c => c.classList.remove('active'));
+                        tab.classList.add('active');
+                        contents[target].classList.add('active');
+                    });
+                });
+            }
+
+            // ---------- initialisation ----------
+            loadData();
+            renderAll();
+            setupTabs();
+
+            const formatSelect = document.getElementById('dateFormatSelect');
+            if (formatSelect) {
+                formatSelect.value = appData.dateFormat || 'US';
+                formatSelect.addEventListener('change', (e) => {
+                    appData.dateFormat = e.target.value;
+                    saveData();
+                    renderAll();
+                });
+            }
+
+            document.getElementById('createPlanBtn').addEventListener('click', createNewPlan);
+            document.getElementById('addIncomeBtn').addEventListener('click', addIncome);
+            document.getElementById('addDestinationBtn').addEventListener('click', addDestination);
+            document.getElementById('exportDataBtn').addEventListener('click', exportData);
+            const importBtn = document.getElementById('importDataBtn');
+            const fileInput = document.getElementById('importFile');
+            importBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    importData(e.target.files[0]);
+                    fileInput.value = '';
+                }
+            });
+
+            // Global undo/redo listener (Ctrl + Z / Ctrl + Y)
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
+                    e.preventDefault(); // Prevents browser's native text undo from conflicting
+                    triggerUndo();
+                }
+                if (e.ctrlKey && (e.key === 'y' || e.key === 'Y')) {
+                    e.preventDefault(); // Prevents browser's native text redo from conflicting
+                    triggerRedo();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

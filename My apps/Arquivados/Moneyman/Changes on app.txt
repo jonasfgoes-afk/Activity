@@ -1,0 +1,6 @@
+Date format options (already on gemini chat) *OK
+Save button 
+Modification notification
+Observation fields on income and destination lines
+Delete button on on income and destination lines
+Type confirmation
