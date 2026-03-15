@@ -1,9 +1,14 @@
 Date format options (already on gemini chat) *OK
+Add toggle on/off on destination percentage (this way we can add fixed expenses) *OK
 Save button 
-Modification notification
-Observation fields on income and destination lines
-Edit button on income and destination lines on plan
-Delete button on on income and destination lines
-Type confirmation
-Add toggle on/off on destination percentage (this way we can add fixed expenses)
+Modification notification *OK
+Observation fields on income and destination lines *OK
+Edit button on income and destination lines on plan *OK
+Delete button on on income and destination lines *OK
+Type confirmation *OK
 Add function export plan (Export excel sheet)
+Choose background color to incomes and destinations on settings.
+
+
+Make items inside incomes and destinations draggable
+Move history to a tab
