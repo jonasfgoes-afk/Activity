@@ -317,7 +317,7 @@
             height: 18px;
             cursor: pointer;
         }
-        .fixed-amount-input {
+                .fixed-amount-input {
             border: 1px solid #cbd5e1;
             border-radius: 40px;
             padding: 0.3rem 0.8rem;
@@ -326,6 +326,59 @@
             background: white;
             text-align: right;
         }
+        
+        .flash-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #1e3a5f;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            animation: flash 1s infinite;
+            transition: transform 0.2s;
+        }
+        .flash-button:hover {
+            transform: scale(1.05);
+            background: #143150;
+        }
+        @keyframes flash {
+            0% { opacity: 1; background: #1e3a5f; }
+            50% { opacity: 0.8; background: #2b4a7a; box-shadow: 0 4px 20px rgba(30,58,95,0.5); }
+            100% { opacity: 1; background: #1e3a5f; }
+        }
+
+        /* Details dot */
+        .details-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: red;
+            border-radius: 50%;
+            margin-left: 2px;
+            vertical-align: super;
+        }
+        .details-panel {
+            transition: all 0.2s;
+        }
+        .details-textarea {
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            padding: 0.5rem;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .details-textarea:focus {
+            outline: none;
+            border-color: #1e3a5f;
+        }
+                
     </style>
 </head>
 <body>
@@ -356,7 +409,7 @@
                 <button id="addIncomeBtn">+ Add income</button>
             </div>
             <div class="settings-section">
-                <h3>🎯 Destinations (fixed percentages)</h3>
+                <h3>🎯 Destinations </h3>
                 <div id="destinationsList" class="item-list"></div>
                 <button id="addDestinationBtn">+ Add destination</button>
             </div>
@@ -389,7 +442,7 @@
                 dateFormat: 'US'    // Display preference
             };
 
-                    // ---------- helper: ensure all plans and destinations have required fields ----------
+                                            // ---------- helper: ensure all plans and destinations have required fields ----------
             function migrateAppData() {
                 // Migrate global destinations to include isPercentage and fixedAmount
                 appData.destinations = appData.destinations.map(dest => ({
@@ -444,6 +497,23 @@
                     if (!plan.destChecks) {
                         plan.destChecks = {};
                     }
+
+                    // Add custom incomes array if missing
+                    if (!plan.customIncomes) {
+                        plan.customIncomes = [];
+                    }
+                    // Add custom destinations array if missing
+                    if (!plan.customDestinations) {
+                        plan.customDestinations = [];
+                    }
+
+                    // Add details objects for incomes and destinations
+                    if (!plan.incomeDetails) {
+                        plan.incomeDetails = {};
+                    }
+                    if (!plan.destDetails) {
+                        plan.destDetails = {};
+                    }
                 });
             }
 
@@ -470,15 +540,18 @@
             let redoStack = [];
             const MAX_UNDO = 30; // Keeps track of the last 30 actions
 
-            // ---------- flash button ----------
+                        // ---------- flash button ----------
             function showExportButtonFlash() {
                 const btn = document.getElementById('exportFlashButton');
                 if (btn) {
                     btn.style.display = 'block';
-                    // Remove flash after a few seconds (optional)
-                    setTimeout(() => {
-                        btn.style.display = 'none';
-                    }, 5000);
+                }
+            }
+
+            function hideExportButtonFlash() {
+                const btn = document.getElementById('exportFlashButton');
+                if (btn) {
+                    btn.style.display = 'none';
                 }
             }
 
@@ -550,12 +623,18 @@
                 return dateStr;
             }
 
-           // Syncs the current active plan's metadata with global settings
+                      // Syncs the current active plan's metadata with global settings
             function syncOngoingPlanMeta() {
                 const ongoingPlan = appData.plans.find(p => p.endDate === null);
                 if (ongoingPlan) {
                     ongoingPlan.incomesMeta = appData.incomes.map(inc => ({ id: inc.id, name: inc.name, taxRate: inc.taxRate }));
-                    ongoingPlan.destinationsMeta = appData.destinations.map(dest => ({ id: dest.id, name: dest.name, percentage: dest.percentage }));
+                    ongoingPlan.destinationsMeta = appData.destinations.map(dest => ({ 
+                        id: dest.id, 
+                        name: dest.name, 
+                        percentage: dest.percentage,
+                        isPercentage: dest.isPercentage,
+                        fixedAmount: dest.fixedAmount 
+                    }));
                     
                     // Ensure incomeValues object has keys for newly added incomes
                     appData.incomes.forEach(inc => {
@@ -566,7 +645,7 @@
                 }
             }
 
-            // ---------- create new plan (3‑step) ----------
+                       // ---------- create new plan (3‑step) ----------
             function createNewPlan() {
                 if (appData.plans.length === 0) {
                     const startInput = prompt('Inform period of the plan.\nEnter start date (YYYY-MM-DD):', todayStr());
@@ -583,7 +662,13 @@
                         archived: false,
                         incomeValues: {},
                         incomesMeta: appData.incomes.map(inc => ({ id: inc.id, name: inc.name, taxRate: inc.taxRate })),
-                        destinationsMeta: appData.destinations.map(dest => ({ id: dest.id, name: dest.name, percentage: dest.percentage })),
+                        destinationsMeta: appData.destinations.map(dest => ({ 
+                            id: dest.id, 
+                            name: dest.name, 
+                            percentage: dest.percentage,
+                            isPercentage: dest.isPercentage,
+                            fixedAmount: dest.fixedAmount 
+                        })),
                         destChecks: {}
                     };
                     appData.incomes.forEach(inc => { newPlan.incomeValues[inc.id] = ''; });
@@ -614,7 +699,13 @@
                     archived: false,
                     incomeValues: {},
                     incomesMeta: appData.incomes.map(inc => ({ id: inc.id, name: inc.name, taxRate: inc.taxRate })),
-                    destinationsMeta: appData.destinations.map(dest => ({ id: dest.id, name: dest.name, percentage: dest.percentage })),
+                    destinationsMeta: appData.destinations.map(dest => ({ 
+                        id: dest.id, 
+                        name: dest.name, 
+                        percentage: dest.percentage,
+                        isPercentage: dest.isPercentage,
+                        fixedAmount: dest.fixedAmount 
+                    })),
                     destChecks: {}
                 };
                 appData.incomes.forEach(inc => { newPlan.incomeValues[inc.id] = ''; });
@@ -752,6 +843,7 @@
                 a.download = `moneyman_backup_${new Date().toISOString().slice(0,10)}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
+                hideExportButtonFlash();
             }
 
             function importData(file) {
@@ -1041,10 +1133,11 @@
                 document.querySelectorAll('.delete-dest').forEach(b => b.addEventListener('click', e => deleteDestination(e.target.dataset.id)));
             }
 
-            function computeTotalNet(plan) {
+                        function computeTotalNet(plan) {
                 let total = 0;
-                const incomesList = plan.incomesMeta || appData.incomes; // fallback for old plans
-                for (let inc of incomesList) {
+                // Combine global incomesMeta and customIncomes
+                const allIncomes = [...(plan.incomesMeta || []), ...(plan.customIncomes || [])];
+                for (let inc of allIncomes) {
                     const gross = parseFloat(plan.incomeValues[inc.id]) || 0;
                     if (inc.taxRate !== null && !isNaN(inc.taxRate)) {
                         total += gross * (1 - inc.taxRate / 100);
@@ -1103,8 +1196,15 @@
                 headerHtml += `</div></div>`;
 
                 // incomes block
-                let incomesHtml = '<div class="income-area"><h4>📥 Incomes</h4>';
-                (plan.incomesMeta || []).forEach(inc => {
+                let incomesHtml = '<div class="income-area"><h4>📥 Incomes';
+                if (!isArchived) {
+                    incomesHtml += ` <button class="add-income-btn" data-plan="${plan.id}" style="margin-left:1rem; padding:0.2rem 0.8rem; font-size:0.8rem;">+ Add</button>`;
+                }
+                incomesHtml += '</h4>';
+
+                // Combine global incomesMeta and customIncomes
+                const allIncomes = [...(plan.incomesMeta || []), ...(plan.customIncomes || [])];
+                allIncomes.forEach(inc => {
                     const gross = plan.incomeValues[inc.id] || '';
                     let netDisplay = '';
                     if (inc.taxRate !== null && gross) {
@@ -1116,6 +1216,22 @@
                         netDisplay = `<span class="net-value">net: ${g.toFixed(2)}</span>`;
                     }
 
+                    // Determine if this income is custom
+                    const isCustom = plan.customIncomes?.some(c => c.id === inc.id);
+                    
+                    // Details existence check
+                    const hasDetails = plan.incomeDetails && plan.incomeDetails[inc.id];
+                    const detailsDot = hasDetails ? '<span class="details-dot"></span>' : '';
+
+                    // Build action buttons for all items
+                    let actionsHtml = '<div class="item-actions" style="display:flex; gap:0.2rem; margin-left:auto;">';
+                    if (!isArchived) {
+                        actionsHtml += `<button class="edit-income-btn" data-plan="${plan.id}" data-income="${inc.id}">✎</button>`;
+                        actionsHtml += `<button class="delete-income-btn" data-plan="${plan.id}" data-income="${inc.id}" style="color:#991b1b;">🗑</button>`;
+                        actionsHtml += `<button class="details-income-btn" data-plan="${plan.id}" data-income="${inc.id}">📋${detailsDot}</button>`;
+                    }
+                    actionsHtml += '</div>';
+
                     incomesHtml += `
                         <div class="income-row">
                             <span class="income-label">${inc.name} ${inc.taxRate ? '('+inc.taxRate+'% tax)' : ''}</span>
@@ -1124,17 +1240,33 @@
                                 `<input type="number" class="income-input" data-plan="${plan.id}" data-income="${inc.id}" value="${gross}" placeholder="gross" step="0.01">`
                             }
                             ${netDisplay ? netDisplay : ''}
+                            ${actionsHtml}
                         </div>
                     `;
+
+                    // Details expandable field (only if not archived)
+                    if (!isArchived) {
+                        const detailsText = (plan.incomeDetails && plan.incomeDetails[inc.id]) || '';
+                        incomesHtml += `
+                            <div class="income-details details-panel" data-income="${inc.id}" style="display:none; margin:0.5rem 0 0.5rem 2rem;">
+                                <textarea class="details-textarea" data-plan="${plan.id}" data-income="${inc.id}" placeholder="Enter details..." rows="2" style="width:100%; border-radius:20px; padding:0.5rem;">${detailsText}</textarea>
+                            </div>
+                        `;
+                    }
                 });
                 incomesHtml += `<div style="text-align:right; font-weight:600; margin-top:1rem;">💰 total net: ${totalNet.toFixed(2)}</div>`;
                 incomesHtml += '</div>';
 
-                                // destinations block (with total row styled like net)
-                let destHtml = '<div class="dest-area"><h4>🎯 Destinations</h4>';
+                // destinations block
+                let destHtml = '<div class="dest-area"><h4>🎯 Destinations';
+                if (!isArchived) {
+                    destHtml += ` <button class="add-destination-btn" data-plan="${plan.id}" style="margin-left:1rem; padding:0.2rem 0.8rem; font-size:0.8rem;">+ Add</button>`;
+                }
+                destHtml += '</h4>';
+
                 let totalAllocated = 0;
-                (plan.destinationsMeta || []).forEach(dest => {
-                    // Determine allocated amount based on type
+                const allDestinations = [...(plan.destinationsMeta || []), ...(plan.customDestinations || [])];
+                allDestinations.forEach(dest => {
                     let allocated = 0;
                     let displayValue = '';
                     if (dest.isPercentage) {
@@ -1146,22 +1278,43 @@
                         displayValue = `fixed: ${allocated.toFixed(2)}`;
                     }
                     totalAllocated += allocated;
-                    
-                    // Ensure destChecks exists (safety)
+
                     if (!plan.destChecks) plan.destChecks = {};
                     const isChecked = plan.destChecks[dest.id] ? 'checked' : '';
 
-                    destHtml += `
+                    const isCustom = plan.customDestinations?.some(c => c.id === dest.id);
+                    const hasDetails = plan.destDetails && plan.destDetails[dest.id];
+                    const detailsDot = hasDetails ? '<span class="details-dot"></span>' : '';
+
+                                        let actionsHtml = '<div class="item-actions" style="display:flex; gap:0.2rem; margin-left:auto;">';
+                    if (!isArchived) {
+                        actionsHtml += `<button class="edit-destination-btn" data-plan="${plan.id}" data-dest="${dest.id}">✎</button>`;
+                        actionsHtml += `<button class="delete-destination-btn" data-plan="${plan.id}" data-dest="${dest.id}" style="color:#991b1b;">🗑</button>`;
+                        actionsHtml += `<button class="details-destination-btn" data-plan="${plan.id}" data-dest="${dest.id}">📋${detailsDot}</button>`;
+                    }
+                    actionsHtml += '</div>';
+
+                      destHtml += `
                         <div class="dest-row">
+                            ${isArchived ? 
+                                `<input type="checkbox" disabled ${isChecked} style="width:18px; height:18px; margin-right:0.5rem;">` : 
+                                `<input type="checkbox" class="dest-checkbox" data-plan="${plan.id}" data-dest="${dest.id}" ${isChecked} style="width:18px; height:18px; margin-right:0.5rem; cursor:pointer;">`
+                            }
                             <span class="dest-label">${dest.name}</span>
                             <span class="readonly-value">${displayValue}</span>
                             <span class="dest-total">${allocated.toFixed(2)}</span>
-                            ${isArchived ? 
-                                `<input type="checkbox" disabled ${isChecked} style="width:18px; height:18px; margin-left:auto;">` : 
-                                `<input type="checkbox" class="dest-checkbox" data-plan="${plan.id}" data-dest="${dest.id}" ${isChecked} style="width:18px; height:18px; margin-left:auto; cursor:pointer;">`
-                            }
+                            ${actionsHtml}
                         </div>
                     `;
+
+                    if (!isArchived) {
+                        const detailsText = (plan.destDetails && plan.destDetails[dest.id]) || '';
+                        destHtml += `
+                            <div class="dest-details details-panel" data-dest="${dest.id}" style="display:none; margin:0.5rem 0 0.5rem 2rem;">
+                                <textarea class="details-textarea" data-plan="${plan.id}" data-dest="${dest.id}" placeholder="Enter details..." rows="2" style="width:100%; border-radius:20px; padding:0.5rem;">${detailsText}</textarea>
+                            </div>
+                        `;
+                    }
                 });
 
                 destHtml += `<div style="text-align:right; font-weight:600; margin-top:1rem;">💰 total allocated: ${totalAllocated.toFixed(2)}</div>`;
@@ -1170,7 +1323,8 @@
                 planDiv.innerHTML = headerHtml + incomesHtml + destHtml;
                 container.appendChild(planDiv);
 
-                if (!isArchived) {
+                                if (!isArchived) {
+                    // Income input change listeners
                     planDiv.querySelectorAll('.income-input').forEach(inp => {
                         inp.addEventListener('change', function(e) {
                             const planId = this.dataset.plan;
@@ -1185,7 +1339,7 @@
                         });
                     });
 
-                    // Event listener for the new destination checkboxes
+                    // Destination checkbox listeners
                     planDiv.querySelectorAll('.dest-checkbox').forEach(chk => {
                         chk.addEventListener('change', function(e) {
                             const planId = this.dataset.plan;
@@ -1196,11 +1350,209 @@
                                 if (!targetPlan.destChecks) targetPlan.destChecks = {};
                                 targetPlan.destChecks[destId] = isChecked;
                                 saveData();
-                                // Note: intentionally omitting renderAll() here so the screen doesn't flicker when you check off an item
                             }
                         });
                     });
 
+                    // Add income button
+                    planDiv.querySelectorAll('.add-income-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            addCustomIncomeToPlan(plan.id);
+                        });
+                    });
+
+                    // Add destination button
+                    planDiv.querySelectorAll('.add-destination-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            addCustomDestinationToPlan(plan.id);
+                        });
+                    });
+
+                    // Delete income buttons (all items)
+                    planDiv.querySelectorAll('.delete-income-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const planId = btn.dataset.plan;
+                            const incomeId = btn.dataset.income;
+                            const targetPlan = appData.plans.find(p => p.id === planId);
+                            if (!targetPlan) return;
+                            
+                            // Confirm deletion
+                            if (!confirm('Are you sure you want to delete this income?')) return;
+                            
+                            // Check if it's a custom income
+                            const isCustom = targetPlan.customIncomes?.some(inc => inc.id === incomeId);
+                            if (isCustom) {
+                                removeCustomIncomeFromPlan(planId, incomeId);
+                            } else {
+                                // Global income - delete from global settings
+                                if (confirm('This will delete the income from all plans. Continue?')) {
+                                    deleteIncome(incomeId);
+                                }
+                            }
+                        });
+                    });
+
+                    // Delete destination buttons (all items)
+                    planDiv.querySelectorAll('.delete-destination-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const planId = btn.dataset.plan;
+                            const destId = btn.dataset.dest;
+                            const targetPlan = appData.plans.find(p => p.id === planId);
+                            if (!targetPlan) return;
+                            
+                            // Confirm deletion
+                            if (!confirm('Are you sure you want to delete this destination?')) return;
+                            
+                            // Check if it's a custom destination
+                            const isCustom = targetPlan.customDestinations?.some(d => d.id === destId);
+                            if (isCustom) {
+                                removeCustomDestinationFromPlan(planId, destId);
+                            } else {
+                                // Global destination - delete from global settings
+                                if (confirm('This will delete the destination from all plans. Continue?')) {
+                                    deleteDestination(destId);
+                                }
+                            }
+                        });
+                    });
+
+                          // Edit income buttons (all items)
+                    planDiv.querySelectorAll('.edit-income-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const planId = btn.dataset.plan;
+                            const incomeId = btn.dataset.income;
+                            const targetPlan = appData.plans.find(p => p.id === planId);
+                            if (!targetPlan) return;
+                            
+                            const isCustom = targetPlan.customIncomes?.some(inc => inc.id === incomeId);
+                            if (isCustom) {
+                                editCustomIncome(planId, incomeId);
+                            } else {
+                                // Find the global income entry in incomesMeta
+                                const incMeta = targetPlan.incomesMeta?.find(inc => inc.id === incomeId);
+                                if (!incMeta) return; // shouldn't happen
+                                
+                                // Prompt for new values
+                                const newName = prompt('Edit income name (plan-specific):', incMeta.name);
+                                if (!newName) return;
+                                const hasTax = confirm('Does this income have tax? (OK = Yes, Cancel = No)');
+                                let newTax = null;
+                                if (hasTax) {
+                                    const taxInput = prompt('Enter tax rate (%):', incMeta.taxRate || '0');
+                                    newTax = parseFloat(taxInput) || 0;
+                                    if (newTax < 0) newTax = 0;
+                                    if (newTax > 100) newTax = 100;
+                                }
+                                
+                                // Update the incomesMeta entry directly
+                                incMeta.name = newName;
+                                incMeta.taxRate = newTax;
+                                
+                                // No changes to incomeValues or incomeDetails needed (same ID)
+                                
+                                saveData();
+                                renderAll();
+                            }
+                        });
+                    });
+
+                                        // Edit destination buttons (all items)
+                    planDiv.querySelectorAll('.edit-destination-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const planId = btn.dataset.plan;
+                            const destId = btn.dataset.dest;
+                            const targetPlan = appData.plans.find(p => p.id === planId);
+                            if (!targetPlan) return;
+                            
+                            const isCustom = targetPlan.customDestinations?.some(d => d.id === destId);
+                            if (isCustom) {
+                                editCustomDestination(planId, destId);
+                            } else {
+                                // Find the global destination entry in destinationsMeta
+                                const destMeta = targetPlan.destinationsMeta?.find(d => d.id === destId);
+                                if (!destMeta) return; // shouldn't happen
+                                
+                                // Prompt for new values
+                                const newName = prompt('Edit destination name (plan-specific):', destMeta.name);
+                                if (!newName) return;
+                                const isPercentage = confirm('OK for percentage (%), Cancel for fixed amount?');
+                                let value = 0;
+                                if (isPercentage) {
+                                    const input = prompt('Enter percentage (0-100):', destMeta.percentage || '0');
+                                    value = parseFloat(input) || 0;
+                                    if (value < 0) value = 0;
+                                    if (value > 100) value = 100;
+                                    destMeta.percentage = value;
+                                    destMeta.fixedAmount = 0;
+                                } else {
+                                    const input = prompt('Enter fixed amount:', destMeta.fixedAmount || '0');
+                                    value = parseFloat(input) || 0;
+                                    if (value < 0) value = 0;
+                                    destMeta.fixedAmount = value;
+                                    destMeta.percentage = 0;
+                                }
+                                destMeta.name = newName;
+                                destMeta.isPercentage = isPercentage;
+                                
+                                // No changes to destChecks or destDetails (same ID)
+                                
+                                saveData();
+                                renderAll();
+                            }
+                        });
+                    });
+
+                    // Details toggle for incomes
+                    planDiv.querySelectorAll('.details-income-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const incomeId = btn.dataset.income;
+                            const detailsPanel = planDiv.querySelector(`.income-details[data-income="${incomeId}"]`);
+                            if (detailsPanel) {
+                                detailsPanel.style.display = detailsPanel.style.display === 'none' ? 'block' : 'none';
+                            }
+                        });
+                    });
+
+                    // Details toggle for destinations
+                    planDiv.querySelectorAll('.details-destination-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const destId = btn.dataset.dest;
+                            const detailsPanel = planDiv.querySelector(`.dest-details[data-dest="${destId}"]`);
+                            if (detailsPanel) {
+                                detailsPanel.style.display = detailsPanel.style.display === 'none' ? 'block' : 'none';
+                            }
+                        });
+                    });
+
+                    // Details textarea change listeners
+                    planDiv.querySelectorAll('.details-textarea').forEach(ta => {
+                        ta.addEventListener('change', function(e) {
+                            const planId = this.dataset.plan;
+                            const incomeId = this.dataset.income;
+                            const destId = this.dataset.dest;
+                            const val = this.value;
+                            const targetPlan = appData.plans.find(p => p.id === planId);
+                            if (!targetPlan) return;
+                            if (incomeId) {
+                                if (!targetPlan.incomeDetails) targetPlan.incomeDetails = {};
+                                targetPlan.incomeDetails[incomeId] = val;
+                            } else if (destId) {
+                                if (!targetPlan.destDetails) targetPlan.destDetails = {};
+                                targetPlan.destDetails[destId] = val;
+                            }
+                            saveData();
+                            renderAll(); // to update dot
+                        });
+                    });
+                   
                     planDiv.querySelector('.archive-btn')?.addEventListener('click', (e) => {
                         archivePlan(plan.id);
                     });
@@ -1212,6 +1564,118 @@
                 planDiv.querySelector('.delete-btn')?.addEventListener('click', (e) => {
                     deletePlan(plan.id);
                 });
+            }
+
+            // ---------- custom income / destination per plan ----------
+                        function addCustomIncomeToPlan(planId) {
+                const plan = appData.plans.find(p => p.id === planId);
+                if (!plan) return;
+                const name = prompt('Enter name for this custom income:');
+                if (!name) return;
+                const hasTax = confirm('Does this income have tax? (OK = Yes, Cancel = No)');
+                let taxRate = null;
+                if (hasTax) {
+                    const taxInput = prompt('Enter tax rate (percentage):', '0');
+                    taxRate = parseFloat(taxInput) || 0;
+                    if (taxRate < 0) taxRate = 0;
+                    if (taxRate > 100) taxRate = 100;
+                }
+                const valueInput = prompt('Enter gross amount:', '0');
+                const grossValue = parseFloat(valueInput) || 0;
+                const newIncome = {
+                    id: genId(),
+                    name: name,
+                    taxRate: taxRate
+                };
+                if (!plan.customIncomes) plan.customIncomes = [];
+                plan.customIncomes.push(newIncome);
+                if (!plan.incomeValues) plan.incomeValues = {};
+                plan.incomeValues[newIncome.id] = grossValue.toString();
+                saveData();
+                renderAll();
+            }
+
+            function removeCustomIncomeFromPlan(planId, incomeId) {
+                const plan = appData.plans.find(p => p.id === planId);
+                if (!plan || !plan.customIncomes) return;
+                plan.customIncomes = plan.customIncomes.filter(inc => inc.id !== incomeId);
+                // Also remove from incomeValues
+                if (plan.incomeValues) {
+                    delete plan.incomeValues[incomeId];
+                }
+                saveData();
+                renderAll();
+            }
+
+                       function addCustomDestinationToPlan(planId) {
+                const plan = appData.plans.find(p => p.id === planId);
+                if (!plan) return;
+                const name = prompt('Enter name for this custom destination:');
+                if (!name) return;
+                const type = confirm('OK for percentage (%), Cancel for fixed amount?');
+                let value = 0;
+                if (type) {
+                    const input = prompt('Enter percentage (0-100):', '0');
+                    value = parseFloat(input) || 0;
+                    if (value < 0) value = 0;
+                    if (value > 100) value = 100;
+                } else {
+                    const input = prompt('Enter fixed amount:', '0');
+                    value = parseFloat(input) || 0;
+                    if (value < 0) value = 0;
+                }
+                const newDest = {
+                    id: genId(),
+                    name: name,
+                    isPercentage: type,
+                    percentage: type ? value : 0,
+                    fixedAmount: type ? 0 : value
+                };
+                if (!plan.customDestinations) plan.customDestinations = [];
+                plan.customDestinations.push(newDest);
+                // Initialize destChecks for this destination
+                if (!plan.destChecks) plan.destChecks = {};
+                plan.destChecks[newDest.id] = false; // default unchecked
+                saveData();
+                renderAll();
+            }
+
+                        function removeCustomDestinationFromPlan(planId, destId) {
+                const plan = appData.plans.find(p => p.id === planId);
+                if (!plan || !plan.customDestinations) return;
+                plan.customDestinations = plan.customDestinations.filter(d => d.id !== destId);
+                // Remove from destChecks
+                if (plan.destChecks) {
+                    delete plan.destChecks[destId];
+                }
+                saveData();
+                renderAll();
+            }
+
+            function editCustomIncome(planId, incomeId) {
+                const plan = appData.plans.find(p => p.id === planId);
+                if (!plan || !plan.customIncomes) return;
+                const inc = plan.customIncomes.find(i => i.id === incomeId);
+                if (!inc) return;
+                const newName = prompt('Edit income name:', inc.name);
+                if (newName) {
+                    inc.name = newName;
+                    saveData();
+                    renderAll();
+                }
+            }
+
+            function editCustomDestination(planId, destId) {
+                const plan = appData.plans.find(p => p.id === planId);
+                if (!plan || !plan.customDestinations) return;
+                const dest = plan.customDestinations.find(d => d.id === destId);
+                if (!dest) return;
+                const newName = prompt('Edit destination name:', dest.name);
+                if (newName) {
+                    dest.name = newName;
+                    saveData();
+                    renderAll();
+                }
             }
 
             // ---------- tab switching ----------
