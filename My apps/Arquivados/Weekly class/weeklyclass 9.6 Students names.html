@@ -363,20 +363,6 @@
   </div>
 </dialog>
 
-<dialog id="copy-plan-dialog">
-  <div class="dialog-form">
-    <h3>Copy Activities</h3>
-    <p>Select which activities to copy:</p>
-    <input type="hidden" id="copy-plan-class-id">
-    <input type="hidden" id="copy-plan-plan-id">
-    <div id="copy-plan-activities" style="max-height:300px; overflow-y:auto; margin-bottom:10px;"></div>
-    <div class="dialog-actions">
-      <button class="danger" onclick="document.getElementById('copy-plan-dialog').close()">Cancel</button>
-      <button class="primary" onclick="handleCopyPlanConfirm()">Copy Selected</button>
-    </div>
-  </div>
-</dialog>
-
 <script>
   // ==========================================
   // FIREBASE & STATE
@@ -1003,41 +989,10 @@
   function archivePlan(cid, pid) { const p = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); if(p && confirm("Archive?")) { p.isArchived = true; saveData(); renderApp(); } }
   function unarchivePlan(cid, pid) { const p = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid); if(p && confirm("Unarchive?")) { p.isArchived = false; saveData(); renderApp(); } }
 
-    function copyPlan(cid, pid) {
+  function copyPlan(cid, pid) {
     const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid);
     if (!plan.activities || plan.activities.length === 0) return alert("Plan is empty.");
-    
-    // Store plan id and class id in dialog for later use
-    document.getElementById('copy-plan-class-id').value = cid;
-    document.getElementById('copy-plan-plan-id').value = pid;
-    
-    // Build checklist of activities
-    const container = document.getElementById('copy-plan-activities');
-    container.innerHTML = plan.activities.map(a => `
-      <label style="display:block; margin:5px 0;">
-        <input type="checkbox" class="copy-activity-checkbox" value="${a.id}" checked> 
-        ${a.text} (${a.duration}m)
-      </label>
-    `).join('');
-    
-    document.getElementById('copy-plan-dialog').showModal();
-  }
-
-  function handleCopyPlanConfirm() {
-    const cid = document.getElementById('copy-plan-class-id').value;
-    const pid = document.getElementById('copy-plan-plan-id').value;
-    const plan = state.classes.find(c => c.id === cid).plans.find(p => p.id === pid);
-    
-    const selectedIds = Array.from(document.querySelectorAll('.copy-activity-checkbox:checked')).map(cb => cb.value);
-    if (selectedIds.length === 0) {
-      alert("No activities selected.");
-      return;
-    }
-    
-    const selectedActivities = plan.activities.filter(a => selectedIds.includes(a.id));
-    localStorage.setItem('wc_clipboard', JSON.stringify(selectedActivities));
-    alert(selectedActivities.length + " activities copied!");
-    document.getElementById('copy-plan-dialog').close();
+    localStorage.setItem('wc_clipboard', JSON.stringify(plan.activities)); alert(plan.activities.length + " activities copied!");
   }
   
   function pastePlan(cid, pid) {
@@ -1418,5 +1373,4 @@
 </script>
 </body>
 </html>
-
 
