@@ -1203,7 +1203,7 @@
     if (div) div.style.display = div.style.display === 'none' ? 'block' : 'none';
   }
   
-    function generateClassHTML(cls, plans, isHist) {
+     function generateClassHTML(cls, plans, isHist) {
     if (isHist && plans.length === 0) return '';
     let pHTML = plans.map(p => {
       const pDateObj = new Date(p.date + "T12:00:00");
@@ -1257,21 +1257,59 @@
 
     const displayDays = (cls.days || [cls.day]).map(d => d.slice(0,3)).join(', ');
 
-            return `
+    // Helper to format student names as a list
+    const studentList = cls.students ? cls.students.split('\n').filter(s => s.trim()).map(s => `<li>${s}</li>`).join('') : '';
+
+    return `
       <div class="class-card">
         <div class="class-header"><div class="class-title"><span>${cls.name}</span><span class="badge">${cls.type}</span></div><div><button class="small" onclick="openEditClassDialog('${cls.id}')">✎ Edit</button> <button class="small warning" onclick="deleteClass('${cls.id}')">🗑</button></div></div>
         <div class="meta">${displayDays} · ${cls.time}</div>
         <div class="students-section">
           <button class="small" onclick="toggleStudents('${cls.id}')">👥 students</button>
           <div id="students-${cls.id}" style="display:none; margin-top:8px;">
-            <textarea class="students-textarea" placeholder="Enter student names (one per line)" onchange="updateStudents('${cls.id}', this.value)">${cls.students || ''}</textarea>
+            <div style="background: #f0f4fa; padding: 10px; border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <strong>${cls.name}</strong>
+                <button class="small" onclick="openEditStudents('${cls.id}')">Edit students</button>
+              </div>
+              <div id="students-display-${cls.id}">
+                ${studentList ? `<ul style="margin:0; padding-left:20px;">${studentList}</ul>` : '<p style="color:#666; font-style:italic;">No students added yet.</p>'}
+              </div>
+              <div id="students-edit-${cls.id}" style="display:none;">
+                <textarea id="students-textarea-${cls.id}" rows="4" placeholder="Enter student names (one per line)" style="width:100%; border-radius:8px; border:1px solid #ccc; padding:8px;">${cls.students || ''}</textarea>
+                <button class="small primary" style="margin-top:8px;" onclick="saveStudents('${cls.id}')">Confirm</button>
+              </div>
+            </div>
           </div>
         </div>
         <div>${pHTML}</div>
         ${!isHist ? `<button class="small primary" style="width:100%; margin-top:0.5rem;" onclick="addPlan('${cls.id}')">➕ add plan</button>` : ''}
       </div>
     `;
-   }
+  }
+
+  // New helper functions (replace old toggleStudents/updateStudents)
+  function toggleStudents(classId) {
+    const div = document.getElementById('students-' + classId);
+    if (div) div.style.display = div.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function openEditStudents(classId) {
+    document.getElementById('students-display-' + classId).style.display = 'none';
+    document.getElementById('students-edit-' + classId).style.display = 'block';
+  }
+
+  function saveStudents(classId) {
+    const textarea = document.getElementById('students-textarea-' + classId);
+    const newValue = textarea.value;
+    const cls = state.classes.find(c => c.id === classId);
+    if (cls) {
+      cls.students = newValue;
+      saveData();
+    }
+    // Re-render to show updated list
+    renderApp();
+  }
 
   function updateStudents(classId, value) {
     const cls = state.classes.find(c => c.id === classId);
@@ -1335,4 +1373,5 @@
 </script>
 </body>
 </html>
+
 
