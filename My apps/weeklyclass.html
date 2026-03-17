@@ -1015,7 +1015,7 @@
     const container = document.getElementById('copy-plan-activities');
     container.innerHTML = plan.activities.map(a => `
       <label style="display:block; margin:5px 0;">
-        <input type="checkbox" class="copy-activity-checkbox" value="${a.id}" checked> 
+        <input type="checkbox" class="copy-activity-checkbox" value="${a.id}"> 
         ${a.text} (${a.duration}m)
       </label>
     `).join('');
