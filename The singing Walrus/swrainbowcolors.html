@@ -195,7 +195,7 @@
     </div>
 </div>
 
-<footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method v7.7</footer>
+<footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method v7.9</footer>
 
 <script>
     // ==================================================
@@ -277,6 +277,8 @@ function init() {
     sentences.forEach((item, i) => {
         const card = document.createElement('div');
         card.className = `card ${i === currentIndex ? 'active' : ''} text-center`;
+        // Escape single quotes in item.en for safe inclusion in onclick
+        const escapedEn = item.en.replace(/'/g, "\\'");
         card.innerHTML = `
             <span class="grammar-tag type-${item.type.toLowerCase()}">${item.type}</span>
             <h2 class="text-3xl font-bold text-gray-800 mt-2 mb-2 leading-tight">${item.en}</h2>
@@ -288,10 +290,10 @@ function init() {
                 <div id="step-${i}-3" class="step-dot"></div>
             </div>
             <div class="flex justify-center items-center gap-6">
-                <button onclick="playAudio('${item.en}', 0.5)" class="w-14 h-14 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center shadow-sm">
+                <button onclick="playAudio('${escapedEn}', 0.5)" class="w-14 h-14 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 7v5l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </button>
-                <button onclick="playAudio('${item.en}', 1)" class="w-24 h-24 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-xl">
+                <button onclick="playAudio('${escapedEn}', 1)" class="w-24 h-24 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-xl">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /></svg>
                 </button>
                 <button onclick="toggleRecording(${i})" class="w-20 h-20 bg-red-50 text-red-600 rounded-full flex items-center justify-center shadow-sm">
