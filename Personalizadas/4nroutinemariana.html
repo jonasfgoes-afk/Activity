@@ -195,13 +195,13 @@
     </div>
 </div>
 
-<footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method v7.9</footer>
+<footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method v8.0</footer>
 
 <script>
     // ==================================================
 // JONAS WAY — CONFIG (REQUIRED)
 // ==================================================
-const LESSON_ID  = '4nroutinemariana';
+const LESSON_ID  = '4nroutineamariana';
 const WORKER_URL = 'https://4nroutinemariana.jonasfgoes.workers.dev/';
 
 if (
@@ -341,26 +341,82 @@ function playAudio(text, rate) {
     speechSynthesis.speak(utterance);
 }
 
+// Speech recognition with continuous mode and silence timeout
+let recognitionActive = false;
+let finalTranscript = '';
+let silenceTimer = null;
+const SILENCE_TIMEOUT = 1500; // 1.5 seconds
+
 function setupSpeechRecognition() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return alert("Chrome/Safari required.");
     recognition = new SR();
     recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
     recognition.onstart = () => {
         isRecording = true;
+        recognitionActive = true;
+        finalTranscript = '';
         document.getElementById(`mic-icon-${currentIndex}`).classList.add('recording-pulse');
-        
     };
+
     recognition.onend = () => {
         isRecording = false;
+        recognitionActive = false;
+        if (silenceTimer) clearTimeout(silenceTimer);
         document.getElementById(`mic-icon-${currentIndex}`).classList.remove('recording-pulse');
+        // If we have a final transcript, process it
+        if (finalTranscript.trim() !== '') {
+            checkPronunciation(finalTranscript);
+        }
     };
-    recognition.onresult = e => checkPronunciation(e.results[0][0].transcript);
+
+    recognition.onresult = (event) => {
+        // Reset silence timer on any speech activity
+        if (silenceTimer) clearTimeout(silenceTimer);
+        silenceTimer = setTimeout(() => {
+            // No new speech for SILENCE_TIMEOUT ms → stop recording
+            if (recognitionActive) {
+                recognition.stop();
+            }
+        }, SILENCE_TIMEOUT);
+
+        // Collect final results
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+                finalTranscript += ' ' + event.results[i][0].transcript;
+            }
+        }
+        // Trim extra spaces
+        finalTranscript = finalTranscript.trim();
+    };
+
+    recognition.onerror = (e) => {
+        console.error('Speech recognition error', e.error);
+        // If error occurs, stop recording state
+        if (recognitionActive) {
+            recognition.stop(); // this will trigger onend
+        }
+    };
 }
 
 function toggleRecording(i) {
-    if (isRecording) recognition.stop();
-    else recognition.start();
+    // Ensure we're on the correct card (the mic button is tied to a specific index)
+    if (i !== currentIndex) return;
+
+    if (isRecording) {
+        // Manual stop
+        if (recognitionActive) {
+            recognition.stop();
+        }
+    } else {
+        // Start new recording
+        if (recognition) {
+            recognition.start();
+        }
+    }
 }
 
 function checkPronunciation(spokenText) {

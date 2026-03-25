@@ -1818,7 +1818,7 @@
                 });
             });
 
-                       document.getElementById('drawStudentBtn')?.addEventListener('click', async () => {
+                                   document.getElementById('drawStudentBtn')?.addEventListener('click', async () => {
                 // Get all students in this class
                 const classStudents = data.students.filter(s => s.classId === state.classId);
                 if (classStudents.length === 0) {
@@ -1873,27 +1873,67 @@
                     message = `🎲 Mode B (random): ${student.name} (${totalPos} positive behaviors)`;
                 }
 
-                // Show modal with Skip option for Mode A only
-                if (currentMode === 'A') {
-                    const result = await showModal({
-                        title: 'Draw Result',
-                        bodyHtml: `<p>${message}</p>`,
+                // Helper to move a student to the end of the class queue
+                const moveToEnd = (studentId) => {
+                    const queue = drawQueueByClass[state.classId];
+                    const index = queue.indexOf(studentId);
+                    if (index !== -1) {
+                        queue.splice(index, 1);
+                        queue.push(studentId);
+                    }
+                };
+
+                // Show modal with Accept/Skip for both modes
+                const result = await showModal({
+                    title: 'Draw Result',
+                    bodyHtml: `<p>${message}</p>`,
+                    showCancel: true,
+                    confirmText: 'Accept',
+                    cancelText: 'Skip'
+                });
+
+                if (result === null) { // Skip button clicked
+                    // Move skipped student to the end of the queue
+                    moveToEnd(chosenStudentId);
+                } else { // Accept button clicked
+                    // Ask if we should assign a good behavior
+                    const assignGood = await showModal({
+                        title: 'Assign Good Behavior?',
+                        bodyHtml: '<p>Do you want to assign a good behavior to this student?</p>',
                         showCancel: true,
-                        confirmText: 'Accept',
-                        cancelText: 'Skip'
+                        confirmText: 'Yes',
+                        cancelText: 'No'
                     });
-                    if (result === null) { // Skip button clicked
-                        // Move the skipped student to the end of the queue
-                        const queue = drawQueueByClass[state.classId];
-                        const index = queue.indexOf(chosenStudentId);
-                        if (index !== -1) {
-                            queue.splice(index, 1);
-                            queue.push(chosenStudentId);
+                    if (assignGood === true) { // Yes clicked
+                        // Trigger appropriate behavior selection for this student
+                        const list = effective.behaviors.filter(b => b.type === 'appropriate');
+                        if (list.length === 0) {
+                            showAlert('No appropriate behaviors defined for this context. Go to Settings to add some.');
+                        } else {
+                            const options = list.map(b => `<option value="${b.id}">${escapeHtml(b.description)}</option>`).join('');
+                            const selectHtml = `<select id="modalInput" class="modal-input">${options}</select>`;
+                            const selectedId = await showModal({ title: 'Select appropriate behavior', bodyHtml: selectHtml, input: true });
+                            if (selectedId) {
+                                const behavior = list.find(b => b.id === selectedId);
+                                if (behavior) {
+                                    const newEvent = {
+                                        id: generateId(),
+                                        lessonId: state.lessonId,
+                                        studentId: chosenStudentId,
+                                        type: 'appropriate',
+                                        description: behavior.description,
+                                        timestamp: new Date().toISOString()
+                                    };
+                                    data.behaviorEvents.push(newEvent);
+                                    saveData(data);
+                                    showAlert('😊 Praise the appropriate behavior in front of the class.');
+                                    render(); // re-render to update counts
+                                }
+                            }
                         }
                     }
-                } else {
-                    // Mode B: just show alert
-                    showAlert(message);
+                    // After handling the good behavior question (Yes or No), move the accepted student to the end of the queue
+                    moveToEnd(chosenStudentId);
                 }
             });
             
@@ -1971,7 +2011,7 @@
                 });
             });
 
-            document.querySelectorAll('.clickable-smile').forEach(el => {
+                        document.querySelectorAll('.clickable-smile').forEach(el => {
                 el.addEventListener('click', async (e) => {
                     const studentId = e.target.dataset.student;
                     const type = e.target.dataset.type;
@@ -2003,6 +2043,7 @@
                     const studentName = studentObj ? studentObj.name : 'Student';
 
                     if (type === 'inappropriate') {
+                        showAlert(`Go to ${studentName}'s level, make eye contact, state the inappropriate behavior (${behavior.description}) and the count: ${updatedInapp}`);
                         if (updatedInapp === limit) {
                             showAlert(`⚠️ Go to ${studentName}'s level, make eye contact, state the rules that were broken, and explain the consequence: ${consequence}`);
                         }
