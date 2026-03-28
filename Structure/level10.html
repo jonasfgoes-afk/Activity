@@ -195,13 +195,13 @@
     </div>
 </div>
 
-<footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method v7.7</footer>
+<footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method v8.1</footer>
 
 <script>
     // ==================================================
 // JONAS WAY — CONFIG (REQUIRED)
 // ==================================================
-const LESSON_ID  = 'level10';
+const LESSON_ID  = 'level0';
 const WORKER_URL = 'https://level10.jonasfgoes.workers.dev/';
 
 if (
@@ -235,6 +235,7 @@ speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
 
 const STORAGE_KEY = `jonas_way_mastery_${LESSON_ID}`;
+const CUMULATIVE_POINTS_KEY = `jonas_way_cumulative_${LESSON_ID}`;
 
 // ⚠️ WORKFLOW RULE
 // Never hardcode backend URLs.
@@ -268,6 +269,50 @@ function loadProgress() {
     }
 }
 
+// Cumulative points functions
+function getCumulativePoints() {
+    const saved = localStorage.getItem(CUMULATIVE_POINTS_KEY);
+    if (saved) {
+        return JSON.parse(saved);
+    }
+    // Initialize empty array with zeros for each sentence (will be updated when sentences load)
+    return {};
+}
+
+function setCumulativePoints(pointsObj) {
+    localStorage.setItem(CUMULATIVE_POINTS_KEY, JSON.stringify(pointsObj));
+}
+
+function incrementCumulativePoint(cardIndex) {
+    let points = getCumulativePoints();
+    if (!points[cardIndex]) points[cardIndex] = 0;
+    points[cardIndex] += 1;
+    setCumulativePoints(points);
+}
+
+function getDeckPoints() {
+    const points = getCumulativePoints();
+    // Sum all values
+    return Object.values(points).reduce((sum, val) => sum + val, 0);
+}
+
+// Daily limit functions (unchanged logic but keep them)
+function canEarnPoint(cardIndex) {
+    const today = new Date().toISOString().split('T')[0];
+    const key = `jonas_way_card_points_${LESSON_ID}_${today}`;
+    const data = JSON.parse(localStorage.getItem(key) || '{}');
+    const pointsToday = data[cardIndex] || 0;
+    return pointsToday < 6;
+}
+
+function registerCardPoint(cardIndex) {
+    const today = new Date().toISOString().split('T')[0];
+    const key = `jonas_way_card_points_${LESSON_ID}_${today}`;
+    const data = JSON.parse(localStorage.getItem(key) || '{}');
+    data[cardIndex] = (data[cardIndex] || 0) + 1;
+    localStorage.setItem(key, JSON.stringify(data));
+}
+
 function init() {
     const wrapper = document.getElementById('cards-wrapper');
     const globalProgress = document.getElementById('global-progress');
@@ -277,6 +322,8 @@ function init() {
     sentences.forEach((item, i) => {
         const card = document.createElement('div');
         card.className = `card ${i === currentIndex ? 'active' : ''} text-center`;
+        // Escape single quotes in item.en for safe inclusion in onclick
+        const escapedEn = item.en.replace(/'/g, "\\'");
         card.innerHTML = `
             <span class="grammar-tag type-${item.type.toLowerCase()}">${item.type}</span>
             <h2 class="text-3xl font-bold text-gray-800 mt-2 mb-2 leading-tight">${item.en}</h2>
@@ -288,10 +335,10 @@ function init() {
                 <div id="step-${i}-3" class="step-dot"></div>
             </div>
             <div class="flex justify-center items-center gap-6">
-                <button onclick="playAudio('${item.en}', 0.5)" class="w-14 h-14 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center shadow-sm">
+                <button onclick="playAudio('${escapedEn}', 0.5)" class="w-14 h-14 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 7v5l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </button>
-                <button onclick="playAudio('${item.en}', 1)" class="w-24 h-24 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-xl">
+                <button onclick="playAudio('${escapedEn}', 1)" class="w-24 h-24 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-xl">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /></svg>
                 </button>
                 <button onclick="toggleRecording(${i})" class="w-20 h-20 bg-red-50 text-red-600 rounded-full flex items-center justify-center shadow-sm">
@@ -311,7 +358,6 @@ function init() {
     updateUI();
     lastDeckPoints = getDeckPoints();
     updateDeckPointsUI();
-
 }
 
 function restoreDots() {
@@ -339,26 +385,82 @@ function playAudio(text, rate) {
     speechSynthesis.speak(utterance);
 }
 
+// Speech recognition with continuous mode and silence timeout
+let recognitionActive = false;
+let finalTranscript = '';
+let silenceTimer = null;
+const SILENCE_TIMEOUT = 1500; // 1.5 seconds
+
 function setupSpeechRecognition() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return alert("Chrome/Safari required.");
     recognition = new SR();
     recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
     recognition.onstart = () => {
         isRecording = true;
+        recognitionActive = true;
+        finalTranscript = '';
         document.getElementById(`mic-icon-${currentIndex}`).classList.add('recording-pulse');
-        
     };
+
     recognition.onend = () => {
         isRecording = false;
+        recognitionActive = false;
+        if (silenceTimer) clearTimeout(silenceTimer);
         document.getElementById(`mic-icon-${currentIndex}`).classList.remove('recording-pulse');
+        // If we have a final transcript, process it
+        if (finalTranscript.trim() !== '') {
+            checkPronunciation(finalTranscript);
+        }
     };
-    recognition.onresult = e => checkPronunciation(e.results[0][0].transcript);
+
+    recognition.onresult = (event) => {
+        // Reset silence timer on any speech activity
+        if (silenceTimer) clearTimeout(silenceTimer);
+        silenceTimer = setTimeout(() => {
+            // No new speech for SILENCE_TIMEOUT ms → stop recording
+            if (recognitionActive) {
+                recognition.stop();
+            }
+        }, SILENCE_TIMEOUT);
+
+        // Collect final results
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+                finalTranscript += ' ' + event.results[i][0].transcript;
+            }
+        }
+        // Trim extra spaces
+        finalTranscript = finalTranscript.trim();
+    };
+
+    recognition.onerror = (e) => {
+        console.error('Speech recognition error', e.error);
+        // If error occurs, stop recording state
+        if (recognitionActive) {
+            recognition.stop(); // this will trigger onend
+        }
+    };
 }
 
 function toggleRecording(i) {
-    if (isRecording) recognition.stop();
-    else recognition.start();
+    // Ensure we're on the correct card (the mic button is tied to a specific index)
+    if (i !== currentIndex) return;
+
+    if (isRecording) {
+        // Manual stop
+        if (recognitionActive) {
+            recognition.stop();
+        }
+    } else {
+        // Start new recording
+        if (recognition) {
+            recognition.start();
+        }
+    }
 }
 
 function checkPronunciation(spokenText) {
@@ -380,8 +482,9 @@ function checkPronunciation(spokenText) {
         /* 🎯 POINT SYSTEM (max 6 per card / day) */
         if (canEarnPoint(currentIndex)) {
             showPointPulse(currentIndex);
-            addPointToday();
-            registerCardPoint(currentIndex);
+            addPointToday();  // global daily counter (optional)
+            registerCardPoint(currentIndex); // daily limit
+            incrementCumulativePoint(currentIndex); // permanent points
             updateDeckPointsUI();
 
             const today = new Date().toISOString().split('T')[0];
@@ -594,24 +697,6 @@ function addPointToday() {
     localStorage.setItem(pointsKey, points);
 }
 
-    function canEarnPoint(cardIndex) {
-    const today = new Date().toISOString().split('T')[0];
-    const key = `jonas_way_card_points_${LESSON_ID}_${today}`;
-    const data = JSON.parse(localStorage.getItem(key) || '{}');
-
-    const pointsToday = data[cardIndex] || 0;
-    return pointsToday < 6; // 👈 HARD CAP
-}
-
-function registerCardPoint(cardIndex) {
-    const today = new Date().toISOString().split('T')[0];
-    const key = `jonas_way_card_points_${LESSON_ID}_${today}`;
-    const data = JSON.parse(localStorage.getItem(key) || '{}');
-
-    data[cardIndex] = (data[cardIndex] || 0) + 1;
-    localStorage.setItem(key, JSON.stringify(data));
-}
-
 function showCardBanner(text, className) {
     const card = document.querySelector('.card.active');
     if (!card) return;
@@ -622,13 +707,6 @@ function showCardBanner(text, className) {
 
     card.appendChild(banner);
     setTimeout(() => banner.remove(), 1500);
-}
-function getDeckPoints() {
-    const today = new Date().toISOString().split('T')[0];
-    const key = `jonas_way_card_points_${LESSON_ID}_${today}`;
-    const data = JSON.parse(localStorage.getItem(key) || '{}');
-
-    return Object.values(data).reduce((sum, n) => sum + n, 0);
 }
 
 function updateDeckPointsUI() {
