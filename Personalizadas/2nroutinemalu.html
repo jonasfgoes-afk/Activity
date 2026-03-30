@@ -195,14 +195,14 @@
     </div>
 </div>
 
-<footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method v8.0</footer>
+<footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method v8.1</footer>
 
 <script>
     // ==================================================
 // JONAS WAY — CONFIG (REQUIRED)
 // ==================================================
-const LESSON_ID  = '4nroutineantonio';
-const WORKER_URL = 'https://4nroutineantonio.jonasfgoes.workers.dev/';
+const LESSON_ID  = '2nroutinemalu';
+const WORKER_URL = 'https://2nroutinemalu.jonasfgoes.workers.dev/';
 
 if (
   LESSON_ID === 'new_lesson' ||
@@ -235,6 +235,7 @@ speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
 
 const STORAGE_KEY = `jonas_way_mastery_${LESSON_ID}`;
+const CUMULATIVE_POINTS_KEY = `jonas_way_cumulative_${LESSON_ID}`;
 
 // ⚠️ WORKFLOW RULE
 // Never hardcode backend URLs.
@@ -266,6 +267,50 @@ function loadProgress() {
         currentIndex = data.currentIndex || 0;
         slideProgress = data.slideProgress || [];
     }
+}
+
+// Cumulative points functions
+function getCumulativePoints() {
+    const saved = localStorage.getItem(CUMULATIVE_POINTS_KEY);
+    if (saved) {
+        return JSON.parse(saved);
+    }
+    // Initialize empty array with zeros for each sentence (will be updated when sentences load)
+    return {};
+}
+
+function setCumulativePoints(pointsObj) {
+    localStorage.setItem(CUMULATIVE_POINTS_KEY, JSON.stringify(pointsObj));
+}
+
+function incrementCumulativePoint(cardIndex) {
+    let points = getCumulativePoints();
+    if (!points[cardIndex]) points[cardIndex] = 0;
+    points[cardIndex] += 1;
+    setCumulativePoints(points);
+}
+
+function getDeckPoints() {
+    const points = getCumulativePoints();
+    // Sum all values
+    return Object.values(points).reduce((sum, val) => sum + val, 0);
+}
+
+// Daily limit functions (unchanged logic but keep them)
+function canEarnPoint(cardIndex) {
+    const today = new Date().toISOString().split('T')[0];
+    const key = `jonas_way_card_points_${LESSON_ID}_${today}`;
+    const data = JSON.parse(localStorage.getItem(key) || '{}');
+    const pointsToday = data[cardIndex] || 0;
+    return pointsToday < 6;
+}
+
+function registerCardPoint(cardIndex) {
+    const today = new Date().toISOString().split('T')[0];
+    const key = `jonas_way_card_points_${LESSON_ID}_${today}`;
+    const data = JSON.parse(localStorage.getItem(key) || '{}');
+    data[cardIndex] = (data[cardIndex] || 0) + 1;
+    localStorage.setItem(key, JSON.stringify(data));
 }
 
 function init() {
@@ -313,7 +358,6 @@ function init() {
     updateUI();
     lastDeckPoints = getDeckPoints();
     updateDeckPointsUI();
-
 }
 
 function restoreDots() {
@@ -438,8 +482,9 @@ function checkPronunciation(spokenText) {
         /* 🎯 POINT SYSTEM (max 6 per card / day) */
         if (canEarnPoint(currentIndex)) {
             showPointPulse(currentIndex);
-            addPointToday();
-            registerCardPoint(currentIndex);
+            addPointToday();  // global daily counter (optional)
+            registerCardPoint(currentIndex); // daily limit
+            incrementCumulativePoint(currentIndex); // permanent points
             updateDeckPointsUI();
 
             const today = new Date().toISOString().split('T')[0];
@@ -652,24 +697,6 @@ function addPointToday() {
     localStorage.setItem(pointsKey, points);
 }
 
-    function canEarnPoint(cardIndex) {
-    const today = new Date().toISOString().split('T')[0];
-    const key = `jonas_way_card_points_${LESSON_ID}_${today}`;
-    const data = JSON.parse(localStorage.getItem(key) || '{}');
-
-    const pointsToday = data[cardIndex] || 0;
-    return pointsToday < 6; // 👈 HARD CAP
-}
-
-function registerCardPoint(cardIndex) {
-    const today = new Date().toISOString().split('T')[0];
-    const key = `jonas_way_card_points_${LESSON_ID}_${today}`;
-    const data = JSON.parse(localStorage.getItem(key) || '{}');
-
-    data[cardIndex] = (data[cardIndex] || 0) + 1;
-    localStorage.setItem(key, JSON.stringify(data));
-}
-
 function showCardBanner(text, className) {
     const card = document.querySelector('.card.active');
     if (!card) return;
@@ -680,13 +707,6 @@ function showCardBanner(text, className) {
 
     card.appendChild(banner);
     setTimeout(() => banner.remove(), 1500);
-}
-function getDeckPoints() {
-    const today = new Date().toISOString().split('T')[0];
-    const key = `jonas_way_card_points_${LESSON_ID}_${today}`;
-    const data = JSON.parse(localStorage.getItem(key) || '{}');
-
-    return Object.values(data).reduce((sum, n) => sum + n, 0);
 }
 
 function updateDeckPointsUI() {
