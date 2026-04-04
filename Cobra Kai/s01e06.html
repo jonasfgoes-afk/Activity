@@ -202,7 +202,7 @@
 // JONAS WAY — CONFIG (REQUIRED)
 // ==================================================
 const LESSON_ID  = 'cks01e06';
-const WORKER_URL = 'https://cks01e06.jonasfgoes.workers.dev/';
+const WORKER_URL = 'https://masterworker.jonasfgoes.workers.dev/cks01e06';
 
 if (
   LESSON_ID === 'new_lesson' ||
@@ -387,7 +387,7 @@ function playAudio(text, rate) {
 
 // Speech recognition with continuous mode and silence timeout
 let recognitionActive = false;
-let finalTranscript = '';
+let finalTranscript = '';      // stores the longest final result seen
 let silenceTimer = null;
 const SILENCE_TIMEOUT = 1500; // 1.5 seconds
 
@@ -411,7 +411,7 @@ function setupSpeechRecognition() {
         recognitionActive = false;
         if (silenceTimer) clearTimeout(silenceTimer);
         document.getElementById(`mic-icon-${currentIndex}`).classList.remove('recording-pulse');
-        // If we have a final transcript, process it
+        // Use the longest final transcript collected (or fallback to what we have)
         if (finalTranscript.trim() !== '') {
             checkPronunciation(finalTranscript);
         }
@@ -421,27 +421,27 @@ function setupSpeechRecognition() {
         // Reset silence timer on any speech activity
         if (silenceTimer) clearTimeout(silenceTimer);
         silenceTimer = setTimeout(() => {
-            // No new speech for SILENCE_TIMEOUT ms → stop recording
             if (recognitionActive) {
                 recognition.stop();
             }
         }, SILENCE_TIMEOUT);
 
-        // Collect final results
+        // Collect final results – keep the longest one (most complete)
         for (let i = event.resultIndex; i < event.results.length; i++) {
             if (event.results[i].isFinal) {
-                finalTranscript += ' ' + event.results[i][0].transcript;
+                const newText = event.results[i][0].transcript.trim();
+                // Replace finalTranscript with the longer text (avoids concatenation of overlapping fragments)
+                if (newText.length > finalTranscript.length) {
+                    finalTranscript = newText;
+                }
             }
         }
-        // Trim extra spaces
-        finalTranscript = finalTranscript.trim();
     };
 
     recognition.onerror = (e) => {
         console.error('Speech recognition error', e.error);
-        // If error occurs, stop recording state
         if (recognitionActive) {
-            recognition.stop(); // this will trigger onend
+            recognition.stop();
         }
     };
 }
@@ -735,8 +735,12 @@ function playHallelujah() {
 function normalize(str) {
   return str
     .toLowerCase()
-    .replace(/[^a-z\s]/g, "") // remove punctuation & apostrophes
-    .replace(/\s+/g, " ")     // collapse multiple spaces
+    .replace(/[^a-z0-9\s]/g, "")      // keep alphanumeric and spaces
+    .replace(/\b(\d+):(\d+)\b/g, (_, h, m) => {
+        // Convert times like "6:00" to just "6" (ignore minutes)
+        return m === '00' ? h : h + m; // fallback to "600" if minutes not zero
+    })
+    .replace(/\s+/g, " ")             // collapse spaces
     .trim();
 }
 
