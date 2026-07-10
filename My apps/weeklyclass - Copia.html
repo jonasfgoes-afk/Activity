@@ -1281,15 +1281,15 @@
     const container = document.getElementById(`history-content-${classId}`);
     if (!container) return;
 
-    // Collect all plans and all activities (including not done)
-    let allPlansData = [];
+    // Collect all plans with completed activities
+    let completedData = [];
     if (cls.plans && cls.plans.length > 0) {
       cls.plans.forEach(plan => {
-        const activities = plan.activities || [];
-        if (activities.length > 0) {
-          allPlansData.push({
+        const completedActivities = (plan.activities || []).filter(a => a.isDone);
+        if (completedActivities.length > 0) {
+          completedData.push({
             date: plan.date,
-            activities: activities
+            activities: completedActivities
           });
         }
       });
@@ -1297,24 +1297,21 @@
 
     // Sort based on order
     if (sortOrder === 'newest') {
-      allPlansData.sort((a, b) => b.date.localeCompare(a.date));
+      completedData.sort((a, b) => b.date.localeCompare(a.date));
     } else {
-      allPlansData.sort((a, b) => a.date.localeCompare(b.date));
+      completedData.sort((a, b) => a.date.localeCompare(b.date));
     }
 
-    if (allPlansData.length === 0) {
-      container.innerHTML = '<p style="color:#666; font-style:italic;">No activities in any plan.</p>';
+    if (completedData.length === 0) {
+      container.innerHTML = '<p style="color:#666; font-style:italic;">No completed activities yet.</p>';
       return;
     }
 
-    const html = allPlansData.map(item => `
+    const html = completedData.map(item => `
       <div style="margin-bottom: 12px; border-left: 3px solid #1e3c72; padding-left: 10px;">
         <strong>📅 ${item.date}</strong>
         <ul style="margin: 5px 0 0 20px;">
-          ${item.activities.map(a => {
-            const status = a.isDone ? '✅ Done' : '❌ Not done';
-            return `<li>${a.text} (${a.duration}m) — ${status}</li>`;
-          }).join('')}
+          ${item.activities.map(a => `<li>${a.text} (${a.duration}m)</li>`).join('')}
         </ul>
       </div>
     `).join('');
