@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Major Scale Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #16110c;
+  --bg-elevated: #1f1811;
+  --bg-elevated-2: #2a2118;
+  --bg-elevated-3: #382c1f;
+  --border: #3d3122;
+  --border-soft: #2a2118;
+  --text-primary: #f5ecdd;
+  --text-secondary: #b3a186;
+  --text-tertiary: #7d715c;
+  --accent: #dd9c44;
+  --accent-bright: #f0b968;
+  --accent-dim: #8a6a37;
+  --success: #7cb87f;
+  --success-bg: rgba(124, 184, 127, 0.14);
+  --error: #dd6e5c;
+  --error-bg: rgba(221, 110, 92, 0.14);
+  --shadow-soft: 0 4px 20px rgba(0,0,0,0.35);
+  --radius: 14px;
+  --radius-sm: 9px;
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Manrope', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  min-height: 100%;
+}
+
+body {
+  background-image:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(221,156,68,0.08), transparent),
+    radial-gradient(ellipse 700px 500px at 100% 10%, rgba(124,184,127,0.05), transparent);
+}
+
+#app {
+  max-width: 640px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 20px 18px 48px;
+  position: relative;
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+.brand-mark {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 21px;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+.brand-note {
+  color: var(--accent);
+  font-size: 21px;
+}
+.icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.icon-btn:hover { background: var(--bg-elevated-2); color: var(--text-primary); border-color: var(--border); }
+.icon-btn svg { width: 18px; height: 18px; }
+
+/* ---------- Screens ---------- */
+.screen { display: none; animation: fadeIn 0.25s ease; }
+.screen.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.page-header { margin-bottom: 20px; }
+.page-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  color: var(--text-primary);
+}
+.page-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.back-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 8px 6px 2px;
+  border-radius: 8px;
+  transition: color 0.15s;
+}
+.back-btn:hover { color: var(--text-primary); }
+.back-btn svg { width: 16px; height: 16px; }
+
+/* ---------- Cards ---------- */
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+
+.mic-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+.mic-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--bg-elevated-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+.mic-icon-wrap svg { width: 21px; height: 21px; color: var(--text-secondary); }
+.mic-icon-wrap.granted { background: var(--success-bg); }
+.mic-icon-wrap.granted svg { color: var(--success); }
+.mic-pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 14px;
+  border: 2px solid var(--success);
+  opacity: 0;
+}
+.mic-icon-wrap.listening .mic-pulse { animation: pulse 1.4s ease-out infinite; }
+@keyframes pulse {
+  0% { opacity: 0.6; transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(1.25); }
+}
+.mic-info { flex: 1; min-width: 0; }
+.mic-title { font-weight: 700; font-size: 14.5px; margin-bottom: 2px; }
+.mic-sub { font-size: 12.5px; color: var(--text-secondary); line-height: 1.4; }
+.mic-sub.error-text { color: var(--error); }
+.mic-live-note {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--accent-bright);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  padding: 11px 18px;
+  transition: transform 0.1s, background 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: #1a1208; }
+.btn-primary:hover { background: var(--accent-bright); }
+.btn-secondary { background: var(--bg-elevated-2); color: var(--text-primary); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--bg-elevated-3); }
+.btn-ghost { background: transparent; color: var(--text-secondary); }
+.btn-ghost:hover { color: var(--text-primary); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.btn-block { width: 100%; }
+
+/* ---------- Mode cards (home) ---------- */
+.mode-grid { display: grid; gap: 14px; margin-top: 4px; }
+.mode-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 20px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  width: 100%;
+}
+.mode-card:hover { border-color: var(--accent-dim); background: var(--bg-elevated-2); }
+.mode-card:active { transform: scale(0.99); }
+.mode-icon {
+  width: 50px; height: 50px;
+  border-radius: 12px;
+  background: var(--bg-elevated-2);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.mode-icon svg { width: 24px; height: 24px; }
+.mode-text-title { font-family: var(--font-display); font-size: 18px; font-weight: 600; margin-bottom: 3px; }
+.mode-text-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.45; }
+.mode-chevron { color: var(--text-tertiary); flex-shrink: 0; }
+.mode-chevron svg { width: 18px; height: 18px; }
+
+.howitworks {
+  margin-top: 22px;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+}
+.howitworks-title { font-size: 12.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; }
+.howitworks-steps { display: flex; flex-direction: column; gap: 9px; }
+.howitworks-step { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; color: var(--text-secondary); line-height: 1.45; }
+.step-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--bg-elevated-2); color: var(--accent);
+  font-size: 11px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+
+/* ---------- Key grid ---------- */
+.key-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.key-tile {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 14px 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+.key-tile:hover { border-color: var(--accent-dim); background: var(--bg-elevated-2); }
+.key-tile:active { transform: scale(0.97); }
+.key-name { font-family: var(--font-display); font-size: 19px; font-weight: 600; margin-bottom: 6px; }
+.key-progress { font-size: 10.5px; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.03em; }
+.key-progress-dots { display: flex; justify-content: center; gap: 3px; margin-top: 6px; }
+.key-progress-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
+.key-progress-dot.done { background: var(--success); }
+
+/* ---------- Level grid ---------- */
+.level-list { display: flex; flex-direction: column; gap: 10px; }
+.level-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: left;
+  width: 100%;
+}
+.level-row:hover:not(.locked) { border-color: var(--accent-dim); background: var(--bg-elevated-2); }
+.level-row.locked { opacity: 0.45; cursor: not-allowed; }
+.level-num {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: var(--bg-elevated-2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 16px;
+  flex-shrink: 0;
+  color: var(--text-primary);
+}
+.level-row.completed .level-num { background: var(--success-bg); color: var(--success); }
+.level-info { flex: 1; min-width: 0; }
+.level-title { font-weight: 700; font-size: 14.5px; margin-bottom: 2px; }
+.level-sub { font-size: 12px; color: var(--text-secondary); }
+.level-badge svg { width: 18px; height: 18px; color: var(--text-tertiary); }
+.level-row.completed .level-badge svg { color: var(--success); }
+
+/* ---------- Custom setup ---------- */
+.field-group { margin-bottom: 20px; }
+.field-label {
+  font-size: 12.5px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 10px; display: block;
+}
+.stepper {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--bg-elevated); border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+}
+.stepper-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: var(--bg-elevated-2); border: 1px solid var(--border);
+  color: var(--text-primary); font-size: 18px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; user-select: none;
+}
+.stepper-btn:hover { background: var(--bg-elevated-3); }
+.stepper-btn:active { transform: scale(0.94); }
+.stepper-value { flex: 1; text-align: center; font-family: var(--font-display); font-size: 22px; font-weight: 600; }
+.stepper-hint { text-align: center; font-size: 11.5px; color: var(--text-tertiary); margin-top: 8px; }
+
+.select-key-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg-elevated); border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm); padding: 14px 16px; cursor: pointer; width: 100%;
+  color: var(--text-primary); font-family: var(--font-body);
+}
+.select-key-btn:hover { border-color: var(--accent-dim); }
+.select-key-btn-name { font-family: var(--font-display); font-size: 17px; font-weight: 600; }
+.select-key-btn svg { width: 16px; height: 16px; color: var(--text-tertiary); }
+
+/* mini key picker inline grid used in custom setup */
+.mini-key-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.mini-key-tile {
+  background: var(--bg-elevated); border: 1px solid var(--border-soft);
+  border-radius: 9px; padding: 10px 4px; text-align: center; cursor: pointer;
+  font-family: var(--font-display); font-weight: 600; font-size: 15px;
+}
+.mini-key-tile:hover { border-color: var(--accent-dim); }
+.mini-key-tile.selected { border-color: var(--accent); background: var(--bg-elevated-2); color: var(--accent-bright); }
+
+/* ---------- Exercise screen ---------- */
+.ex-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.ex-breadcrumb { font-size: 12.5px; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.02em; }
+.ex-count { font-size: 12.5px; color: var(--text-secondary); font-weight: 700; }
+.ex-progress-bar { height: 4px; background: var(--border-soft); border-radius: 2px; overflow: hidden; margin-bottom: 26px; }
+.ex-progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+
+.sequence-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+.seq-slot {
+  width: 46px; height: 46px; border-radius: 12px;
+  background: var(--bg-elevated); border: 2px solid var(--border-soft);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 600; font-size: 15px;
+  color: var(--text-tertiary);
+  transition: all 0.2s;
+}
+.seq-slot.current { border-color: var(--accent); color: var(--accent-bright); background: var(--bg-elevated-2); transform: scale(1.08); }
+.seq-slot.done { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+
+.play-zone { text-align: center; margin-bottom: 30px; }
+.play-btn {
+  width: 92px; height: 92px; border-radius: 50%;
+  background: var(--accent); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 12px; transition: transform 0.12s, background 0.15s;
+  box-shadow: 0 6px 24px rgba(221,156,68,0.28);
+}
+.play-btn:hover { background: var(--accent-bright); }
+.play-btn:active { transform: scale(0.95); }
+.play-btn svg { width: 34px; height: 34px; color: #1a1208; margin-left: 3px; }
+.play-btn.playing { animation: playPulse 0.9s ease-in-out infinite; }
+@keyframes playPulse { 0%,100% { box-shadow: 0 6px 24px rgba(221,156,68,0.28); } 50% { box-shadow: 0 6px 32px rgba(221,156,68,0.5); } }
+.replay-label { font-size: 12.5px; color: var(--text-tertiary); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; }
+
+.listen-zone {
+  background: var(--bg-elevated); border: 1px solid var(--border-soft);
+  border-radius: var(--radius); padding: 22px 18px; text-align: center; margin-bottom: 18px;
+  min-height: 108px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.listen-status { font-size: 12px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; }
+.detected-note { font-family: var(--font-display); font-size: 34px; font-weight: 600; color: var(--text-secondary); min-height: 42px; }
+.detected-note.live { color: var(--accent-bright); }
+.cents-meter { width: 160px; height: 5px; background: var(--bg-elevated-2); border-radius: 3px; margin: 10px auto 0; position: relative; overflow: hidden; display: none; }
+.cents-meter.show { display: block; }
+.cents-meter-fill { position: absolute; top: 0; bottom: 0; width: 3px; background: var(--accent-bright); left: 50%; border-radius: 2px; transition: left 0.1s; }
+.cents-meter-center { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--border); }
+
+.feedback-banner {
+  display: none;
+  align-items: center; gap: 10px;
+  padding: 12px 16px; border-radius: var(--radius-sm);
+  font-size: 13.5px; font-weight: 700; margin-bottom: 16px;
+}
+.feedback-banner.show { display: flex; }
+.feedback-banner.correct { background: var(--success-bg); color: var(--success); }
+.feedback-banner.incorrect { background: var(--error-bg); color: var(--error); }
+.feedback-banner svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.ex-controls { display: flex; justify-content: center; gap: 10px; }
+
+/* ---------- Results ---------- */
+.results-hero { text-align: center; padding: 20px 0 10px; }
+.results-icon {
+  width: 74px; height: 74px; border-radius: 50%;
+  background: var(--success-bg); display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+}
+.results-icon svg { width: 36px; height: 36px; color: var(--success); }
+.results-title { font-family: var(--font-display); font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+.results-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 26px; }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 26px; }
+.stat-tile { background: var(--bg-elevated); border: 1px solid var(--border-soft); border-radius: var(--radius-sm); padding: 14px 8px; text-align: center; }
+.stat-value { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--accent-bright); }
+.stat-label { font-size: 10.5px; color: var(--text-tertiary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 3px; }
+.results-actions { display: flex; flex-direction: column; gap: 10px; }
+
+/* ---------- Modal ---------- */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(10,7,4,0.6);
+  display: none; align-items: flex-end; justify-content: center; z-index: 50;
+  backdrop-filter: blur(2px);
+}
+.modal-overlay.show { display: flex; }
+.modal-sheet {
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: 20px 20px 0 0; padding: 22px 20px 28px;
+  width: 100%; max-width: 640px; animation: slideUp 0.25s ease;
+}
+@media (min-width: 520px) {
+  .modal-overlay { align-items: center; }
+  .modal-sheet { border-radius: var(--radius); max-width: 420px; }
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.modal-title { font-family: var(--font-display); font-size: 19px; font-weight: 600; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-soft); }
+.setting-row:last-of-type { border-bottom: none; }
+.setting-label { font-size: 14px; font-weight: 700; }
+.setting-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.toggle { width: 44px; height: 26px; border-radius: 13px; background: var(--bg-elevated-3); border: none; cursor: pointer; position: relative; flex-shrink: 0; }
+.toggle.on { background: var(--accent); }
+.toggle-knob { width: 20px; height: 20px; border-radius: 50%; background: #fff; position: absolute; top: 3px; left: 3px; transition: left 0.15s; }
+.toggle.on .toggle-knob { left: 21px; }
+.volume-row { padding: 12px 0; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+.key-picker-list { display: flex; flex-direction: column; gap: 6px; max-height: 50vh; overflow-y: auto; }
+.key-picker-item { padding: 12px 14px; border-radius: 9px; cursor: pointer; font-family: var(--font-display); font-size: 16px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+.key-picker-item:hover { background: var(--bg-elevated-2); }
+.key-picker-item .kp-check { color: var(--accent); display: none; }
+.key-picker-item.selected .kp-check { display: block; }
+.key-picker-item.selected .kp-check svg { width: 16px; height: 16px; }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <div class="brand"><span class="brand-mark">Major Scale Trainer</span><span class="brand-note">♪</span></div>
+    <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </button>
+  </div>
+
+  <!-- ============ HOME ============ -->
+  <div class="screen active" id="screen-home">
+    <div class="mic-card card" id="micCard">
+      <div class="mic-icon-wrap" id="micIconWrap">
+        <div class="mic-pulse"></div>
+        <svg id="micIconSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+      </div>
+      <div class="mic-info">
+        <div class="mic-title" id="micTitle">Microphone access needed</div>
+        <div class="mic-sub" id="micSub">So the app can hear what you play</div>
+      </div>
+      <button class="btn btn-primary" id="micBtn">Enable</button>
+    </div>
+
+    <div class="page-header">
+      <h1 class="page-title">Choose a mode</h1>
+      <p class="page-subtitle">The app plays a note or short phrase, you find and play it back on your guitar.</p>
+    </div>
+
+    <div class="mode-grid">
+      <button class="mode-card" id="goProgressive">
+        <div class="mode-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M6 21V17"></path><path d="M11 21V12"></path><path d="M16 21V7"></path><path d="M21 21V3"></path></svg></div>
+        <div style="flex:1">
+          <div class="mode-text-title">Progressive</div>
+          <div class="mode-text-desc">7 levels per key. Start with single notes, work up to 7-note phrases.</div>
+        </div>
+        <div class="mode-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+      </button>
+      <button class="mode-card" id="goCustom">
+        <div class="mode-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg></div>
+        <div style="flex:1">
+          <div class="mode-text-title">Custom</div>
+          <div class="mode-text-desc">Pick the key, notes per exercise, and how many exercises yourself.</div>
+        </div>
+        <div class="mode-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+      </button>
+    </div>
+
+    <div class="howitworks">
+      <div class="howitworks-title">How it works</div>
+      <div class="howitworks-steps">
+        <div class="howitworks-step"><span class="step-num">1</span>The app plays a note (or a short sequence).</div>
+        <div class="howitworks-step"><span class="step-num">2</span>Find it and play it back on your guitar, in order.</div>
+        <div class="howitworks-step"><span class="step-num">3</span>Get instant feedback per note, then move on.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PROGRESSIVE: KEY SELECT ============ -->
+  <div class="screen" id="screen-key-select">
+    <div class="back-row">
+      <button class="back-btn" data-back="screen-home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>Home</button>
+    </div>
+    <div class="page-header">
+      <h1 class="page-title">Choose a key</h1>
+      <p class="page-subtitle">Each key has 7 levels, from single notes up to 7-note phrases.</p>
+    </div>
+    <div class="key-grid" id="keyGridProgressive"></div>
+  </div>
+
+  <!-- ============ PROGRESSIVE: LEVEL SELECT ============ -->
+  <div class="screen" id="screen-level-select">
+    <div class="back-row">
+      <button class="back-btn" data-back="screen-key-select"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>Keys</button>
+    </div>
+    <div class="page-header">
+      <h1 class="page-title" id="levelSelectTitle">Key</h1>
+      <p class="page-subtitle">Levels unlock in order. Replay any completed level anytime.</p>
+    </div>
+    <div class="level-list" id="levelList"></div>
+  </div>
+
+  <!-- ============ CUSTOM SETUP ============ -->
+  <div class="screen" id="screen-custom-setup">
+    <div class="back-row">
+      <button class="back-btn" data-back="screen-home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>Home</button>
+    </div>
+    <div class="page-header">
+      <h1 class="page-title">Custom exercise</h1>
+      <p class="page-subtitle">Set it up however you like.</p>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Key</label>
+      <button class="select-key-btn" id="customKeyBtn">
+        <span class="select-key-btn-name" id="customKeyName">C Major</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Notes per exercise</label>
+      <div class="stepper">
+        <button class="stepper-btn" id="notesMinus">−</button>
+        <div class="stepper-value" id="notesPerExerciseValue">3</div>
+        <button class="stepper-btn" id="notesPlus">+</button>
+      </div>
+      <div class="stepper-hint">How many notes the app plays per exercise (1-16)</div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Number of exercises</label>
+      <div class="stepper">
+        <button class="stepper-btn" id="exercisesMinus">−</button>
+        <div class="stepper-value" id="numExercisesValue">10</div>
+        <button class="stepper-btn" id="exercisesPlus">+</button>
+      </div>
+      <div class="stepper-hint">How many exercises in this session (1-50)</div>
+    </div>
+
+    <button class="btn btn-primary btn-block" id="startCustomBtn" style="padding:14px;">Start Session</button>
+  </div>
+
+  <!-- ============ EXERCISE ============ -->
+  <div class="screen" id="screen-exercise">
+    <div class="ex-header">
+      <div class="ex-breadcrumb" id="exBreadcrumb">C Major · Level 1</div>
+      <div class="ex-count" id="exCount">Exercise 1/10</div>
+    </div>
+    <div class="ex-progress-bar"><div class="ex-progress-fill" id="exProgressFill" style="width:0%"></div></div>
+
+    <div class="sequence-row" id="sequenceRow"></div>
+
+    <div class="play-zone">
+      <button class="play-btn" id="playBtn" aria-label="Play sequence">
+        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+      </button>
+      <div class="replay-label" id="playLabel">Tap to hear it</div>
+    </div>
+
+    <div class="feedback-banner" id="feedbackBanner"></div>
+
+    <div class="listen-zone">
+      <div class="listen-status" id="listenStatus">Waiting</div>
+      <div class="detected-note" id="detectedNote">—</div>
+      <div class="cents-meter" id="centsMeter"><div class="cents-meter-center"></div><div class="cents-meter-fill" id="centsMeterFill"></div></div>
+    </div>
+
+    <div class="ex-controls">
+      <button class="btn btn-ghost" id="skipNoteBtn">Skip note</button>
+      <button class="btn btn-ghost" id="exitExerciseBtn">Exit</button>
+    </div>
+  </div>
+
+  <!-- ============ RESULTS ============ -->
+  <div class="screen" id="screen-results">
+    <div class="results-hero">
+      <div class="results-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
+      <div class="results-title" id="resultsTitle">Level Complete!</div>
+      <div class="results-sub" id="resultsSub">Nice work.</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-tile"><div class="stat-value" id="statAccuracy">0%</div><div class="stat-label">Accuracy</div></div>
+      <div class="stat-tile"><div class="stat-value" id="statFirstTry">0%</div><div class="stat-label">First try</div></div>
+      <div class="stat-tile"><div class="stat-value" id="statNotes">0</div><div class="stat-label">Notes played</div></div>
+    </div>
+    <div class="results-actions" id="resultsActions"></div>
+  </div>
+
+</div>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">Settings</div>
+      <button class="icon-btn" id="closeSettingsBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+    </div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Play key reference</div>
+        <div class="setting-desc">Hear the key's tonic note before each exercise</div>
+      </div>
+      <button class="toggle on" id="keyReferenceToggle"><div class="toggle-knob"></div></button>
+    </div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Ignore octave</div>
+        <div class="setting-desc">Any octave of the right note counts as correct</div>
+      </div>
+      <button class="toggle" id="ignoreOctaveToggle"><div class="toggle-knob"></div></button>
+    </div>
+    <div class="volume-row">
+      <div class="setting-label" style="margin-bottom:8px;">Playback volume</div>
+      <input type="range" id="volumeSlider" min="0" max="100" value="80">
+    </div>
+  </div>
+</div>
+
+<!-- ============ KEY PICKER MODAL (custom mode) ============ -->
+<div class="modal-overlay" id="keyPickerModal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">Choose a key</div>
+      <button class="icon-btn" id="closeKeyPickerBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+    </div>
+    <div class="key-picker-list" id="keyPickerList"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+'use strict';
+
+/* =========================================================================
+   MUSIC THEORY
+   ========================================================================= */
+const NOTE_SEMITONES = {
+  'C':0,'B#':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,'E':4,'Fb':4,'E#':5,'F':5,
+  'F#':6,'Gb':6,'G':7,'G#':8,'Ab':8,'A':9,'A#':10,'Bb':10,'B':11,'Cb':11
+};
+
+const MAJOR_KEYS = [
+  { name: 'C',  label: 'C Major',  notes: ['C','D','E','F','G','A','B'] },
+  { name: 'G',  label: 'G Major',  notes: ['G','A','B','C','D','E','F#'] },
+  { name: 'D',  label: 'D Major',  notes: ['D','E','F#','G','A','B','C#'] },
+  { name: 'A',  label: 'A Major',  notes: ['A','B','C#','D','E','F#','G#'] },
+  { name: 'E',  label: 'E Major',  notes: ['E','F#','G#','A','B','C#','D#'] },
+  { name: 'B',  label: 'B Major',  notes: ['B','C#','D#','E','F#','G#','A#'] },
+  { name: 'F#', label: 'F# Major', notes: ['F#','G#','A#','B','C#','D#','E#'] },
+  { name: 'Db', label: 'Db Major', notes: ['Db','Eb','F','Gb','Ab','Bb','C'] },
+  { name: 'Ab', label: 'Ab Major', notes: ['Ab','Bb','C','Db','Eb','F','G'] },
+  { name: 'Eb', label: 'Eb Major', notes: ['Eb','F','G','Ab','Bb','C','D'] },
+  { name: 'Bb', label: 'Bb Major', notes: ['Bb','C','D','Eb','F','G','A'] },
+  { name: 'F',  label: 'F Major',  notes: ['F','G','A','Bb','C','D','E'] },
+];
+
+const SCALE_INTERVALS = [0, 2, 4, 5, 7, 9, 11, 12];
+
+// Pitch computed via integer MIDI arithmetic so octave boundaries (which occur
+// at C, not necessarily at the root) fall out correctly automatically.
+function getScaleNotes(keyObj, startOctave) {
+  startOctave = startOctave || 3;
+  const degreeNames = keyObj.notes;
+  const rootSemitone = NOTE_SEMITONES[degreeNames[0]];
+  const rootMidi = rootSemitone + 12 * (startOctave + 1);
+  const notes = [];
+  for (let i = 0; i < 8; i++) {
+    const midi = rootMidi + SCALE_INTERVALS[i];
+    const octave = Math.floor(midi / 12) - 1;
+    const name = i === 7 ? degreeNames[0] : degreeNames[i];
+    const freq = 440 * Math.pow(2, (midi - 69) / 12);
+    notes.push({ name, octave, midi, freq, display: name + octave, degree: i + 1 });
+  }
+  return notes;
+}
+
+function generateSequence(scaleNotes, length) {
+  const seq = [];
+  for (let i = 0; i < length; i++) {
+    seq.push(scaleNotes[Math.floor(Math.random() * scaleNotes.length)]);
+  }
+  return seq;
+}
+
+const CHROMATIC_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+function freqToNoteInfo(freq) {
+  const exactMidi = 69 + 12 * Math.log2(freq / 440);
+  const midi = Math.round(exactMidi);
+  const cents = Math.round((exactMidi - midi) * 100);
+  const pitchClass = ((midi % 12) + 12) % 12;
+  const octave = Math.floor(midi / 12) - 1;
+  return { midi, name: CHROMATIC_NAMES[pitchClass], octave, cents, display: CHROMATIC_NAMES[pitchClass] + octave };
+}
+
+/* =========================================================================
+   AUDIO ENGINE (Karplus-Strong plucked-string synthesis)
+   ========================================================================= */
+const AudioEngine = {
+  ctx: null,
+  ensureContext() {
+    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    return this.ctx;
+  },
+  karplusStrongBuffer(frequency, duration, sampleRate, sustainFactor) {
+    sustainFactor = sustainFactor || 0.45;
+    const decay = Math.min(0.9997, Math.max(0.9, Math.pow(sustainFactor, 1 / frequency)));
+    const N = Math.max(2, Math.round(sampleRate / frequency));
+    const buf = new Float32Array(N);
+    for (let i = 0; i < N; i++) buf[i] = Math.random() * 2 - 1;
+    const total = Math.floor(sampleRate * duration);
+    const out = new Float32Array(total);
+    let idx = 0;
+    for (let n = 0; n < total; n++) {
+      const cur = buf[idx];
+      out[n] = cur;
+      const nextIdx = (idx + 1) % N;
+      const avg = 0.5 * (cur + buf[nextIdx]);
+      buf[idx] = avg * decay;
+      idx = nextIdx;
+    }
+    const fadeSamples = Math.min(total, Math.floor(sampleRate * 0.003));
+    for (let i = 0; i < fadeSamples; i++) out[i] *= i / fadeSamples;
+    return out;
+  },
+  playNote(freq, when, duration) {
+    const ctx = this.ensureContext();
+    duration = duration || 1.8;
+    when = when || 0;
+    const data = this.karplusStrongBuffer(freq, duration, ctx.sampleRate);
+    const buffer = ctx.createBuffer(1, data.length, ctx.sampleRate);
+    buffer.copyToChannel(data, 0);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 6500;
+    const gain = ctx.createGain();
+    const startTime = ctx.currentTime + when;
+    const vol = Settings.data.volume;
+    gain.gain.setValueAtTime(vol, startTime);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.001, vol * 0.001), startTime + duration);
+    source.connect(filter).connect(gain).connect(ctx.destination);
+    source.start(startTime);
+  },
+  playSequence(notes, options, onComplete) {
+    options = options || {};
+    this.ensureContext();
+    const interval = 0.85;
+    let t = 0;
+    if (options.referenceNote) {
+      this.playNote(options.referenceNote.freq, 0, 1.3);
+      t = 1.15; // longer pause after the reference tone so it reads as separate from the sequence
+    }
+    notes.forEach((note, i) => this.playNote(note.freq, t + i * interval, 1.7));
+    const totalMs = (t + Math.max(0, notes.length - 1) * interval) * 1000 + 500;
+    if (onComplete) setTimeout(onComplete, totalMs);
+    return totalMs;
+  }
+};
+
+/* =========================================================================
+   PITCH DETECTION (autocorrelation with octave-error guards)
+   ========================================================================= */
+function autoCorrelate(buf, sampleRate) {
+  const SIZE = buf.length;
+  let energySum = 0;
+  for (let i = 0; i < SIZE; i++) energySum += buf[i] * buf[i];
+  const rms = Math.sqrt(energySum / SIZE);
+  if (rms < 0.008) return -1;
+  const meanSquare = energySum / SIZE;
+  if (meanSquare <= 0) return -1;
+
+  const MIN_FREQ = 65, MAX_FREQ = 700;
+  const maxLag = Math.min(SIZE - 1, Math.floor(sampleRate / MIN_FREQ));
+  const minLag = Math.max(1, Math.floor(sampleRate / MAX_FREQ));
+
+  function confAt(lag) {
+    if (lag < 1 || lag >= SIZE) return 0;
+    let sum = 0;
+    for (let i = 0; i < SIZE - lag; i++) sum += buf[i] * buf[i + lag];
+    return (sum / (SIZE - lag)) / meanSquare;
+  }
+
+  const conf = new Float32Array(maxLag + 1);
+  for (let lag = minLag; lag <= maxLag; lag++) conf[lag] = confAt(lag);
+
+  const THRESHOLD = 0.7;
+  let candidateLag = -1;
+  for (let lag = minLag + 1; lag < maxLag; lag++) {
+    if (conf[lag] >= THRESHOLD && conf[lag] >= conf[lag - 1] && conf[lag] >= conf[lag + 1]) {
+      candidateLag = lag;
+      break;
+    }
+  }
+  if (candidateLag === -1) return -1;
+
+  // Octave-up guard: a genuine fundamental also correlates strongly at 3x its
+  // lag (a true multiple). A false sub-harmonic peak (real period = 2x) won't,
+  // since 3x that lag is 1.5x the real period -- not a true multiple.
+  const doubleConf = confAt(Math.round(candidateLag * 2));
+  const tripleConf = confAt(Math.round(candidateLag * 3));
+  if (doubleConf >= 0.7 && tripleConf < 0.5 && candidateLag * 2 <= maxLag) {
+    candidateLag = Math.round(candidateLag * 2);
+  }
+
+  let refinedLag = candidateLag;
+  const c1 = confAt(candidateLag - 1), c2 = confAt(candidateLag), c3 = confAt(candidateLag + 1);
+  const denom = (c1 - 2 * c2 + c3);
+  if (denom !== 0) {
+    const shift = 0.5 * (c1 - c3) / denom;
+    if (Math.abs(shift) < 1) refinedLag = candidateLag + shift;
+  }
+  if (refinedLag <= 0) return -1;
+  return sampleRate / refinedLag;
+}
+
+const PitchDetector = {
+  ctx: null, analyser: null, stream: null, buffer: null, active: false, rafId: null, onDetect: null,
+  async requestAccess() {
+    this.stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+    });
+    this.ctx = AudioEngine.ensureContext();
+    const source = this.ctx.createMediaStreamSource(this.stream);
+    this.analyser = this.ctx.createAnalyser();
+    this.analyser.fftSize = 4096;
+    this.buffer = new Float32Array(this.analyser.fftSize);
+    source.connect(this.analyser);
+  },
+  start(onDetect) {
+    this.active = true;
+    this.onDetect = onDetect;
+    this._tick();
+  },
+  stop() {
+    this.active = false;
+    if (this.rafId) cancelAnimationFrame(this.rafId);
+  },
+  _tick() {
+    if (!this.active) return;
+    this.analyser.getFloatTimeDomainData(this.buffer);
+    const freq = autoCorrelate(this.buffer, this.ctx.sampleRate);
+    if (this.onDetect) this.onDetect(freq);
+    this.rafId = requestAnimationFrame(() => this._tick());
+  }
+};
+
+/* =========================================================================
+   PERSISTENT STORAGE (progress + settings)
+   ========================================================================= */
+const Storage = {
+  async loadProgress() {
+    try {
+      const result = await window.storage.get('ms_progress_v1', false);
+      if (result && result.value) return JSON.parse(result.value);
+    } catch (e) {}
+    return {};
+  },
+  async saveProgress(progress) {
+    try { await window.storage.set('ms_progress_v1', JSON.stringify(progress), false); }
+    catch (e) { console.error('progress save failed', e); }
+  },
+  async loadSettings() {
+    try {
+      const result = await window.storage.get('ms_settings_v1', false);
+      if (result && result.value) return JSON.parse(result.value);
+    } catch (e) {}
+    return null;
+  },
+  async saveSettings(s) {
+    try { await window.storage.set('ms_settings_v1', JSON.stringify(s), false); }
+    catch (e) { console.error('settings save failed', e); }
+  }
+};
+
+const Settings = { data: { ignoreOctave: false, volume: 0.8, playKeyReference: true } };
+
+/* =========================================================================
+   APP STATE
+   ========================================================================= */
+const EXERCISES_PER_LEVEL = 10;
+const LEVELS_PER_KEY = 7;
+
+const state = {
+  micGranted: false,
+  mode: null,               // 'progressive' | 'custom'
+  currentKey: MAJOR_KEYS[0],
+  currentLevel: 1,
+  totalExercises: EXERCISES_PER_LEVEL,
+  notesPerExercise: 1,
+  currentExerciseIndex: 0,  // 0-based
+  currentSequence: [],
+  currentPosition: 0,
+  mistakesOnCurrentNote: 0,
+  session: { correctFirstTry: 0, totalNotes: 0, totalMistakes: 0, exercisesCompleted: 0 },
+  progress: {},
+  customNotesPerExercise: 3,
+  customNumExercises: 10,
+  cooldownUntil: 0,
+  recentMidis: [],
+  awaitingTap: true,
+  isPlaying: false,
+};
+
+/* =========================================================================
+   DOM HELPERS / SCREEN NAV
+   ========================================================================= */
+const $ = (id) => document.getElementById(id);
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  $(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+/* =========================================================================
+   MIC ENABLE FLOW
+   ========================================================================= */
+let micTestActive = false;
+$('micBtn').addEventListener('click', async () => {
+  if (state.micGranted) return;
+  $('micBtn').disabled = true;
+  $('micBtn').textContent = 'Requesting…';
+  try {
+    await PitchDetector.requestAccess();
+    state.micGranted = true;
+    $('micIconWrap').classList.add('granted', 'listening');
+    $('micTitle').textContent = 'Microphone ready';
+    $('micSub').textContent = 'Pluck a string to test it';
+    $('micBtn').textContent = 'Enabled';
+    $('micBtn').classList.remove('btn-primary');
+    $('micBtn').classList.add('btn-secondary');
+    micTestActive = true;
+    PitchDetector.start((freq) => {
+      if (!micTestActive) return;
+      if (freq > 0) {
+        const info = freqToNoteInfo(freq);
+        $('micSub').innerHTML = 'Detected: <span style="color:var(--accent-bright);font-weight:800;">' + info.display + '</span> — you\'re all set';
+      }
+    });
+  } catch (err) {
+    $('micTitle').textContent = 'Microphone access denied';
+    $('micSub').textContent = 'Check your browser/site permissions and try again';
+    $('micSub').classList.add('error-text');
+    $('micBtn').disabled = false;
+    $('micBtn').textContent = 'Try again';
+  }
+});
+
+function stopMicTest() {
+  if (micTestActive) {
+    micTestActive = false;
+    PitchDetector.stop();
+  }
+}
+
+/* =========================================================================
+   HOME NAV
+   ========================================================================= */
+$('goProgressive').addEventListener('click', () => {
+  stopMicTest();
+  renderKeyGridProgressive();
+  showScreen('screen-key-select');
+});
+$('goCustom').addEventListener('click', () => {
+  stopMicTest();
+  renderCustomSetup();
+  showScreen('screen-custom-setup');
+});
+document.querySelectorAll('.back-btn').forEach(btn => {
+  btn.addEventListener('click', () => showScreen(btn.getAttribute('data-back')));
+});
+
+/* =========================================================================
+   PROGRESSIVE: KEY GRID
+   ========================================================================= */
+function keyProgress(keyName) {
+  const arr = state.progress[keyName];
+  if (!arr) return 0;
+  return arr.filter(l => l && l.completed).length;
+}
+
+function renderKeyGridProgressive() {
+  const grid = $('keyGridProgressive');
+  grid.innerHTML = '';
+  MAJOR_KEYS.forEach(key => {
+    const done = keyProgress(key.name);
+    const tile = document.createElement('button');
+    tile.className = 'key-tile';
+    let dots = '';
+    for (let i = 0; i < LEVELS_PER_KEY; i++) dots += '<div class="key-progress-dot' + (i < done ? ' done' : '') + '"></div>';
+    tile.innerHTML = '<div class="key-name">' + key.name + '</div><div class="key-progress">' + done + '/' + LEVELS_PER_KEY + '</div><div class="key-progress-dots">' + dots + '</div>';
+    tile.addEventListener('click', () => {
+      state.currentKey = key;
+      renderLevelSelect();
+      showScreen('screen-level-select');
+    });
+    grid.appendChild(tile);
+  });
+}
+
+/* =========================================================================
+   PROGRESSIVE: LEVEL SELECT
+   ========================================================================= */
+function renderLevelSelect() {
+  $('levelSelectTitle').textContent = state.currentKey.label;
+  const list = $('levelList');
+  list.innerHTML = '';
+  const arr = state.progress[state.currentKey.name] || [];
+  for (let lvl = 1; lvl <= LEVELS_PER_KEY; lvl++) {
+    const entry = arr[lvl - 1];
+    const completed = entry && entry.completed;
+    const prevCompleted = lvl === 1 || (arr[lvl - 2] && arr[lvl - 2].completed);
+    const locked = !prevCompleted;
+
+    const row = document.createElement('button');
+    row.className = 'level-row' + (locked ? ' locked' : '') + (completed ? ' completed' : '');
+    const noteWord = lvl === 1 ? 'note' : 'notes';
+    let sub = lvl + ' ' + noteWord + ' per exercise · ' + EXERCISES_PER_LEVEL + ' exercises';
+    if (completed) sub += ' · best ' + Math.round(entry.bestAccuracy * 100) + '%';
+    let badge = '';
+    if (locked) badge = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>';
+    else if (completed) badge = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>';
+    else badge = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>';
+
+    row.innerHTML = '<div class="level-num">' + lvl + '</div>' +
+      '<div class="level-info"><div class="level-title">Level ' + lvl + '</div><div class="level-sub">' + sub + '</div></div>' +
+      '<div class="level-badge">' + badge + '</div>';
+
+    if (!locked) {
+      row.addEventListener('click', () => startProgressiveLevel(lvl));
+    }
+    list.appendChild(row);
+  }
+}
+
+function startProgressiveLevel(level) {
+  state.mode = 'progressive';
+  state.currentLevel = level;
+  state.notesPerExercise = level;
+  state.totalExercises = EXERCISES_PER_LEVEL;
+  beginSession();
+}
+
+/* =========================================================================
+   CUSTOM SETUP
+   ========================================================================= */
+function renderCustomSetup() {
+  $('customKeyName').textContent = state.currentKey.label;
+  $('notesPerExerciseValue').textContent = state.customNotesPerExercise;
+  $('numExercisesValue').textContent = state.customNumExercises;
+}
+
+$('customKeyBtn').addEventListener('click', () => openKeyPicker());
+$('notesMinus').addEventListener('click', () => { state.customNotesPerExercise = Math.max(1, state.customNotesPerExercise - 1); renderCustomSetup(); });
+$('notesPlus').addEventListener('click', () => { state.customNotesPerExercise = Math.min(16, state.customNotesPerExercise + 1); renderCustomSetup(); });
+$('exercisesMinus').addEventListener('click', () => { state.customNumExercises = Math.max(1, state.customNumExercises - 5); renderCustomSetup(); });
+$('exercisesPlus').addEventListener('click', () => { state.customNumExercises = Math.min(50, state.customNumExercises + 5); renderCustomSetup(); });
+
+$('startCustomBtn').addEventListener('click', () => {
+  state.mode = 'custom';
+  state.notesPerExercise = state.customNotesPerExercise;
+  state.totalExercises = state.customNumExercises;
+  beginSession();
+});
+
+function openKeyPicker() {
+  const list = $('keyPickerList');
+  list.innerHTML = '';
+  MAJOR_KEYS.forEach(key => {
+    const item = document.createElement('div');
+    item.className = 'key-picker-item' + (key.name === state.currentKey.name ? ' selected' : '');
+    item.innerHTML = '<span>' + key.label + '</span><span class="kp-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></span>';
+    item.addEventListener('click', () => {
+      state.currentKey = key;
+      renderCustomSetup();
+      $('keyPickerModal').classList.remove('show');
+    });
+    list.appendChild(item);
+  });
+  $('keyPickerModal').classList.add('show');
+}
+$('closeKeyPickerBtn').addEventListener('click', () => $('keyPickerModal').classList.remove('show'));
+
+/* =========================================================================
+   EXERCISE SESSION
+   ========================================================================= */
+function beginSession() {
+  stopMicTest();
+  state.awaitingTap = false;
+  state.currentExerciseIndex = 0;
+  state.session = { correctFirstTry: 0, totalNotes: 0, totalMistakes: 0, exercisesCompleted: 0 };
+  showScreen('screen-exercise');
+  startExercise();
+  PitchDetector.start(handlePitchDetected);
+}
+
+function scaleNotesForCurrentKey() {
+  return getScaleNotes(state.currentKey, 3);
+}
+
+function startExercise() {
+  const pool = scaleNotesForCurrentKey();
+  state.currentSequence = generateSequence(pool, state.notesPerExercise);
+  state.currentPosition = 0;
+  state.mistakesOnCurrentNote = 0;
+  state.recentMidis = [];
+  state.cooldownUntil = 0;
+
+  const breadcrumb = state.mode === 'progressive'
+    ? state.currentKey.label + ' · Level ' + state.currentLevel
+    : state.currentKey.label + ' · Custom';
+  $('exBreadcrumb').textContent = breadcrumb;
+  $('exCount').textContent = 'Exercise ' + (state.currentExerciseIndex + 1) + '/' + state.totalExercises;
+  $('exProgressFill').style.width = Math.round(100 * state.currentExerciseIndex / state.totalExercises) + '%';
+
+  renderSequenceRow();
+  clearFeedback();
+  $('detectedNote').textContent = '—';
+  $('detectedNote').classList.remove('live');
+  $('centsMeter').classList.remove('show');
+  $('listenStatus').textContent = 'Listen, then play it back';
+
+  setTimeout(() => playCurrentSequence(), 500);
+}
+
+function renderSequenceRow() {
+  const row = $('sequenceRow');
+  row.innerHTML = '';
+  state.currentSequence.forEach((note, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'seq-slot';
+    if (i < state.currentPosition) { slot.classList.add('done'); slot.textContent = note.name; }
+    else if (i === state.currentPosition) { slot.classList.add('current'); slot.textContent = '?'; }
+    else { slot.textContent = '·'; }
+    row.appendChild(slot);
+  });
+}
+
+let playbackTimer = null;
+function playCurrentSequence() {
+  const btn = $('playBtn');
+  btn.classList.add('playing');
+  state.isPlaying = true;
+
+  const useReference = Settings.data.playKeyReference;
+  const referenceNote = useReference ? scaleNotesForCurrentKey()[0] : null;
+
+  if (referenceNote) {
+    $('playLabel').textContent = 'Key: ' + referenceNote.name + '…';
+    playbackTimer = setTimeout(() => { $('playLabel').textContent = 'Playing…'; }, 1150);
+  } else {
+    $('playLabel').textContent = 'Playing…';
+  }
+
+  AudioEngine.playSequence(state.currentSequence, { referenceNote }, () => {
+    state.isPlaying = false;
+    btn.classList.remove('playing');
+    $('playLabel').textContent = 'Tap to hear again';
+    $('listenStatus').textContent = 'Your turn — play note ' + (state.currentPosition + 1);
+  });
+}
+$('playBtn').addEventListener('click', () => {
+  if (playbackTimer) clearTimeout(playbackTimer);
+  playCurrentSequence();
+});
+
+function clearFeedback() {
+  const b = $('feedbackBanner');
+  b.className = 'feedback-banner';
+  b.innerHTML = '';
+}
+function showFeedback(kind, html) {
+  const b = $('feedbackBanner');
+  b.className = 'feedback-banner show ' + kind;
+  const icon = kind === 'correct'
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+  b.innerHTML = icon + '<span>' + html + '</span>';
+}
+
+function handlePitchDetected(freq) {
+  if (state.awaitingTap) return; // not in an active exercise
+  if (state.isPlaying) return;   // ignore mic input while the app itself is making sound
+  const now = performance.now();
+
+  if (freq <= 0) {
+    state.recentMidis = [];
+    $('detectedNote').textContent = '—';
+    $('detectedNote').classList.remove('live');
+    $('centsMeter').classList.remove('show');
+    return;
+  }
+
+  const info = freqToNoteInfo(freq);
+  $('detectedNote').textContent = info.display;
+  $('detectedNote').classList.add('live');
+  $('centsMeter').classList.add('show');
+  const clampedCents = Math.max(-50, Math.min(50, info.cents));
+  $('centsMeterFill').style.left = (50 + clampedCents) + '%';
+
+  if (now < state.cooldownUntil) return;
+
+  state.recentMidis.push(info.midi);
+  if (state.recentMidis.length > 5) state.recentMidis.shift();
+
+  if (state.recentMidis.length === 5 && state.recentMidis.every(m => m === state.recentMidis[0])) {
+    evaluateStableNote(state.recentMidis[0], info);
+    state.recentMidis = [];
+  }
+}
+
+function evaluateStableNote(midi, info) {
+  const target = state.currentSequence[state.currentPosition];
+  const match = Settings.data.ignoreOctave
+    ? (((midi % 12) + 12) % 12) === (((target.midi % 12) + 12) % 12)
+    : midi === target.midi;
+
+  state.session.totalNotes++;
+
+  if (match) {
+    if (state.mistakesOnCurrentNote === 0) state.session.correctFirstTry++;
+    showFeedback('correct', 'Correct — ' + info.display);
+    state.currentPosition++;
+    state.mistakesOnCurrentNote = 0;
+    state.cooldownUntil = performance.now() + 550;
+    renderSequenceRow();
+
+    if (state.currentPosition >= state.currentSequence.length) {
+      state.cooldownUntil = performance.now() + 900;
+      setTimeout(finishExercise, 700);
+    } else {
+      $('listenStatus').textContent = 'Play note ' + (state.currentPosition + 1);
+    }
+  } else {
+    state.mistakesOnCurrentNote++;
+    state.session.totalMistakes++;
+    showFeedback('incorrect', 'Heard ' + info.display + ' — expected ' + target.name + target.octave);
+    state.cooldownUntil = performance.now() + 450;
+  }
+}
+
+$('skipNoteBtn').addEventListener('click', () => {
+  clearFeedback();
+  state.currentPosition++;
+  state.recentMidis = [];
+  renderSequenceRow();
+  if (state.currentPosition >= state.currentSequence.length) {
+    setTimeout(finishExercise, 200);
+  } else {
+    $('listenStatus').textContent = 'Play note ' + (state.currentPosition + 1);
+  }
+});
+
+$('exitExerciseBtn').addEventListener('click', () => {
+  PitchDetector.stop();
+  state.awaitingTap = true;
+  if (state.mode === 'progressive') { renderLevelSelect(); showScreen('screen-level-select'); }
+  else { showScreen('screen-home'); }
+});
+
+function finishExercise() {
+  clearFeedback();
+  state.session.exercisesCompleted++;
+  state.currentExerciseIndex++;
+  if (state.currentExerciseIndex >= state.totalExercises) {
+    finishSession();
+  } else {
+    startExercise();
+  }
+}
+
+async function finishSession() {
+  PitchDetector.stop();
+  state.awaitingTap = true;
+  const accuracy = state.session.totalNotes > 0
+    ? (state.session.totalNotes - state.session.totalMistakes) / state.session.totalNotes
+    : 1;
+  // First-try rate: fraction of exercises where every note in the sequence
+  // was played correctly on the first attempt (no mistakes along the way).
+  const firstTryPct = state.totalExercises > 0 ? state.session.correctFirstTry / state.totalExercises : 1;
+
+  if (state.mode === 'progressive') {
+    if (!state.progress[state.currentKey.name]) state.progress[state.currentKey.name] = new Array(LEVELS_PER_KEY).fill(null);
+    const arr = state.progress[state.currentKey.name];
+    const prevBest = arr[state.currentLevel - 1] ? arr[state.currentLevel - 1].bestAccuracy : 0;
+    arr[state.currentLevel - 1] = { completed: true, bestAccuracy: Math.max(prevBest, accuracy), lastAccuracy: accuracy, date: Date.now() };
+    await Storage.saveProgress(state.progress);
+  }
+
+  renderResults(accuracy, firstTryPct);
+  showScreen('screen-results');
+}
+
+function renderResults(accuracy, firstTryPct) {
+  const unlockedNext = state.mode === 'progressive' && state.currentLevel < LEVELS_PER_KEY;
+  $('resultsTitle').textContent = state.mode === 'progressive' ? 'Level ' + state.currentLevel + ' Complete!' : 'Session Complete!';
+  $('resultsSub').textContent = state.mode === 'progressive'
+    ? (unlockedNext ? state.currentKey.label + ' · Level ' + (state.currentLevel + 1) + ' is now unlocked' : state.currentKey.label + ' · All 7 levels done!')
+    : state.currentKey.label + ' · ' + state.notesPerExercise + ' notes per exercise';
+
+  $('statAccuracy').textContent = Math.round(accuracy * 100) + '%';
+  $('statFirstTry').textContent = Math.round(firstTryPct * 100) + '%';
+  $('statNotes').textContent = state.session.totalNotes;
+
+  const actions = $('resultsActions');
+  actions.innerHTML = '';
+
+  if (state.mode === 'progressive') {
+    if (unlockedNext) {
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'btn btn-primary btn-block';
+      nextBtn.style.padding = '13px';
+      nextBtn.textContent = 'Next Level →';
+      nextBtn.addEventListener('click', () => startProgressiveLevel(state.currentLevel + 1));
+      actions.appendChild(nextBtn);
+    }
+    const retryBtn = document.createElement('button');
+    retryBtn.className = 'btn btn-secondary btn-block';
+    retryBtn.style.padding = '13px';
+    retryBtn.textContent = 'Retry This Level';
+    retryBtn.addEventListener('click', () => startProgressiveLevel(state.currentLevel));
+    actions.appendChild(retryBtn);
+
+    const levelsBtn = document.createElement('button');
+    levelsBtn.className = 'btn btn-ghost btn-block';
+    levelsBtn.textContent = 'Back to Levels';
+    levelsBtn.addEventListener('click', () => { renderLevelSelect(); showScreen('screen-level-select'); });
+    actions.appendChild(levelsBtn);
+  } else {
+    const retryBtn = document.createElement('button');
+    retryBtn.className = 'btn btn-primary btn-block';
+    retryBtn.style.padding = '13px';
+    retryBtn.textContent = 'Retry Session';
+    retryBtn.addEventListener('click', () => beginSession());
+    actions.appendChild(retryBtn);
+
+    const homeBtn = document.createElement('button');
+    homeBtn.className = 'btn btn-ghost btn-block';
+    homeBtn.textContent = 'Back to Home';
+    homeBtn.addEventListener('click', () => showScreen('screen-home'));
+    actions.appendChild(homeBtn);
+  }
+}
+
+
+/* =========================================================================
+   SETTINGS MODAL
+   ========================================================================= */
+$('settingsBtn').addEventListener('click', () => $('settingsModal').classList.add('show'));
+$('closeSettingsBtn').addEventListener('click', () => $('settingsModal').classList.remove('show'));
+$('ignoreOctaveToggle').addEventListener('click', () => {
+  Settings.data.ignoreOctave = !Settings.data.ignoreOctave;
+  $('ignoreOctaveToggle').classList.toggle('on', Settings.data.ignoreOctave);
+  Storage.saveSettings(Settings.data);
+});
+$('keyReferenceToggle').addEventListener('click', () => {
+  Settings.data.playKeyReference = !Settings.data.playKeyReference;
+  $('keyReferenceToggle').classList.toggle('on', Settings.data.playKeyReference);
+  Storage.saveSettings(Settings.data);
+});
+$('volumeSlider').addEventListener('input', (e) => {
+  Settings.data.volume = Number(e.target.value) / 100;
+});
+$('volumeSlider').addEventListener('change', () => Storage.saveSettings(Settings.data));
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+async function init() {
+  const savedSettings = await Storage.loadSettings();
+  if (savedSettings) {
+    Settings.data = Object.assign(Settings.data, savedSettings);
+  }
+  $('ignoreOctaveToggle').classList.toggle('on', Settings.data.ignoreOctave);
+  $('keyReferenceToggle').classList.toggle('on', Settings.data.playKeyReference);
+  $('volumeSlider').value = Math.round(Settings.data.volume * 100);
+  state.progress = await Storage.loadProgress();
+  renderCustomSetup();
+}
+init();
+
+})();
+</script>
+</body>
+</html>
