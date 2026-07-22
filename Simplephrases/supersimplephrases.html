@@ -733,15 +733,42 @@ function playHallelujah() {
     });
 }
 function normalize(str) {
-  return str
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, "")      // keep alphanumeric and spaces
-    .replace(/\b(\d+):(\d+)\b/g, (_, h, m) => {
-        // Convert times like "6:00" to just "6" (ignore minutes)
-        return m === '00' ? h : h + m; // fallback to "600" if minutes not zero
-    })
-    .replace(/\s+/g, " ")             // collapse spaces
-    .trim();
+  // Convert numbers to words (0-99)
+  const numberWords = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
+  function numToWords(num) {
+    const n = parseInt(num, 10);
+    if (isNaN(n)) return num;
+    if (n >= 0 && n <= 12) return numberWords[n];
+    if (n < 20) {
+      const teens = ['thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+      if (n >= 13 && n <= 19) return teens[n-13];
+    }
+    if (n < 100) {
+      const tens = ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+      const t = Math.floor(n / 10);
+      const u = n % 10;
+      let word = tens[t];
+      if (u > 0) word += numberWords[u];
+      return word;
+    }
+    return num; // fallback for larger numbers
+  }
+
+  let processed = str.toLowerCase();
+  // Replace times like "6:00" -> "six" (if minutes are 00) or "six zero" (if not)
+  processed = processed.replace(/\b(\d+):(\d+)\b/g, (_, h, m) => {
+    let hourWord = numToWords(h);
+    if (m === '00') return hourWord;
+    else return hourWord + ' ' + numToWords(m);
+  });
+  // Replace standalone numbers
+  processed = processed.replace(/\b(\d+)\b/g, (_, num) => numToWords(num));
+
+  // Remove punctuation and keep only letters and spaces
+  processed = processed.replace(/[^a-z\s]/g, "");
+  // Collapse spaces
+  processed = processed.replace(/\s+/g, " ").trim();
+  return processed;
 }
 
 </script>
