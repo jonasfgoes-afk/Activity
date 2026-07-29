@@ -241,20 +241,32 @@ const CUMULATIVE_POINTS_KEY = `jonas_way_cumulative_${LESSON_ID}`;
 // Never hardcode backend URLs.
 // Always use WORKER_URL from CONFIG.
 fetch(WORKER_URL)
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    return res.json();
+  })
   .then(data => {
-  sentences = data;
-  loadProgress();
+    sentences = data;
+    loadProgress();
 
-  // 🔥 HARD SAFETY: backend changed → reset progress
-  if (slideProgress.length !== sentences.length) {
-    slideProgress = new Array(sentences.length).fill(0);
-    currentIndex = 0;
-    localStorage.removeItem(STORAGE_KEY);
-  }
+    // 🔥 HARD SAFETY: backend changed → reset progress
+    if (slideProgress.length !== sentences.length) {
+      slideProgress = new Array(sentences.length).fill(0);
+      currentIndex = 0;
+      localStorage.removeItem(STORAGE_KEY);
+    }
 
-  init();
-});
+    init();
+  })
+  .catch(err => {
+    console.error('Failed to load lesson data:', err);
+    document.getElementById('counter').innerText = '⚠️ Connection error – check URL or internet';
+    document.getElementById('result-msg').innerHTML = `
+      <div class="text-red-500 text-sm font-bold">
+        Could not load lesson. Please verify that the Worker URL is correct and the Worker is deployed.
+      </div>
+    `;
+  });
 
 function saveProgress() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ currentIndex, slideProgress }));
