@@ -195,14 +195,14 @@
     </div>
 </div>
 
-<footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method v8.1</footer>
+<footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method v8.3</footer>
 
 <script>
     // ==================================================
 // JONAS WAY — CONFIG (REQUIRED)
 // ==================================================
-const LESSON_ID  = 'level14';
-const WORKER_URL = 'https://level14.jonasfgoes.workers.dev/';
+const LESSON_ID  = 'supersimplephrases';
+const WORKER_URL = 'https://masterworker2.jonasfgoes.workers.dev/supersimplephrases';
 
 if (
   LESSON_ID === 'new_lesson' ||
@@ -387,7 +387,7 @@ function playAudio(text, rate) {
 
 // Speech recognition with continuous mode and silence timeout
 let recognitionActive = false;
-let finalTranscript = '';
+let finalTranscript = '';      // stores the longest final result seen
 let silenceTimer = null;
 const SILENCE_TIMEOUT = 1500; // 1.5 seconds
 
@@ -411,7 +411,7 @@ function setupSpeechRecognition() {
         recognitionActive = false;
         if (silenceTimer) clearTimeout(silenceTimer);
         document.getElementById(`mic-icon-${currentIndex}`).classList.remove('recording-pulse');
-        // If we have a final transcript, process it
+        // Use the longest final transcript collected (or fallback to what we have)
         if (finalTranscript.trim() !== '') {
             checkPronunciation(finalTranscript);
         }
@@ -421,27 +421,27 @@ function setupSpeechRecognition() {
         // Reset silence timer on any speech activity
         if (silenceTimer) clearTimeout(silenceTimer);
         silenceTimer = setTimeout(() => {
-            // No new speech for SILENCE_TIMEOUT ms → stop recording
             if (recognitionActive) {
                 recognition.stop();
             }
         }, SILENCE_TIMEOUT);
 
-        // Collect final results
+        // Collect final results – keep the longest one (most complete)
         for (let i = event.resultIndex; i < event.results.length; i++) {
             if (event.results[i].isFinal) {
-                finalTranscript += ' ' + event.results[i][0].transcript;
+                const newText = event.results[i][0].transcript.trim();
+                // Replace finalTranscript with the longer text (avoids concatenation of overlapping fragments)
+                if (newText.length > finalTranscript.length) {
+                    finalTranscript = newText;
+                }
             }
         }
-        // Trim extra spaces
-        finalTranscript = finalTranscript.trim();
     };
 
     recognition.onerror = (e) => {
         console.error('Speech recognition error', e.error);
-        // If error occurs, stop recording state
         if (recognitionActive) {
-            recognition.stop(); // this will trigger onend
+            recognition.stop();
         }
     };
 }
@@ -733,11 +733,42 @@ function playHallelujah() {
     });
 }
 function normalize(str) {
-  return str
-    .toLowerCase()
-    .replace(/[^a-z\s]/g, "") // remove punctuation & apostrophes
-    .replace(/\s+/g, " ")     // collapse multiple spaces
-    .trim();
+  // Convert numbers to words (0-99)
+  const numberWords = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
+  function numToWords(num) {
+    const n = parseInt(num, 10);
+    if (isNaN(n)) return num;
+    if (n >= 0 && n <= 12) return numberWords[n];
+    if (n < 20) {
+      const teens = ['thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+      if (n >= 13 && n <= 19) return teens[n-13];
+    }
+    if (n < 100) {
+      const tens = ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+      const t = Math.floor(n / 10);
+      const u = n % 10;
+      let word = tens[t];
+      if (u > 0) word += numberWords[u];
+      return word;
+    }
+    return num; // fallback for larger numbers
+  }
+
+  let processed = str.toLowerCase();
+  // Replace times like "6:00" -> "six" (if minutes are 00) or "six zero" (if not)
+  processed = processed.replace(/\b(\d+):(\d+)\b/g, (_, h, m) => {
+    let hourWord = numToWords(h);
+    if (m === '00') return hourWord;
+    else return hourWord + ' ' + numToWords(m);
+  });
+  // Replace standalone numbers
+  processed = processed.replace(/\b(\d+)\b/g, (_, num) => numToWords(num));
+
+  // Remove punctuation and keep only letters and spaces
+  processed = processed.replace(/[^a-z\s]/g, "");
+  // Collapse spaces
+  processed = processed.replace(/\s+/g, " ").trim();
+  return processed;
 }
 
 </script>

@@ -195,14 +195,27 @@
     </div>
 </div>
 
+<!-- Offline paste section -->
+<div id="paste-section" style="display: none; margin-top: 1rem; width: 100%; max-width: 400px; background: #f9fafb; border-radius: 12px; padding: 1rem; border: 1px solid #e5e7eb;">
+    <div class="flex justify-between items-center mb-2">
+        <span class="text-sm font-bold text-gray-700">📋 Paste Backend JSON</span>
+        <button onclick="document.getElementById('paste-section').style.display='none'" class="text-gray-400 hover:text-gray-600">✕</button>
+    </div>
+    <textarea id="paste-textarea" rows="8" class="w-full p-2 border border-gray-300 rounded text-sm font-mono" placeholder='Paste the array from your Worker here, e.g. [{ "type": "sentence", "en": "...", ... }]'></textarea>
+    <button onclick="savePastedData()" class="mt-2 w-full py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700">Save & Reload</button>
+    <p class="text-xs text-gray-400 mt-1">Data will be stored locally and used offline.</p>
+</div>
+
+<button id="show-paste-btn" onclick="document.getElementById('paste-section').style.display='block'" class="mt-2 text-xs text-blue-500 underline hover:text-blue-700">📥 Paste Backend (offline)</button>
+
 <footer class="mt-6 text-gray-400 text-xs">Jonas Way English - Mastery Method v8.1</footer>
 
 <script>
     // ==================================================
 // JONAS WAY — CONFIG (REQUIRED)
 // ==================================================
-const LESSON_ID  = 'level7';
-const WORKER_URL = 'https://level7.jonasfgoes.workers.dev/';
+const LESSON_ID  = '2nroutinemalu';
+const WORKER_URL = 'https://2nroutinemalu.jonasfgoes.workers.dev/';
 
 if (
   LESSON_ID === 'new_lesson' ||
@@ -236,26 +249,106 @@ loadVoices();
 
 const STORAGE_KEY = `jonas_way_mastery_${LESSON_ID}`;
 const CUMULATIVE_POINTS_KEY = `jonas_way_cumulative_${LESSON_ID}`;
+const LOCAL_DATA_KEY = `jonas_way_local_${LESSON_ID}`;
 
 // ⚠️ WORKFLOW RULE
 // Never hardcode backend URLs.
 // Always use WORKER_URL from CONFIG.
-fetch(WORKER_URL)
-  .then(res => res.json())
-  .then(data => {
-  sentences = data;
-  loadProgress();
 
-  // 🔥 HARD SAFETY: backend changed → reset progress
-  if (slideProgress.length !== sentences.length) {
-    slideProgress = new Array(sentences.length).fill(0);
-    currentIndex = 0;
-    localStorage.removeItem(STORAGE_KEY);
-  }
+// ================================================================
+// LOCAL DATA HELPERS (for offline paste)
+// ================================================================
+function loadLocalSentences() {
+    const raw = localStorage.getItem(LOCAL_DATA_KEY);
+    if (raw) {
+        try {
+            return JSON.parse(raw);
+        } catch (e) {
+            return null;
+        }
+    }
+    return null;
+}
 
-  init();
-});
+function saveLocalSentences(data) {
+    localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(data));
+}
 
+// ================================================================
+// LOADING LOGIC: local first, then fetch, then error
+// ================================================================
+function loadSentences() {
+    const localData = loadLocalSentences();
+    if (localData && Array.isArray(localData) && localData.length > 0) {
+        // Use local data immediately
+        sentences = localData;
+        loadProgress();
+        if (slideProgress.length !== sentences.length) {
+            slideProgress = new Array(sentences.length).fill(0);
+            currentIndex = 0;
+            localStorage.removeItem(STORAGE_KEY);
+        }
+        init();
+        return;
+    }
+
+    // No local data – fetch from worker
+    fetch(WORKER_URL)
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            sentences = data;
+            loadProgress();
+            if (slideProgress.length !== sentences.length) {
+                slideProgress = new Array(sentences.length).fill(0);
+                currentIndex = 0;
+                localStorage.removeItem(STORAGE_KEY);
+            }
+            init();
+        })
+        .catch(err => {
+            console.error('Failed to load lesson data:', err);
+            document.getElementById('counter').innerText = '⚠️ Connection error – use "Paste Backend" below';
+            document.getElementById('result-msg').innerHTML = `
+                <div class="text-red-500 text-sm font-bold">
+                    Could not load lesson. Please paste the backend JSON using the "Paste Backend" button.
+                </div>
+            `;
+            // Show paste section automatically
+            const pasteSection = document.getElementById('paste-section');
+            if (pasteSection) pasteSection.style.display = 'block';
+        });
+}
+
+// ================================================================
+// Save pasted data and reload
+// ================================================================
+function savePastedData() {
+    const textarea = document.getElementById('paste-textarea');
+    const raw = textarea.value.trim();
+    if (!raw) {
+        alert('Please paste some JSON data.');
+        return;
+    }
+    try {
+        const data = JSON.parse(raw);
+        if (!Array.isArray(data) || data.length === 0) {
+            alert('Data must be a non-empty array.');
+            return;
+        }
+        saveLocalSentences(data);
+        alert('Data saved! Reloading...');
+        location.reload();
+    } catch (e) {
+        alert('Invalid JSON format. Please check your paste.');
+    }
+}
+
+// ================================================================
+// PROGRESS & MASTERY
+// ================================================================
 function saveProgress() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ currentIndex, slideProgress }));
 }
@@ -275,7 +368,6 @@ function getCumulativePoints() {
     if (saved) {
         return JSON.parse(saved);
     }
-    // Initialize empty array with zeros for each sentence (will be updated when sentences load)
     return {};
 }
 
@@ -292,11 +384,10 @@ function incrementCumulativePoint(cardIndex) {
 
 function getDeckPoints() {
     const points = getCumulativePoints();
-    // Sum all values
     return Object.values(points).reduce((sum, val) => sum + val, 0);
 }
 
-// Daily limit functions (unchanged logic but keep them)
+// Daily limit functions
 function canEarnPoint(cardIndex) {
     const today = new Date().toISOString().split('T')[0];
     const key = `jonas_way_card_points_${LESSON_ID}_${today}`;
@@ -358,6 +449,15 @@ function init() {
     updateUI();
     lastDeckPoints = getDeckPoints();
     updateDeckPointsUI();
+
+    // Populate paste textarea if it exists
+    const textarea = document.getElementById('paste-textarea');
+    if (textarea) {
+        const localData = loadLocalSentences();
+        if (localData) {
+            textarea.value = JSON.stringify(localData, null, 2);
+        }
+    }
 }
 
 function restoreDots() {
@@ -411,52 +511,46 @@ function setupSpeechRecognition() {
         recognitionActive = false;
         if (silenceTimer) clearTimeout(silenceTimer);
         document.getElementById(`mic-icon-${currentIndex}`).classList.remove('recording-pulse');
-        // If we have a final transcript, process it
         if (finalTranscript.trim() !== '') {
             checkPronunciation(finalTranscript);
         }
     };
 
     recognition.onresult = (event) => {
-        // Reset silence timer on any speech activity
         if (silenceTimer) clearTimeout(silenceTimer);
         silenceTimer = setTimeout(() => {
-            // No new speech for SILENCE_TIMEOUT ms → stop recording
             if (recognitionActive) {
                 recognition.stop();
             }
         }, SILENCE_TIMEOUT);
 
-        // Collect final results
+        // Keep the longest final transcript (avoid concatenation of overlapping fragments)
         for (let i = event.resultIndex; i < event.results.length; i++) {
             if (event.results[i].isFinal) {
-                finalTranscript += ' ' + event.results[i][0].transcript;
+                const newText = event.results[i][0].transcript.trim();
+                if (newText.length > finalTranscript.length) {
+                    finalTranscript = newText;
+                }
             }
         }
-        // Trim extra spaces
-        finalTranscript = finalTranscript.trim();
     };
 
     recognition.onerror = (e) => {
         console.error('Speech recognition error', e.error);
-        // If error occurs, stop recording state
         if (recognitionActive) {
-            recognition.stop(); // this will trigger onend
+            recognition.stop();
         }
     };
 }
 
 function toggleRecording(i) {
-    // Ensure we're on the correct card (the mic button is tied to a specific index)
     if (i !== currentIndex) return;
 
     if (isRecording) {
-        // Manual stop
         if (recognitionActive) {
             recognition.stop();
         }
     } else {
-        // Start new recording
         if (recognition) {
             recognition.start();
         }
@@ -473,34 +567,28 @@ function checkPronunciation(spokenText) {
     const shownScore = score >= 0.95 ? 100 : Math.round(score * 100);
 
     const msg = document.getElementById('result-msg');
-    const cardContainer = document.getElementById('slider-container');
     const displaySpoken = `"${spokenText}"`;
 
-    /* ✅ SUCCESS */
     if (score >= 0.75) {
-
-        /* 🎯 POINT SYSTEM (max 6 per card / day) */
         if (canEarnPoint(currentIndex)) {
             showPointPulse(currentIndex);
-            addPointToday();  // global daily counter (optional)
-            registerCardPoint(currentIndex); // daily limit
-            incrementCumulativePoint(currentIndex); // permanent points
+            addPointToday();
+            registerCardPoint(currentIndex);
+            incrementCumulativePoint(currentIndex);
             updateDeckPointsUI();
 
             const today = new Date().toISOString().split('T')[0];
             const data = JSON.parse(
-            localStorage.getItem(`jonas_way_card_points_${LESSON_ID}_${today}`) || '{}'
+                localStorage.getItem(`jonas_way_card_points_${LESSON_ID}_${today}`) || '{}'
             );
 
-            // 🌟 Reinforcement milestone (6th success)
             if (data[currentIndex] === 6) {
                 setTimeout(() => {
-                showCardBanner('REINFORCED!', 'banner-reinforced');
-                }, 500);    
+                    showCardBanner('REINFORCED!', 'banner-reinforced');
+                }, 500);
             }
         }
 
-        /* 🧠 MASTERY PROGRESSION (only until 3) */
         if (slideProgress[currentIndex] < 3) {
             slideProgress[currentIndex]++;
 
@@ -509,13 +597,11 @@ function checkPronunciation(spokenText) {
             );
             currentDot.classList.add('active', 'pop-success');
 
-            // 🏆 Card mastered
-            if (slideProgress[currentIndex] === 3) {                
+            if (slideProgress[currentIndex] === 3) {
                 playMasterySound();
                 showCardBanner('CLEAR!', 'banner-clear');
             }
 
-            // 🎉 All cards mastered
             if (slideProgress.every(p => p === 3)) {
                 partyAnimation();
             }
@@ -523,7 +609,6 @@ function checkPronunciation(spokenText) {
 
         saveProgress();
 
-        /* ✅ SUCCESS FEEDBACK (always shown) */
         msg.innerHTML = `
             <div class="feedback-entry">
                 <div class="text-green-500 text-xl font-bold">
@@ -534,10 +619,7 @@ function checkPronunciation(spokenText) {
                 </div>
             </div>
         `;
-
-    } 
-    /* ❌ FAILURE */
-    else {
+    } else {
         msg.innerHTML = `
             <div class="feedback-entry">
                 <div class="text-red-500 text-xl font-bold">
@@ -607,7 +689,6 @@ function updateUI() {
     document.getElementById('counter').innerText =
       `Card ${currentIndex + 1} of ${sentences.length}`;
 
-    // 🔒 ESTADO VISUAL ÚNICO (regra global)
     const container = document.getElementById('slider-container');
     if (slideProgress[currentIndex] === 3) {
         container.classList.add('mastery-achieved');
@@ -615,6 +696,7 @@ function updateUI() {
         container.classList.remove('mastery-achieved');
     }
 }
+
 function changeSlide(dir) {
     currentIndex = (currentIndex + dir + sentences.length) % sentences.length;
     document.getElementById('result-msg').innerText = "";
@@ -624,24 +706,19 @@ function changeSlide(dir) {
 
 function confirmReset() {
     if (confirm("Deseja apagar o progresso DESTE card?")) {
-
-        // reset data
         slideProgress[currentIndex] = 0;
-
-        // clear dots visually for current card
         for (let step = 1; step <= 3; step++) {
             const dot = document.getElementById(`step-${currentIndex}-${step}`);
             if (dot) dot.classList.remove('active', 'pop-success');
         }
-
         document.getElementById('result-msg').innerText = "";
-
         saveProgress();
         updateUI();
     }
 }
+
 function partyAnimation() {
-        playHallelujah();
+    playHallelujah();
     for (let i = 0; i < 120; i++) {
         const confetti = document.createElement('div');
         confetti.className = 'confetti';
@@ -652,10 +729,10 @@ function partyAnimation() {
         confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
         confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
         document.body.appendChild(confetti);
-
         setTimeout(() => confetti.remove(), 4000);
     }
 }
+
 function showPointPulse(cardIndex) {
     const card = document.querySelector('.card.active');
     if (!card) return;
@@ -667,7 +744,6 @@ function showPointPulse(cardIndex) {
     pulse.className = 'point-pulse';
     pulse.innerText = '+1';
 
-    // position relative to the card
     const micRect = mic.getBoundingClientRect();
     const cardRect = card.getBoundingClientRect();
 
@@ -675,19 +751,17 @@ function showPointPulse(cardIndex) {
     pulse.style.top  = (micRect.top  - cardRect.top  - 10) + 'px';
 
     card.appendChild(pulse);
-
     setTimeout(() => pulse.remove(), 800);
 }
+
 function addPointToday() {
     const today = new Date().toISOString().split('T')[0];
-
     const dateKey   = `jonas_way_points_date_${LESSON_ID}`;
     const pointsKey = `jonas_way_points_today_${LESSON_ID}`;
 
     const lastDate = localStorage.getItem(dateKey);
     let points = parseInt(localStorage.getItem(pointsKey) || '0', 10);
 
-    // 🔄 Midnight reset (por lição)
     if (lastDate !== today) {
         points = 0;
         localStorage.setItem(dateKey, today);
@@ -716,29 +790,64 @@ function updateDeckPointsUI() {
     const points = getDeckPoints();
     el.innerText = points;
 
-    // 🎉 Trigger bounce only if points increased
     if (points > lastDeckPoints) {
-        el.classList.remove('deck-bounce'); // reset if needed
-        void el.offsetWidth; // force reflow
+        el.classList.remove('deck-bounce');
+        void el.offsetWidth;
         el.classList.add('deck-bounce');
     }
 
     lastDeckPoints = points;
 }
+
 function playHallelujah() {
     const audio = new Audio('hallelujah.mp3');
-    audio.volume = 0.4; // subtle, not overpowering
-    audio.play().catch(() => {
-        // mobile browsers may block autoplay — silently fail
-    });
+    audio.volume = 0.4;
+    audio.play().catch(() => {});
 }
+
 function normalize(str) {
-  return str
-    .toLowerCase()
-    .replace(/[^a-z\s]/g, "") // remove punctuation & apostrophes
-    .replace(/\s+/g, " ")     // collapse multiple spaces
-    .trim();
+    // Convert numbers to words (0-99)
+    const numberWords = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
+    function numToWords(num) {
+        const n = parseInt(num, 10);
+        if (isNaN(n)) return num;
+        if (n >= 0 && n <= 12) return numberWords[n];
+        if (n < 20) {
+            const teens = ['thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+            if (n >= 13 && n <= 19) return teens[n-13];
+        }
+        if (n < 100) {
+            const tens = ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+            const t = Math.floor(n / 10);
+            const u = n % 10;
+            let word = tens[t];
+            if (u > 0) word += numberWords[u];
+            return word;
+        }
+        return num;
+    }
+
+    let processed = str.toLowerCase();
+    // Replace times like "6:00" -> "six" (if minutes are 00) or "six zero" (if not)
+    processed = processed.replace(/\b(\d+):(\d+)\b/g, (_, h, m) => {
+        let hourWord = numToWords(h);
+        if (m === '00') return hourWord;
+        else return hourWord + ' ' + numToWords(m);
+    });
+    // Replace standalone numbers
+    processed = processed.replace(/\b(\d+)\b/g, (_, num) => numToWords(num));
+
+    // Remove punctuation and keep only letters and spaces
+    processed = processed.replace(/[^a-z\s]/g, "");
+    // Collapse spaces
+    processed = processed.replace(/\s+/g, " ").trim();
+    return processed;
 }
+
+// ================================================================
+// Start the app
+// ================================================================
+loadSentences();
 
 </script>
 </body>
