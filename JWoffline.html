@@ -269,9 +269,27 @@ function handleFileUpload(event) {
                 alert('Invalid JSON: must be a non-empty array.');
                 return;
             }
+            // 🔥 Reset all progress for this lesson before saving new data
+            // Remove mastery progress
+            localStorage.removeItem(STORAGE_KEY);
+            // Remove cumulative points
+            localStorage.removeItem(CUMULATIVE_POINTS_KEY);
+            // Remove all daily card point keys for this lesson
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith(`jonas_way_card_points_${LESSON_ID}_`)) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+            // Also reset global daily counter (optional)
+            localStorage.removeItem(`jonas_way_points_date_${LESSON_ID}`);
+            localStorage.removeItem(`jonas_way_points_today_${LESSON_ID}`);
+
             saveLocalSentences(data);
-            document.getElementById('upload-status').innerText = '✅ Data loaded successfully! Reloading...';
-            // Reload the page to start the app
+            document.getElementById('upload-status').innerText = '✅ Data loaded! Progress reset. Reloading...';
+            // Reload the page to start fresh
             location.reload();
         } catch (err) {
             alert('Error reading file: ' + err.message);
@@ -801,3 +819,4 @@ function normalize(str) {
 </script>
 </body>
 </html>
+
