@@ -610,11 +610,19 @@
             processRoundResults(passed, failed);
         }
 
-        async function processRoundResults(passed, failed) {
+                async function processRoundResults(passed, failed) {
             for(const p of failed) {
                 messageBanner.textContent = `❌ Player ${p.index+1} eliminated!`;
                 messageBanner.className = 'message-banner elimination';
                 await speak(`Player ${p.index+1} eliminated!`);
+                // Wait until the voice actually finishes speaking
+                await new Promise(resolve => {
+                    const check = () => {
+                        if (!speechSynth || !speechSynth.speaking) resolve();
+                        else setTimeout(check, 100);
+                    };
+                    check();
+                });
                 await delay(600);
             }
             const remaining = players.filter(p=>p.active&&p.connected);
