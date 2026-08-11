@@ -531,7 +531,7 @@
         }
 
         // ─── SEQUENCE DISPLAY ───
-        function playSequenceWithTimer() {
+                function playSequenceWithTimer() {
             return new Promise((resolve) => {
                 showingSequenceActive = true;
                 stateDisplay.textContent = '📺 Watch...';
@@ -554,8 +554,8 @@
                     setTimeout(() => {
                         colorBtns[color].classList.remove('highlight-'+color);
                         i++;
-                        setTimeout(nextStep, 200);
-                    }, 600);
+                        setTimeout(nextStep, 500);
+                    }, 1200);
                 }
                 setTimeout(nextStep, 400);
             });
