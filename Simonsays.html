@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Simon Says - Party Game</title>
+    <style>
+        :root {
+            --bg: #0a0a14;
+            --surface: #141428;
+            --surface2: #1a1a35;
+            --text: #e0e0f0;
+            --text-dim: #8888aa;
+            --blue: #3b82f6;
+            --blue-glow: #3b82f680;
+            --yellow: #eab308;
+            --yellow-glow: #eab30880;
+            --green: #22c55e;
+            --green-glow: #22c55e80;
+            --red: #ef4444;
+            --red-glow: #ef444480;
+            --gold: #f59e0b;
+            --eliminated: #6b1c1c;
+            --winner: #1c6b3a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: 'Segoe UI', 'Poppins', 'Helvetica Neue', sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(ellipse at 50% 30%, #1a1a40 0%, transparent 70%),
+                radial-gradient(ellipse at 20% 70%, #0f0f25 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 70%, #0f0f25 0%, transparent 60%);
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 1100px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .game-header {
+            text-align: center;
+        }
+        .game-header h1 {
+            font-size: 2.8rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #f59e0b, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+            filter: drop-shadow(0 0 20px #f59e0b44);
+        }
+        .game-header .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* Settings Bar */
+        .settings-bar {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            background: var(--surface);
+            padding: 14px 24px;
+            border-radius: 16px;
+            border: 1px solid #ffffff10;
+        }
+        .settings-bar label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .settings-bar input[type="range"] {
+            width: 140px;
+            accent-color: #f59e0b;
+        }
+        .time-display {
+            font-weight: 700;
+            color: #fbbf24;
+            font-size: 1.1rem;
+            min-width: 50px;
+            text-align: center;
+        }
+        .btn {
+            padding: 10px 22px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+        .btn-start {
+            background: #f59e0b;
+            color: #1a1a14;
+            box-shadow: 0 0 24px #f59e0b55;
+        }
+        .btn-start:hover {
+            background: #fbbf24;
+            box-shadow: 0 0 36px #f59e0b77;
+            transform: translateY(-2px);
+        }
+        .btn-start:disabled {
+            background: #555;
+            color: #999;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-reset {
+            background: #ffffff15;
+            color: #ccc;
+            border: 1px solid #ffffff20;
+        }
+        .btn-reset:hover {
+            background: #ffffff25;
+        }
+
+        /* Player Panels */
+        .players-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+        .player-panel {
+            flex: 1;
+            min-width: 180px;
+            max-width: 240px;
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            border: 2px solid #ffffff0a;
+            transition: all 0.4s;
+            position: relative;
+            overflow: hidden;
+        }
+        .player-panel.connected {
+            border-color: #ffffff20;
+            box-shadow: 0 0 20px #ffffff08;
+        }
+        .player-panel.active-player {
+            border-color: #f59e0b44;
+            box-shadow: 0 0 28px #f59e0b15;
+        }
+        .player-panel.eliminated-player {
+            border-color: #ef444466;
+            background: var(--eliminated);
+            opacity: 0.7;
+            box-shadow: 0 0 20px #ef444422;
+        }
+        .player-panel.winner-player {
+            border-color: #22c55e88;
+            background: var(--winner);
+            box-shadow: 0 0 32px #22c55e44;
+            animation: winnerGlow 0.8s ease-in-out infinite alternate;
+        }
+        @keyframes winnerGlow {
+            from {
+                box-shadow: 0 0 20px #22c55e33;
+            }
+            to {
+                box-shadow: 0 0 45px #22c55e77;
+            }
+        }
+        .player-panel .player-number {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+        }
+        .player-panel .player-icon {
+            font-size: 2.5rem;
+            margin: 6px 0;
+            transition: all 0.3s;
+        }
+        .player-panel .player-status {
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+        .player-panel .player-score {
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: #fbbf24;
+        }
+        .player-panel .progress-dots {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 8px;
+            min-height: 16px;
+        }
+        .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ffffff15;
+            transition: all 0.3s;
+        }
+        .progress-dot.correct {
+            background: #22c55e;
+            box-shadow: 0 0 8px #22c55e88;
+        }
+        .progress-dot.wrong {
+            background: #ef4444;
+            box-shadow: 0 0 8px #ef444488;
+            animation: shake 0.5s;
+        }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-6px);
+            }
+            50% {
+                transform: translateX(6px);
+            }
+            75% {
+                transform: translateX(-4px);
+            }
+        }
+        .player-panel .eliminated-stamp {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-20deg);
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #ef4444aa;
+            pointer-events: none;
+            letter-spacing: 2px;
+            border: 4px solid #ef444488;
+            padding: 8px 16px;
+            border-radius: 8px;
+            display: none;
+        }
+        .player-panel.eliminated-player .eliminated-stamp {
+            display: block;
+        }
+
+        /* Central Game Area */
+        .game-area {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .button-diamond {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .color-btn {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            cursor: default;
+            transition: all 0.2s;
+            border: 3px solid #ffffff20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            color: #fff;
+            text-shadow: 0 0 10px #00000088;
+        }
+        .color-btn.btn-blue {
+            background: #1d4ed8;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 30px #3b82f640;
+        }
+        .color-btn.btn-yellow {
+            background: #a16207;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            box-shadow: 0 0 30px #eab30840;
+        }
+        .color-btn.btn-green {
+            background: #15803d;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            box-shadow: 0 0 30px #22c55e40;
+        }
+        .color-btn.btn-red {
+            background: #991b1b;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 30px #ef444440;
+        }
+        .color-btn.highlight-blue {
+            background: #3b82f6;
+            box-shadow: 0 0 60px #3b82f6cc, 0 0 120px #3b82f680;
+            border-color: #93c5fd;
+            transform: translateX(-50%) scale(1.12);
+            animation: pulseGlow 0.4s ease-out;
+        }
+        .color-btn.highlight-yellow {
+            background: #eab308;
+            box-shadow: 0 0 60px #eab308cc, 0 0 120px #eab30880;
+            border-color: #fde68a;
+            transform: translateY(-50%) scale(1.12);
+            animation: pulseGlow 0.4s ease-out;
+        }
+        .color-btn.highlight-green {
+            background: #22c55e;
+            box-shadow: 0 0 60px #22c55ecc, 0 0 120px #22c55e80;
+            border-color: #86efac;
+            transform: translateY(-50%) scale(1.12);
+            animation: pulseGlow 0.4s ease-out;
+        }
+        .color-btn.highlight-red {
+            background: #ef4444;
+            box-shadow: 0 0 60px #ef4444cc, 0 0 120px #ef444480;
+            border-color: #fca5a5;
+            transform: translateX(-50%) scale(1.12);
+            animation: pulseGlow 0.4s ease-out;
+        }
+        @keyframes pulseGlow {
+            0% {
+                transform: scale(1);
+            }
+            40% {
+                transform: scale(1.18);
+            }
+            100% {
+                transform: scale(1.12);
+            }
+        }
+        .center-logo {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: #1a1a30;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            z-index: 2;
+            border: 2px solid #ffffff20;
+            pointer-events: none;
+        }
+
+        /* Round & Timer Display */
+        .info-bar {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .info-item {
+            background: var(--surface2);
+            padding: 10px 18px;
+            border-radius: 10px;
+            letter-spacing: 1px;
+        }
+        .info-item.round-num {
+            color: #fbbf24;
+            font-size: 1.3rem;
+        }
+        .info-item.timer {
+            color: #f87171;
+            font-size: 1.5rem;
+            font-weight: 900;
+            min-width: 60px;
+            text-align: center;
+        }
+        .info-item.timer.urgent {
+            animation: timerBlink 0.5s ease-in-out infinite;
+            color: #ef4444;
+        }
+        @keyframes timerBlink {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* Message Overlay */
+        .message-banner {
+            text-align: center;
+            font-weight: 900;
+            font-size: 1.3rem;
+            letter-spacing: 1px;
+            padding: 12px 28px;
+            border-radius: 12px;
+            background: var(--surface2);
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            border: 1px solid #ffffff10;
+        }
+        .message-banner.announcement {
+            background: #f59e0b22;
+            border-color: #f59e0b55;
+            color: #fbbf24;
+            animation: fadeInUp 0.4s ease-out;
+        }
+        .message-banner.elimination {
+            background: #ef444422;
+            border-color: #ef444455;
+            color: #f87171;
+        }
+        .message-banner.win {
+            background: #22c55e22;
+            border-color: #22c55e55;
+            color: #4ade80;
+            animation: winnerGlow 0.6s ease-in-out infinite alternate;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 800px) {
+            .game-header h1 {
+                font-size: 2rem;
+            }
+            .game-area {
+                width: 240px;
+                height: 240px;
+            }
+            .button-diamond {
+                width: 210px;
+                height: 210px;
+            }
+            .color-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 0.75rem;
+            }
+            .player-panel {
+                min-width: 130px;
+                max-width: 160px;
+                padding: 10px;
+            }
+            .player-panel .player-icon {
+                font-size: 1.8rem;
+            }
+            .player-panel .player-score {
+                font-size: 1.2rem;
+            }
+        }
+        @media (max-width: 500px) {
+            .players-row {
+                gap: 8px;
+            }
+            .player-panel {
+                min-width: 100px;
+                max-width: 130px;
+                padding: 8px;
+                font-size: 0.7rem;
+            }
+            .player-panel .player-icon {
+                font-size: 1.4rem;
+            }
+            .game-area {
+                width: 200px;
+                height: 200px;
+            }
+            .button-diamond {
+                width: 170px;
+                height: 170px;
+            }
+            .color-btn {
+                width: 55px;
+                height: 55px;
+                font-size: 0.65rem;
+                border-width: 2px;
+            }
+            .center-logo {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <div class="game-header">
+            <h1>🎮 SIMON SAYS</h1>
+            <p class="subtitle">Party Edition · 1–4 Players</p>
+        </div>
+
+        <!-- Settings -->
+        <div class="settings-bar">
+            <label for="timeLimit">⏱ Input Time:</label>
+            <input type="range" id="timeLimit" min="5" max="45" value="20" step="1">
+            <span class="time-display" id="timeDisplay">20s</span>
+            <button class="btn btn-start" id="btnStart">▶ Start Game</button>
+            <button class="btn btn-reset" id="btnReset">↺ Reset</button>
+        </div>
+
+        <!-- Player Panels -->
+        <div class="players-row" id="playersRow">
+            <div class="player-panel" id="panel0">
+                <div class="player-number">Player 1</div>
+                <div class="player-icon">🎮</div>
+                <div class="player-status">Press a button</div>
+                <div class="player-score">0</div>
+                <div class="progress-dots" id="dots0"></div>
+                <div class="eliminated-stamp">OUT</div>
+            </div>
+            <div class="player-panel" id="panel1">
+                <div class="player-number">Player 2</div>
+                <div class="player-icon">🎮</div>
+                <div class="player-status">Press a button</div>
+                <div class="player-score">0</div>
+                <div class="progress-dots" id="dots1"></div>
+                <div class="eliminated-stamp">OUT</div>
+            </div>
+            <div class="player-panel" id="panel2">
+                <div class="player-number">Player 3</div>
+                <div class="player-icon">🎮</div>
+                <div class="player-status">Press a button</div>
+                <div class="player-score">0</div>
+                <div class="progress-dots" id="dots2"></div>
+                <div class="eliminated-stamp">OUT</div>
+            </div>
+            <div class="player-panel" id="panel3">
+                <div class="player-number">Player 4</div>
+                <div class="player-icon">🎮</div>
+                <div class="player-status">Press a button</div>
+                <div class="player-score">0</div>
+                <div class="progress-dots" id="dots3"></div>
+                <div class="eliminated-stamp">OUT</div>
+            </div>
+        </div>
+
+        <!-- Info Bar -->
+        <div class="info-bar">
+            <div class="info-item round-num" id="roundDisplay">Round: —</div>
+            <div class="info-item timer" id="timerDisplay">⏱ —</div>
+            <div class="info-item" id="stateDisplay">Waiting...</div>
+        </div>
+
+        <!-- Central Game Area -->
+        <div class="game-area">
+            <div class="button-diamond">
+                <div class="color-btn btn-blue" id="btnBlue">X · BLUE</div>
+                <div class="color-btn btn-yellow" id="btnYellow">Y · YELLOW</div>
+                <div class="color-btn btn-green" id="btnGreen">A · GREEN</div>
+                <div class="color-btn btn-red" id="btnRed">B · RED</div>
+                <div class="center-logo">🎯</div>
+            </div>
+        </div>
+
+        <!-- Message Banner -->
+        <div class="message-banner" id="messageBanner">Connect controllers &amp; press <strong>Start Game</strong></div>
+    </div>
+
+    <script>
+        (function() {
+            // ──────────────────────────────────────
+            // DOM REFERENCES
+            // ──────────────────────────────────────
+            const btnStart = document.getElementById('btnStart');
+            const btnReset = document.getElementById('btnReset');
+            const timeLimitSlider = document.getElementById('timeLimit');
+            const timeDisplay = document.getElementById('timeDisplay');
+            const roundDisplay = document.getElementById('roundDisplay');
+            const timerDisplay = document.getElementById('timerDisplay');
+            const stateDisplay = document.getElementById('stateDisplay');
+            const messageBanner = document.getElementById('messageBanner');
+            const playersRow = document.getElementById('playersRow');
+            const panels = [0, 1, 2, 3].map(i => document.getElementById('panel' + i));
+            const dotsContainers = [0, 1, 2, 3].map(i => document.getElementById('dots' + i));
+            const colorBtns = {
+                blue: document.getElementById('btnBlue'),
+                yellow: document.getElementById('btnYellow'),
+                green: document.getElementById('btnGreen'),
+                red: document.getElementById('btnRed'),
+            };
+
+            // ──────────────────────────────────────
+            // COLOR DEFINITIONS
+            // ──────────────────────────────────────
+            const COLORS = ['blue', 'yellow', 'green', 'red'];
+            const COLOR_NAMES = { blue: 'Blue', yellow: 'Yellow', green: 'Green', red: 'Red' };
+            // Button index → color (standard gamepad mapping, Xbox layout)
+            // Button 0 (bottom) = A = Green
+            // Button 1 (right)  = B = Red
+            // Button 2 (left)   = X = Blue
+            // Button 3 (top)    = Y = Yellow
+            const BUTTON_TO_COLOR = {
+                0: 'green', // A → Green
+                1: 'red', // B → Red
+                2: 'blue', // X → Blue
+                3: 'yellow', // Y → Yellow
+            };
+            const COLOR_TO_BUTTON = {
+                blue: 2,
+                yellow: 3,
+                green: 0,
+                red: 1,
+            };
+
+            // ──────────────────────────────────────
+            // GAME STATE
+            // ──────────────────────────────────────
+            const MAX_ROUNDS = 10;
+            const BASE_SEQUENCE_LENGTH = 2; // Round 1 = 2 buttons
+
+            let gameState = 'idle'; // idle | countdown | showing_sequence | input_phase | judging | round_end | game_over
+            let players = []; // { index, gamepadIndex, connected, active, score, sequenceProgress, completed, wrong }
+            let sequence = [];
+            let currentRound = 0;
+            let inputTimeLimit = 20; // seconds
+            let inputTimerRemaining = 0;
+            let inputTimerInterval = null;
+            let showingSequenceActive = false;
+            let previousGamepadButtons = {}; // { gamepadIndex: [bool array] }
+            let animationFrameId = null;
+            let gameLoopActive = false;
+
+            // ──────────────────────────────────────
+            // AUDIO / TTS
+            // ──────────────────────────────────────
+            let speechSynth = window.speechSynthesis;
+            let speechQueue = [];
+            let speaking = false;
+
+            function getBestVoice() {
+                if (!speechSynth) return null;
+                const voices = speechSynth.getVoices();
+                // Prefer English voices
+                let voice = voices.find(v => v.lang.startsWith('en-US') && v.name.includes('Google'));
+                if (!voice) voice = voices.find(v => v.lang.startsWith('en-US'));
+                if (!voice) voice = voices.find(v => v.lang.startsWith('en-'));
+                if (!voice && voices.length > 0) voice = voices[0];
+                return voice || null;
+            }
+
+            function speak(text, priority = false) {
+                if (!speechSynth) {
+                    console.log('🔊 [TTS not supported]:', text);
+                    return Promise.resolve();
+                }
+                if (priority) {
+                    speechSynth.cancel();
+                    speechQueue = [];
+                    speaking = false;
+                }
+                return new Promise((resolve) => {
+                    speechQueue.push({ text, resolve });
+                    if (!speaking) processSpeechQueue();
+                });
+            }
+
+            function processSpeechQueue() {
+                if (!speechSynth || speechQueue.length === 0) {
+                    speaking = false;
+                    return;
+                }
+                speaking = true;
+                const { text, resolve } = speechQueue.shift();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.voice = getBestVoice();
+                utterance.rate = 0.9;
+                utterance.pitch = 1.05;
+                utterance.volume = 1.0;
+                utterance.onend = () => {
+                    resolve();
+                    processSpeechQueue();
+                };
+                utterance.onerror = () => {
+                    resolve();
+                    processSpeechQueue();
+                };
+                // Timeout in case speech hangs
+                const timeout = setTimeout(() => {
+                    speechSynth.cancel();
+                    resolve();
+                    processSpeechQueue();
+                }, 4000);
+                utterance.onend = () => clearTimeout(timeout);
+                utterance.onerror = () => clearTimeout(timeout);
+                speechSynth.speak(utterance);
+            }
+
+            function stopAllSpeech() {
+                if (speechSynth) {
+                    speechSynth.cancel();
+                }
+                speechQueue = [];
+                speaking = false;
+            }
+
+            // Preload voices
+            if (speechSynth) {
+                speechSynth.getVoices();
+                speechSynth.onvoiceschanged = () => { speechSynth.getVoices(); };
+            }
+
+            // ──────────────────────────────────────
+            // HELPER: DELAY
+            // ──────────────────────────────────────
+            function delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            // ──────────────────────────────────────
+            // PLAYER MANAGEMENT
+            // ──────────────────────────────────────
+            function initPlayers() {
+                players = [];
+                for (let i = 0; i < 4; i++) {
+                    players.push({
+                        index: i,
+                        gamepadIndex: null,
+                        connected: false,
+                        active: false,
+                        score: 0,
+                        sequenceProgress: 0,
+                        completed: false,
+                        wrong: false,
+                    });
+                }
+                updatePlayerPanels();
+            }
+
+            function resetPlayerGameData() {
+                players.forEach(p => {
+                    p.active = p.connected;
+                    p.sequenceProgress = 0;
+                    p.completed = false;
+                    p.wrong = false;
+                    if (!p.connected) p.score = 0;
+                });
+                updatePlayerPanels();
+            }
+
+            function getActivePlayers() {
+                return players.filter(p => p.active && p.connected);
+            }
+
+            function getConnectedPlayers() {
+                return players.filter(p => p.connected);
+            }
+
+            function updatePlayerPanels() {
+                players.forEach((p, i) => {
+                    const panel = panels[i];
+                    panel.classList.remove('connected', 'active-player', 'eliminated-player', 'winner-player');
+                    const statusEl = panel.querySelector('.player-status');
+                    const iconEl = panel.querySelector('.player-icon');
+                    const scoreEl = panel.querySelector('.player-score');
+                    const stampEl = panel.querySelector('.eliminated-stamp');
+
+                    if (p.connected) {
+                        panel.classList.add('connected');
+                        iconEl.textContent = '🎮';
+                        if (p.active) {
+                            panel.classList.add('active-player');
+                            statusEl.textContent = 'Ready';
+                            statusEl.style.color = '#4ade80';
+                            stampEl.style.display = 'none';
+                        } else if (p.wrong || (!p.active && p.connected && gameState !== 'idle')) {
+                            panel.classList.add('eliminated-player');
+                            statusEl.textContent = 'ELIMINATED';
+                            statusEl.style.color = '#f87171';
+                            stampEl.style.display = 'block';
+                        } else {
+                            statusEl.textContent = 'Connected';
+                            statusEl.style.color = '#fbbf24';
+                            stampEl.style.display = 'none';
+                        }
+                    } else {
+                        iconEl.textContent = '⬜';
+                        statusEl.textContent = 'Press a button';
+                        statusEl.style.color = '#8888aa';
+                        stampEl.style.display = 'none';
+                    }
+                    scoreEl.textContent = p.score;
+                    updateProgressDots(i);
+                });
+
+                // Update start button
+                const connectedCount = getConnectedPlayers().length;
+                btnStart.disabled = (connectedCount < 1) || (gameState !== 'idle' && gameState !== 'game_over');
+                if (connectedCount < 1 && gameState === 'idle') {
+                    btnStart.textContent = '🔌 Waiting for controllers...';
+                } else if (gameState === 'idle') {
+                    btnStart.textContent = `▶ Start Game (${connectedCount}P)`;
+                }
+            }
+
+            function updateProgressDots(playerIndex) {
+                const container = dotsContainers[playerIndex];
+                const p = players[playerIndex];
+                container.innerHTML = '';
+                const totalNeeded = sequence.length;
+                if (totalNeeded === 0) return;
+
+                for (let i = 0; i < totalNeeded; i++) {
+                    const dot = document.createElement('span');
+                    dot.classList.add('progress-dot');
+                    if (i < p.sequenceProgress) {
+                        dot.classList.add('correct');
+                    }
+                    if (p.wrong && i === p.sequenceProgress) {
+                        dot.classList.add('wrong');
+                    }
+                    container.appendChild(dot);
+                }
+            }
+
+            function clearAllProgressDots() {
+                dotsContainers.forEach(c => c.innerHTML = '');
+            }
+
+            // ──────────────────────────────────────
+            // GAMEPAD DETECTION
+            // ──────────────────────────────────────
+            function scanGamepads() {
+                const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+                const detectedIndices = new Set();
+
+                for (let i = 0; i < gamepads.length; i++) {
+                    const gp = gamepads[i];
+                    if (gp && gp.connected) {
+                        detectedIndices.add(i);
+                    }
+                }
+
+                // Update player-gamepad assignments
+                const assignedGamepadIndices = new Set(players.filter(p => p.gamepadIndex !== null).map(p => p
+                    .gamepadIndex));
+
+                // Assign unassigned gamepads to unconnected players
+                for (const gpIndex of detectedIndices) {
+                    if (!assignedGamepadIndices.has(gpIndex)) {
+                        const unconnectedPlayer = players.find(p => !p.connected);
+                        if (unconnectedPlayer) {
+                            unconnectedPlayer.gamepadIndex = gpIndex;
+                            unconnectedPlayer.connected = true;
+                            unconnectedPlayer.active = true;
+                            unconnectedPlayer.score = 0;
+                            console.log(`🎮 Gamepad ${gpIndex} assigned to Player ${unconnectedPlayer.index + 1}`);
+                            if (gameState === 'idle') {
+                                speak(`Player ${unconnectedPlayer.index + 1} joined`, true);
+                            }
+                        }
+                    }
+                }
+
+                // Mark disconnected players
+                for (const p of players) {
+                    if (p.gamepadIndex !== null && !detectedIndices.has(p.gamepadIndex)) {
+                        console.log(`🔌 Player ${p.index + 1} controller disconnected`);
+                        p.gamepadIndex = null;
+                        p.connected = false;
+                        p.active = false;
+                        if (gameState !== 'idle' && gameState !== 'game_over') {
+                            p.active = false;
+                            messageBanner.textContent = `⚠️ Player ${p.index + 1} controller disconnected!`;
+                            messageBanner.className = 'message-banner elimination';
+                        }
+                    }
+                }
+
+                updatePlayerPanels();
+                return detectedIndices;
+            }
+
+            function readGamepadButtons(gamepadIndex) {
+                const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+                const gp = gamepads[gamepadIndex];
+                if (!gp || !gp.connected) return null;
+                // Return array of button pressed states (at least 16 buttons)
+                const buttons = [];
+                for (let i = 0; i < Math.min(gp.buttons.length, 16); i++) {
+                    buttons.push(gp.buttons[i].pressed);
+                }
+                return buttons;
+            }
+
+            function detectNewPresses(gamepadIndex, currentButtons) {
+                const prev = previousGamepadButtons[gamepadIndex] || [];
+                const newPresses = [];
+                for (let i = 0; i < currentButtons.length; i++) {
+                    if (currentButtons[i] && !prev[i]) {
+                        newPresses.push(i);
+                    }
+                }
+                return newPresses;
+            }
+
+            // ──────────────────────────────────────
+            // GAME LOGIC
+            // ──────────────────────────────────────
+            function generateSequence(round) {
+                const length = BASE_SEQUENCE_LENGTH + (round - 1); // Round 1 = 2, Round 10 = 11
+                const seq = [];
+                for (let i = 0; i < length; i++) {
+                    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+                    seq.push(randomColor);
+                }
+                return seq;
+            }
+
+            async function showSequenceToPlayers() {
+                showingSequenceActive = true;
+                stateDisplay.textContent = '📺 Watch the sequence...';
+                messageBanner.textContent = 'Watch carefully! Listen to the colors...';
+                messageBanner.className = 'message-banner announcement';
+                clearAllProgressDots();
+
+                // Reset player progress for new round
+                players.forEach(p => {
+                    if (p.active && p.connected) {
+                        p.sequenceProgress = 0;
+                        p.completed = false;
+                        p.wrong = false;
+                    }
+                });
+                updatePlayerPanels();
+
+                await delay(800);
+
+                for (let i = 0; i < sequence.length; i++) {
+                    if (!showingSequenceActive) break;
+                    const color = sequence[i];
+                    const colorName = COLOR_NAMES[color];
+
+                    // Highlight the color button
+                    const btn = colorBtns[color];
+                    const highlightClass = 'highlight-' + color;
+                    btn.classList.add(highlightClass);
+
+                    // Speak the color name
+                    await speak(colorName);
+
+                    // Keep highlighted for a bit
+                    await delay(500);
+                    btn.classList.remove(highlightClass);
+                    await delay(250);
+                }
+
+                showingSequenceActive = false;
+            }
+
+            function startInputPhase() {
+                stateDisplay.textContent = '🎮 Your turn! Input the sequence!';
+                messageBanner.textContent = 'GO! Press the buttons in order!';
+                messageBanner.className = 'message-banner announcement';
+                speak('Go!', true);
+
+                // Reset progress
+                players.forEach(p => {
+                    if (p.active && p.connected) {
+                        p.sequenceProgress = 0;
+                        p.completed = false;
+                        p.wrong = false;
+                    }
+                });
+                updatePlayerPanels();
+                updateAllProgressDots();
+
+                inputTimerRemaining = inputTimeLimit;
+                updateTimerDisplay();
+                timerDisplay.classList.remove('urgent');
+
+                // Start timer
+                if (inputTimerInterval) clearInterval(inputTimerInterval);
+                inputTimerInterval = setInterval(() => {
+                    inputTimerRemaining -= 0.1;
+                    if (inputTimerRemaining <= 0) {
+                        inputTimerRemaining = 0;
+                        endInputPhase();
+                    }
+                    updateTimerDisplay();
+                    if (inputTimerRemaining <= 5 && inputTimerRemaining > 0) {
+                        timerDisplay.classList.add('urgent');
+                    }
+                }, 100);
+
+                gameState = 'input_phase';
+            }
+
+            function updateTimerDisplay() {
+                const secs = Math.max(0, Math.ceil(inputTimerRemaining));
+                timerDisplay.textContent = '⏱ ' + secs + 's';
+                if (inputTimerRemaining <= 0) {
+                    timerDisplay.textContent = '⏱ 0s';
+                }
+            }
+
+            function updateAllProgressDots() {
+                players.forEach((p, i) => {
+                    if (p.active && p.connected) {
+                        updateProgressDots(i);
+                    } else if (!p.active && p.connected && p.wrong) {
+                        updateProgressDots(i);
+                    }
+                });
+            }
+
+            function endInputPhase() {
+                if (inputTimerInterval) {
+                    clearInterval(inputTimerInterval);
+                    inputTimerInterval = null;
+                }
+                timerDisplay.classList.remove('urgent');
+                gameState = 'judging';
+                judgeRound();
+            }
+
+            function judgeRound() {
+                stopAllSpeech();
+                const activePlayers = players.filter(p => p.active && p.connected);
+                const results = [];
+
+                for (const p of activePlayers) {
+                    if (p.completed && !p.wrong) {
+                        results.push({ player: p, result: 'passed' });
+                    } else {
+                        results.push({ player: p, result: 'failed' });
+                        p.active = false;
+                        p.wrong = true;
+                    }
+                }
+
+                // Also mark any player who didn't complete as failed
+                for (const p of activePlayers) {
+                    if (!p.completed && !p.wrong) {
+                        p.active = false;
+                        p.wrong = true;
+                        if (!results.find(r => r.player === p)) {
+                            results.push({ player: p, result: 'failed' });
+                        }
+                    }
+                }
+
+                // Award scores to those who passed
+                const passedPlayers = results.filter(r => r.result === 'passed').map(r => r.player);
+                const failedPlayers = results.filter(r => r.result === 'failed').map(r => r.player);
+
+                passedPlayers.forEach(p => {
+                    p.score += 100 + Math.floor(inputTimerRemaining * 5); // Bonus for speed
+                });
+
+                updatePlayerPanels();
+                updateAllProgressDots();
+
+                // Announce results
+                gameState = 'round_end';
+                processRoundEndResults(passedPlayers, failedPlayers);
+            }
+
+            async function processRoundEndResults(passedPlayers, failedPlayers) {
+                // Announce eliminations
+                for (const p of failedPlayers) {
+                    messageBanner.textContent = `❌ Player ${p.index + 1} is eliminated!`;
+                    messageBanner.className = 'message-banner elimination';
+                    await speak(`Player ${p.index + 1} is eliminated!`);
+                    await delay(600);
+                }
+
+                // Check win conditions
+                const remainingActive = players.filter(p => p.active && p.connected);
+
+                if (remainingActive.length === 0) {
+                    // All eliminated
+                    messageBanner.textContent = '💀 All players eliminated! No winner.';
+                    messageBanner.className = 'message-banner elimination';
+                    await speak('All players eliminated. No winner.');
+                    await delay(1500);
+                    endGame(null);
+                    return;
+                }
+
+                if (remainingActive.length === 1 && currentRound < MAX_ROUNDS) {
+                    // Last man standing before round 10
+                    const winner = remainingActive[0];
+                    messageBanner.textContent = `🏆 Player ${winner.index + 1} is the last one standing!`;
+                    messageBanner.className = 'message-banner win';
+                    await speak(`Player ${winner.index + 1} is the last one standing! Winner!`);
+                    await delay(1500);
+                    endGame([winner]);
+                    return;
+                }
+
+                if (currentRound >= MAX_ROUNDS) {
+                    // Round 10 complete - all remaining players win
+                    const winners = remainingActive;
+                    const winnerNames = winners.map(p => `Player ${p.index + 1}`).join(' and ');
+                    messageBanner.textContent = `🏆 Round 10 complete! ${winnerNames} win!`;
+                    messageBanner.className = 'message-banner win';
+                    await speak(`Round 10 complete! ${winnerNames} win! Congratulations!`);
+                    await delay(2000);
+                    endGame(winners);
+                    return;
+                }
+
+                // Continue to next round
+                const passedNames = passedPlayers.map(p => `Player ${p.index + 1}`).join(', ');
+                messageBanner.textContent = `✅ Round ${currentRound} complete! ${passedNames} advance.`;
+                messageBanner.className = 'message-banner announcement';
+                await speak(`Round ${currentRound} complete.`);
+                await delay(1500);
+
+                // Start next round
+                currentRound++;
+                await startRound();
+            }
+
+            function endGame(winners) {
+                gameState = 'game_over';
+                stopAllSpeech();
+                if (inputTimerInterval) {
+                    clearInterval(inputTimerInterval);
+                    inputTimerInterval = null;
+                }
+                timerDisplay.textContent = '⏱ —';
+                timerDisplay.classList.remove('urgent');
+                stateDisplay.textContent = 'Game Over';
+                roundDisplay.textContent = 'Round: —';
+                clearAllProgressDots();
+
+                // Highlight winners
+                players.forEach(p => {
+                    p.sequenceProgress = 0;
+                    p.completed = false;
+                    p.wrong = false;
+                });
+                if (winners && winners.length > 0) {
+                    winners.forEach(p => {
+                        const panel = panels[p.index];
+                        panel.classList.add('winner-player');
+                        panel.querySelector('.player-status').textContent = '🏆 WINNER!';
+                        panel.querySelector('.player-status').style.color = '#4ade80';
+                        panel.querySelector('.eliminated-stamp').style.display = 'none';
+                    });
+                    const winnerNames = winners.map(p => `Player ${p.index + 1}`).join(' & ');
+                    messageBanner.textContent = `🏆 ${winnerNames} won the game! 🎉`;
+                    messageBanner.className = 'message-banner win';
+                    speak(`${winnerNames} won the game! Congratulations!`, true);
+                } else {
+                    messageBanner.textContent = 'Game Over — No winners this time.';
+                    messageBanner.className = 'message-banner elimination';
+                }
+
+                btnStart.textContent = '🔄 Play Again';
+                btnStart.disabled = false;
+                updatePlayerPanels();
+            }
+
+            async function startRound() {
+                if (gameState === 'game_over') return;
+
+                gameState = 'countdown';
+                sequence = generateSequence(currentRound);
+                roundDisplay.textContent = 'Round: ' + currentRound + ' / ' + MAX_ROUNDS;
+                stateDisplay.textContent = '🔢 Generating sequence...';
+                messageBanner.textContent = `Round ${currentRound} — ${sequence.length} buttons to memorize`;
+                messageBanner.className = 'message-banner announcement';
+                timerDisplay.textContent = '⏱ —';
+                timerDisplay.classList.remove('urgent');
+                clearAllProgressDots();
+                updatePlayerPanels();
+                updateAllProgressDots();
+
+                await speak(`Round ${currentRound}`, true);
+                await delay(1000);
+
+                // Show sequence
+                gameState = 'showing_sequence';
+                await showSequenceToPlayers();
+
+                if (gameState === 'game_over') return;
+
+                // Brief pause before input
+                await delay(600);
+
+                // Start input phase
+                startInputPhase();
+            }
+
+            async function startGame() {
+                stopAllSpeech();
+                if (inputTimerInterval) {
+                    clearInterval(inputTimerInterval);
+                    inputTimerInterval = null;
+                }
+
+                const connectedPlayers = getConnectedPlayers();
+                if (connectedPlayers.length < 1) {
+                    messageBanner.textContent = '⚠️ Need at least 1 player with a controller!';
+                    messageBanner.className = 'message-banner elimination';
+                    return;
+                }
+
+                // Reset game
+                currentRound = 1;
+                sequence = [];
+                gameState = 'countdown';
+                resetPlayerGameData();
+                clearAllProgressDots();
+                timerDisplay.textContent = '⏱ —';
+                timerDisplay.classList.remove('urgent');
+                roundDisplay.textContent = 'Round: ' + currentRound + ' / ' + MAX_ROUNDS;
+                stateDisplay.textContent = '🎲 Starting...';
+                messageBanner.textContent = 'Get ready! Round 1 starting...';
+                messageBanner.className = 'message-banner announcement';
+                btnStart.disabled = true;
+                btnStart.textContent = '▶ In Progress...';
+
+                // Remove winner highlights
+                panels.forEach(panel => panel.classList.remove('winner-player'));
+
+                updatePlayerPanels();
+
+                await speak('Game starting! Get ready!', true);
+                await delay(1500);
+
+                await startRound();
+            }
+
+            function resetGame() {
+                stopAllSpeech();
+                if (inputTimerInterval) {
+                    clearInterval(inputTimerInterval);
+                    inputTimerInterval = null;
+                }
+                showingSequenceActive = false;
+                gameState = 'idle';
+                currentRound = 0;
+                sequence = [];
+                initPlayers();
+                clearAllProgressDots();
+                timerDisplay.textContent = '⏱ —';
+                timerDisplay.classList.remove('urgent');
+                roundDisplay.textContent = 'Round: —';
+                stateDisplay.textContent = 'Waiting...';
+                messageBanner.textContent = 'Connect controllers & press <strong>Start Game</strong>';
+                messageBanner.className = 'message-banner';
+                btnStart.disabled = false;
+                btnStart.textContent = '▶ Start Game';
+                panels.forEach(panel => panel.classList.remove('winner-player', 'eliminated-player', 'active-player'));
+                updatePlayerPanels();
+                scanGamepads();
+                speak('Game reset. Press start when ready.', true);
+            }
+
+            // ──────────────────────────────────────
+            // MAIN GAME LOOP
+            // ──────────────────────────────────────
+            function gameLoop() {
+                if (!gameLoopActive) return;
+                animationFrameId = requestAnimationFrame(gameLoop);
+
+                // Scan gamepads
+                const detectedIndices = scanGamepads();
+
+                // Read all gamepad button states
+                const allCurrentButtons = {};
+                for (const gpIndex of detectedIndices) {
+                    const buttons = readGamepadButtons(gpIndex);
+                    if (buttons) {
+                        allCurrentButtons[gpIndex] = buttons;
+                    }
+                }
+
+                // Handle input based on game state
+                if (gameState === 'idle' || gameState === 'game_over') {
+                    // In idle/game_over, button presses help detect/join players
+                    for (const gpIndex of detectedIndices) {
+                        const buttons = allCurrentButtons[gpIndex] || [];
+                        const prev = previousGamepadButtons[gpIndex] || [];
+                        const newPresses = [];
+                        for (let i = 0; i < buttons.length; i++) {
+                            if (buttons[i] && !prev[i]) newPresses.push(i);
+                        }
+                        if (newPresses.length > 0) {
+                            // Ensure player is marked connected
+                            const player = players.find(p => p.gamepadIndex === gpIndex);
+                            if (player && !player.connected) {
+                                player.connected = true;
+                                player.active = true;
+                                updatePlayerPanels();
+                                if (gameState === 'idle') {
+                                    speak(`Player ${player.index + 1} ready`, true);
+                                }
+                            }
+                            // If game is over and player presses button, maybe reset
+                            if (gameState === 'game_over' && newPresses.includes(0)) {
+                                // Press A to play again
+                                resetGame();
+                            }
+                        }
+                    }
+                }
+
+                if (gameState === 'input_phase') {
+                    // Process input from active players
+                    for (const p of players) {
+                        if (!p.active || !p.connected || p.completed || p.wrong) continue;
+                        if (p.gamepadIndex === null) continue;
+                        const buttons = allCurrentButtons[p.gamepadIndex];
+                        if (!buttons) continue;
+
+                        const newPresses = detectNewPresses(p.gamepadIndex, buttons);
+                        for (const btnIndex of newPresses) {
+                            if (p.completed || p.wrong) break;
+                            const pressedColor = BUTTON_TO_COLOR[btnIndex];
+                            if (pressedColor === undefined) continue; // Not a face button
+
+                            const expectedColor = sequence[p.sequenceProgress];
+                            if (pressedColor === expectedColor) {
+                                // Correct!
+                                p.sequenceProgress++;
+                                updateProgressDots(p.index);
+                                if (p.sequenceProgress >= sequence.length) {
+                                    p.completed = true;
+                                    updatePlayerPanels();
+                                    updateProgressDots(p.index);
+                                    // Check if all active players are done
+                                    const allDone = players.filter(pl => pl.active && pl.connected).every(pl => pl
+                                        .completed || pl.wrong);
+                                    if (allDone) {
+                                        endInputPhase();
+                                    }
+                                }
+                            } else {
+                                // Wrong!
+                                p.wrong = true;
+                                p.active = false;
+                                updatePlayerPanels();
+                                updateProgressDots(p.index);
+                                speak(`Player ${p.index + 1} wrong!`, true);
+                                // Brief visual feedback
+                                const panel = panels[p.index];
+                                panel.classList.add('eliminated-player');
+                                // Check if all active players are done/failed
+                                const allDone = players.filter(pl => pl.active && pl.connected).every(pl => pl
+                                    .completed || pl.wrong);
+                                if (allDone) {
+                                    endInputPhase();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Update previous button states
+                for (const gpIndex of Object.keys(allCurrentButtons)) {
+                    previousGamepadButtons[gpIndex] = [...allCurrentButtons[gpIndex]];
+                }
+            }
+
+            // ──────────────────────────────────────
+            // EVENT LISTENERS
+            // ──────────────────────────────────────
+            btnStart.addEventListener('click', () => {
+                if (gameState === 'idle') {
+                    inputTimeLimit = parseInt(timeLimitSlider.value);
+                    startGame();
+                } else if (gameState === 'game_over') {
+                    inputTimeLimit = parseInt(timeLimitSlider.value);
+                    resetGame();
+                    setTimeout(() => {
+                        inputTimeLimit = parseInt(timeLimitSlider.value);
+                        startGame();
+                    }, 300);
+                }
+            });
+
+            btnReset.addEventListener('click', () => {
+                resetGame();
+            });
+
+            timeLimitSlider.addEventListener('input', () => {
+                inputTimeLimit = parseInt(timeLimitSlider.value);
+                timeDisplay.textContent = inputTimeLimit + 's';
+            });
+
+            // Handle controller connection/disconnection events
+            window.addEventListener('gamepadconnected', (e) => {
+                console.log('🎮 Gamepad connected:', e.gamepad.index);
+                scanGamepads();
+                if (gameState === 'idle') {
+                    messageBanner.textContent = 'Controller detected! Press <strong>Start Game</strong> to begin.';
+                    messageBanner.className = 'message-banner announcement';
+                }
+            });
+
+            window.addEventListener('gamepaddisconnected', (e) => {
+                console.log('🔌 Gamepad disconnected:', e.gamepad.index);
+                const player = players.find(p => p.gamepadIndex === e.gamepad.index);
+                if (player) {
+                    player.gamepadIndex = null;
+                    player.connected = false;
+                    player.active = false;
+                    updatePlayerPanels();
+                    if (gameState !== 'idle' && gameState !== 'game_over') {
+                        messageBanner.textContent = `⚠️ Player ${player.index + 1} disconnected!`;
+                        messageBanner.className = 'message-banner elimination';
+                    }
+                }
+                delete previousGamepadButtons[e.gamepad.index];
+            });
+
+            // Keyboard fallback for Player 1 (testing without controller)
+            // Arrow keys / WASD mapped to face button positions
+            const keyColorMap = {
+                'ArrowUp': 'yellow', // Y / Top
+                'w': 'yellow',
+                'W': 'yellow',
+                'ArrowLeft': 'blue', // X / Left
+                'a': 'blue',
+                'A': 'blue',
+                'ArrowDown': 'green', // A / Bottom
+                's': 'green',
+                'S': 'green',
+                'ArrowRight': 'red', // B / Right
+                'd': 'red',
+                'D': 'red',
+            };
+
+            window.addEventListener('keydown', (e) => {
+                if (gameState === 'idle') {
+                    // Press any key to simulate Player 1 joining
+                    if (!players[0].connected && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a',
+                            's', 'd', 'W', 'A', 'S', 'D'
+                        ].includes(e.key)) {
+                        players[0].connected = true;
+                        players[0].active = true;
+                        players[0].gamepadIndex = -1; // Keyboard player
+                        updatePlayerPanels();
+                        speak('Player 1 ready (keyboard)', true);
+                        messageBanner.textContent = 'Keyboard Player 1 ready! Press <strong>Start Game</strong>.';
+                        messageBanner.className = 'message-banner announcement';
+                    }
+                    return;
+                }
+                if (gameState === 'game_over') {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        resetGame();
+                        setTimeout(() => startGame(), 300);
+                    }
+                    return;
+                }
+                if (gameState !== 'input_phase') return;
+                // Keyboard Player 1 input
+                const p = players[0];
+                if (!p || !p.active || !p.connected || p.completed || p.wrong) return;
+                if (p.gamepadIndex !== -1) return; // Only if using keyboard
+
+                const color = keyColorMap[e.key];
+                if (!color) return;
+                const expectedColor = sequence[p.sequenceProgress];
+                if (color === expectedColor) {
+                    p.sequenceProgress++;
+                    updateProgressDots(0);
+                    if (p.sequenceProgress >= sequence.length) {
+                        p.completed = true;
+                        updatePlayerPanels();
+                        updateProgressDots(0);
+                        const allDone = players.filter(pl => pl.active && pl.connected).every(pl => pl.completed || pl
+                            .wrong);
+                        if (allDone) endInputPhase();
+                    }
+                } else {
+                    p.wrong = true;
+                    p.active = false;
+                    updatePlayerPanels();
+                    updateProgressDots(0);
+                    speak('Player 1 wrong!', true);
+                    const allDone = players.filter(pl => pl.active && pl.connected).every(pl => pl.completed || pl.wrong);
+                    if (allDone) endInputPhase();
+                }
+            });
+
+            // ──────────────────────────────────────
+            // INITIALIZATION
+            // ──────────────────────────────────────
+            function init() {
+                inputTimeLimit = parseInt(timeLimitSlider.value);
+                timeDisplay.textContent = inputTimeLimit + 's';
+                initPlayers();
+                scanGamepads();
+                gameLoopActive = true;
+                animationFrameId = requestAnimationFrame(gameLoop);
+                messageBanner.textContent =
+                    'Connect controllers & press <strong>Start Game</strong><br><small>Keyboard: Arrow keys / WASD for Player 1</small>';
+                messageBanner.className = 'message-banner';
+                btnStart.textContent = '▶ Start Game';
+                btnStart.disabled = false;
+                roundDisplay.textContent = 'Round: —';
+                timerDisplay.textContent = '⏱ —';
+                stateDisplay.textContent = 'Waiting...';
+            }
+
+            init();
+
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', () => {
+                gameLoopActive = false;
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                if (inputTimerInterval) clearInterval(inputTimerInterval);
+                stopAllSpeech();
+            });
+
+            console.log('🎮 Simon Says Party Game Ready!');
+            console.log('   Connect up to 4 game controllers');
+            console.log('   Button mapping (Xbox layout):');
+            console.log('   X (left)  = Blue');
+            console.log('   Y (top)   = Yellow');
+            console.log('   A (bottom)= Green');
+            console.log('   B (right) = Red');
+            console.log('   Keyboard fallback for Player 1: Arrow keys / WASD');
+            console.log('   Adjust time limit with the slider (5-45 seconds)');
+            console.log('   Press Start Game to begin!');
+        })();
+    </script>
+</body>
+</html>
