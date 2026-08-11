@@ -294,12 +294,13 @@
 
         // ─── SPEECH ───
         let speechSynth = window.speechSynthesis;
-        function speak(text, priority=false) {
+                function speak(text, priority=false) {
             return new Promise((resolve) => {
                 if (!speechSynth) { resolve(); return; }
                 if (priority) speechSynth.cancel();
                 const utter = new SpeechSynthesisUtterance(text);
                 utter.rate = 0.9; utter.pitch = 1.05; utter.volume = 1.0;
+                utter.lang = 'en-US';
                 let resolved = false;
                 const done = () => { if (!resolved) { resolved = true; resolve(); } };
                 utter.onend = done;
