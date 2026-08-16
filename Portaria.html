@@ -1650,7 +1650,7 @@
             }
         }
 
-                function performSearch(query) {
+                    function performSearch(query) {
             const q = normalize(query.toLowerCase().trim());
             const resultsDiv = document.getElementById('search-results');
             resultsDiv.innerHTML = '';
@@ -1668,7 +1668,7 @@
                         const distance = levenshtein(q, normalizedName);
                         const maxLen = Math.max(q.length, normalizedName.length);
                         const similarity = 1 - distance / maxLen;
-                        if (similarity >= 0.7) { // aceita 70% de semelhança
+                        if (similarity >= 0.7) { // mantém 70% de semelhança
                             matches.push({ name, className: cls.name, classId: cls.id, score: similarity * 100 });
                         }
                     }
@@ -1699,6 +1699,8 @@
                 .replace(/nh/g, 'n')
                 .replace(/lh/g, 'l')
                 .replace(/th/g, 't')
+                .replace(/o/g, 'u')   // "Emanoel" -> "Emanuel" (som de "u")
+                .replace(/e/g, 'i')   // "Emanuel" -> "Imanuel" (som de "i")
                 .replace(/(.)\1+/g, '$1');
         }
 
