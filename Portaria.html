@@ -1202,12 +1202,39 @@
             document.getElementById('portaria-subview-class').style.display = 'none';
         }
 
-        async function releaseCurrentClass() {
+                async function releaseCurrentClass() {
             if (!currentClass) return;
+            const alreadyReleased = releasedClasses.some(r => r.classId === currentClass.id);
+
+            if (alreadyReleased) {
+                // Cancelar liberação com confirmação em três etapas
+                if (!confirm(`Cancelar liberação da turma ${currentClass.name}?`)) return;
+                if (!confirm('Tem certeza? A turma voltará a ficar bloqueada.')) return;
+                if (!confirm('Confirmação final: cancelar liberação?')) return;
+
+                try {
+                    const snapshot = await db.collection('releasedClasses')
+                        .where('classId', '==', currentClass.id)
+                        .get();
+                    const batch = db.batch();
+                    snapshot.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                } catch (error) {
+                    alert('Erro ao cancelar liberação: ' + error.message);
+                }
+                return;
+            }
+
+            // Liberar turma (apenas uma vez)
             if (confirmationEnabled) {
                 if (!confirm(`Liberar turma ${currentClass.name}?`)) return;
             }
             try {
+                // Garante que não há registro duplicado antes de adicionar
+                const existing = await db.collection('releasedClasses')
+                    .where('classId', '==', currentClass.id)
+                    .get();
+                if (!existing.empty) return;
                 await db.collection('releasedClasses').add({
                     classId: currentClass.id,
                     className: currentClass.name,
