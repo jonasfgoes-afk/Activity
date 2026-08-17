@@ -493,8 +493,11 @@
                 <button class="btn" onclick="exportData()">⬇️ Exportar dados</button>
                 <input type="file" id="import-file" accept=".json" onchange="importData(event)" style="display:block; margin:10px 0;">
 
-                <h3>👥 Usuários logados</h3>
-                <div id="logged-users-list"></div>
+                                <h3>👥 Usuários logados <button id="toggle-logs-btn" class="btn" onclick="toggleLogs()">Expandir/Retrair</button></h3>
+                <div id="logged-users-list" style="display:block;"></div>
+
+                <h3>🏠 Definir tela inicial dos usuários</h3>
+                <div id="user-home-list"></div>
 
                 <h3>📝 Solicitações de cadastro</h3>
                 <div id="registration-requests-list"></div>
@@ -662,9 +665,12 @@
                         userName = userDoc.data().name || '';
                         await loadSettingsPassword();
 
-                        const savedHome = localStorage.getItem(`homeScreen_${user.uid}`);
-                        const savedName = localStorage.getItem(`userName_${user.uid}`);
+                                                // Verifica se já tem configuração salva (prioriza Firestore)
+                        const userData = userDoc.data();
+                        let savedHome = userData.homeScreen || localStorage.getItem(`homeScreen_${user.uid}`);
+                        let savedName = userData.name || localStorage.getItem(`userName_${user.uid}`);
                         if (savedHome && savedName) {
+                            // Usuário já configurado
                             userName = savedName;
                             homeScreen = savedHome;
                             setupDone = true;
@@ -672,6 +678,7 @@
                             enterHomeScreen();
                             recordLogin(userName);
                         } else {
+                            // Primeiro acesso: mostrar tela de configuração
                             setupDone = false;
                             showApp();
                             showSetupScreen();
@@ -1004,7 +1011,7 @@
             });
         }
 
-        function renderPortariaClassStudents() {
+                function renderPortariaClassStudents() {
             const div = document.getElementById('portaria-class-students');
             if (!currentPortariaClass) return;
             const cls = allClasses.find(c => c.id === currentPortariaClass);
@@ -1013,6 +1020,7 @@
             div.innerHTML = '';
             cls.students.forEach(name => {
                 const activeCall = activeCalls.find(c => c.classId === cls.id && c.studentName === name && c.status !== 'left');
+                const leftCall = activeCalls.find(c => c.classId === cls.id && c.studentName === name && c.status === 'left');
                 const row = document.createElement('div');
                 row.className = 'student-row';
                 let statusText = '';
@@ -1021,6 +1029,9 @@
                     bgColor = activeCall.status === 'hurried' ? '#ffcccc' : '#ffe0b3';
                     const time = activeCall.calledAt ? new Date(activeCall.calledAt.toMillis()).toLocaleTimeString('pt-BR') : '';
                     statusText = ` - ${activeCall.status === 'hurried' ? '🏃 Apressado' : '🟠 Chamado'} ${time}`;
+                } else if (leftCall) {
+                    bgColor = '#cce0ff'; // azul para quem já saiu
+                    statusText = ' - ✅ Saiu';
                 }
                 const btn = document.createElement('button');
                 btn.className = 'btn';
@@ -1029,6 +1040,17 @@
                 btn.style.backgroundColor = bgColor;
                 btn.onclick = () => releaseStudent({ name, className: cls.name, classId: cls.id });
                 row.appendChild(btn);
+
+                // Botão desfazer chamada (somente se houver chamada ativa)
+                if (activeCall) {
+                    const undoBtn = document.createElement('button');
+                    undoBtn.className = 'btn';
+                    undoBtn.textContent = '↩️';
+                    undoBtn.title = 'Desfazer chamada';
+                    undoBtn.onclick = () => undoCall(activeCall.id);
+                    row.appendChild(undoBtn);
+                }
+
                 const obsBtn = document.createElement('button');
                 obsBtn.className = 'obs-btn';
                 obsBtn.textContent = '📝';
@@ -1293,6 +1315,7 @@
                 closePasswordModal();
                 showScreen('screen-settings');
                 renderLoggedUsers();
+                renderUserHomeList();
                 renderArchiveList();
             } else {
                 document.getElementById('password-error').textContent = 'Senha incorreta!';
@@ -1434,7 +1457,16 @@
             reader.readAsText(file);
         }
 
-                function renderLoggedUsers() {
+                        function toggleLogs() {
+            const div = document.getElementById('logged-users-list');
+            if (div.style.display === 'none') {
+                div.style.display = 'block';
+            } else {
+                div.style.display = 'none';
+            }
+        }
+
+        function renderLoggedUsers() {
             db.collection('logins').orderBy('timestamp', 'desc').limit(50).onSnapshot(snapshot => {
                 const div = document.getElementById('logged-users-list');
                 div.innerHTML = '';
@@ -1450,6 +1482,55 @@
                     div.innerHTML += `<p>👤 ${name} (📧 ${d.email}) - ${time}${actionInfo}</p>`;
                 });
             });
+        }
+
+        function renderUserHomeList() {
+            db.collection('users').onSnapshot(snapshot => {
+                const div = document.getElementById('user-home-list');
+                div.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const userData = doc.data();
+                    const userId = doc.id;
+                    const row = document.createElement('div');
+                    row.className = 'request-row';
+                    row.innerHTML = `<span>${userData.name || 'Sem nome'} (${userData.email || 'sem email'})</span>`;
+                    
+                    // Dropdown para tela inicial
+                    const select = document.createElement('select');
+                    select.id = `home-select-${userId}`;
+                    const optionPortaria = document.createElement('option');
+                    optionPortaria.value = 'portaria';
+                    optionPortaria.textContent = 'Portaria';
+                    select.appendChild(optionPortaria);
+                    allClasses.forEach(cls => {
+                        const option = document.createElement('option');
+                        option.value = cls.id;
+                        option.textContent = cls.name;
+                        select.appendChild(option);
+                    });
+                    // Seleciona o valor atual
+                    const currentHome = userData.homeScreen || 'portaria';
+                    select.value = currentHome;
+                    row.appendChild(select);
+                    
+                    const saveBtn = document.createElement('button');
+                    saveBtn.className = 'btn btn-primary';
+                    saveBtn.textContent = 'Salvar';
+                    saveBtn.onclick = () => saveUserHomeSetting(userId, select.value);
+                    row.appendChild(saveBtn);
+                    
+                    div.appendChild(row);
+                });
+            });
+        }
+
+        async function saveUserHomeSetting(userId, homeScreenValue) {
+            try {
+                await db.collection('users').doc(userId).update({ homeScreen: homeScreenValue });
+                alert('Tela inicial atualizada!');
+            } catch (error) {
+                alert('Erro ao salvar: ' + error.message);
+            }
         }
 
         function renderArchiveList() {
