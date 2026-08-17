@@ -644,6 +644,22 @@
                 localStorage.setItem('confirmationEnabled', confirmationEnabled);
             });
 
+            // Listener para o botão voltar do navegador (Android)
+            window.addEventListener('popstate', (event) => {
+                if (event.state && event.state.screenId) {
+                    // Impede que a tela seja empilhada novamente
+                    showScreen(event.state.screenId, false);
+                } else {
+                    // Fallback: volta para o menu principal
+                    showScreen('screen-main-menu', false);
+                }
+            });
+
+            // Trata o botão voltar do navegador (Android)
+            window.addEventListener('popstate', () => {
+                goBack();
+            });
+
                         auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     try {
@@ -721,36 +737,29 @@
             document.getElementById('app-screen').style.display = 'none';
         }
 
-        function showApp() {
+                function showApp() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app-screen').style.display = 'block';
+            // Restaura a última tela visitada (se houver) após um refresh
+            const savedScreen = sessionStorage.getItem('lastScreen');
+            if (savedScreen && savedScreen !== 'screen-main-menu') {
+                showScreen(savedScreen, false);
+            } else {
+                showScreen('screen-main-menu', false);
+            }
+            // Substitui o estado atual do histórico para que o botão voltar não saia do app
+            history.replaceState({ screenId: currentScreen }, '');
         }
 
-        function showScreen(screenId, push = true, action = null) {
+                function showScreen(screenId, push = true) {
             if (push && currentScreen !== screenId) {
                 navStack.push(currentScreen);
-            }
-            if (action && currentUser) {
-                // Update the latest login document for this user with the action
-                db.collection('logins')
-                    .where('uid', '==', currentUser.uid)
-                    .orderBy('timestamp', 'desc')
-                    .limit(1)
-                    .get()
-                    .then(snapshot => {
-                        if (!snapshot.empty) {
-                            const docId = snapshot.docs[0].id;
-                            db.collection('logins').doc(docId).update({
-                                lastAction: action,
-                                lastActionTimestamp: firebase.firestore.FieldValue.serverTimestamp()
-                            }).catch(err => console.error('Erro ao registrar ação:', err));
-                        }
-                    })
-                    .catch(err => console.error('Erro ao buscar login:', err));
+                history.pushState({ screenId: screenId }, '');
             }
             document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
             document.getElementById(screenId).style.display = 'block';
             currentScreen = screenId;
+            sessionStorage.setItem('lastScreen', screenId);
             document.getElementById('btn-back').style.display = (screenId === 'screen-main-menu' || screenId === 'screen-setup') ? 'none' : 'inline-block';
             const titles = {
                 'screen-main-menu': 'Menu Principal',
@@ -770,13 +779,14 @@
                 return;
             }
             if (navStack.length > 0) {
-                const prev = navStack.pop();
-                showScreen(prev, false);
+                // Remove o estado atual do histórico e navega de volta
+                history.back();
             } else {
+                // Se não há histórico interno, volta para o menu principal sem sair do app
                 showScreen('screen-main-menu', false);
             }
         }
-
+        
         function logout() {
             auth.signOut().then(() => {
                 showLogin();
