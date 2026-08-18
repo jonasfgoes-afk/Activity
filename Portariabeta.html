@@ -453,7 +453,7 @@
             <!-- Tela da Turma (Professor) -->
             <section id="screen-class" class="screen">
                 <h2 id="class-screen-title"></h2>
-                <button class="btn btn-success" onclick="releaseCurrentClass()">🔓 Liberar Turma</button>
+                <button id="btn-release-class" class="btn" onclick="releaseCurrentClass()">🔓 Liberar turma</button>
                 <h3>🔔 Chamadas ativas</h3>
                 <div id="class-active-calls"></div>
                 <h3>✅ Histórico</h3>
@@ -864,10 +864,11 @@
                 navStack = [];
             } else {
                 const cls = allClasses.find(c => c.id === homeScreen);
-                if (cls) {
+                  if (cls) {
                     currentClass = cls;
                     showScreen('screen-class', false);
                     document.getElementById('class-screen-title').textContent = cls.name;
+                    updateReleaseButton(); // adicionar
                     renderClassScreen();
                     navStack = [];
                 } else {
@@ -925,6 +926,7 @@
             db.collection('releasedClasses').onSnapshot(snapshot => {
                 releasedClasses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderReleasedClasses();
+                updateReleaseButton(); // adicionar
             });
 
             db.collection('registrationRequests').onSnapshot(snapshot => {
@@ -1503,6 +1505,7 @@
             if (!currentClass) return;
             showScreen('screen-class');
             document.getElementById('class-screen-title').textContent = currentClass.name;
+            updateReleaseButton(); // adicionar
             renderClassScreen();
         }
 
@@ -1556,6 +1559,19 @@
                 });
             } catch (error) {
                 alert('Erro ao liberar turma: ' + error.message);
+            }
+        }
+
+        function updateReleaseButton() {
+            const btn = document.getElementById('btn-release-class');
+            if (!btn || !currentClass) return;
+            const isReleased = releasedClasses.some(r => r.classId === currentClass.id);
+            if (isReleased) {
+                btn.textContent = '✅ Turma liberada';
+                btn.className = 'btn btn-success'; // verde
+            } else {
+                btn.textContent = '🔓 Liberar turma';
+                btn.className = 'btn'; // cinza
             }
         }
 
