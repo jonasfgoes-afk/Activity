@@ -424,8 +424,9 @@
             <!-- Tela Portaria -->
             <section id="screen-portaria" class="screen">
                 <div id="portaria-subview-main">
-                    <div class="search-box">
+                                        <div class="search-box">
                         <input type="text" id="search-input" placeholder="Pesquisar estudante..." oninput="performSearch(this.value)">
+                        <button class="btn" id="clear-search-btn" onclick="clearSearch()">✖</button>
                         <button class="btn" id="btn-voice" onclick="toggleVoice()">🎤 Modo de voz</button>
                     </div>
                     <div id="search-results"></div>
@@ -591,6 +592,8 @@
         let setupDone = false;
         let settingsPassword = null;
         let portariaShowClasses = true; // padrão
+        let classGridExpanded = true; // controla se a grade de turmas está expandida
+        let expandedReleasedClassId = null; // guarda o ID da turma com lista expandida
 
         // ================= CARREGAR SENHA DO FIRESTORE =================
         async function loadSettingsPassword() {
@@ -1051,8 +1054,6 @@
                 return orderA - orderB;
             });
 
-            let currentlyExpanded = null;
-
             sortedClasses.forEach(cls => {
                 const isReleased = releasedIds.has(cls.id);
                 const container = document.createElement('div');
@@ -1066,18 +1067,9 @@
                 header.style.background = '#f8f9fa';
                 header.style.borderRadius = '6px';
                 header.onclick = () => {
-                    const studentList = container.querySelector('.student-list');
-                    if (!studentList) return;
-                    if (studentList.style.display === 'block') {
-                        studentList.style.display = 'none';
-                        currentlyExpanded = null;
-                    } else {
-                        if (currentlyExpanded) {
-                            currentlyExpanded.style.display = 'none';
-                        }
-                        studentList.style.display = 'block';
-                        currentlyExpanded = studentList;
-                    }
+                    // Alterna a expansão da turma
+                    expandedReleasedClassId = (expandedReleasedClassId === cls.id) ? null : cls.id;
+                    renderReleasedClasses(); // Re-renderiza para aplicar o estado
                 };
 
                 const circle = document.createElement('span');
@@ -1099,7 +1091,7 @@
 
                 const studentList = document.createElement('div');
                 studentList.className = 'student-list';
-                studentList.style.display = 'none';
+                studentList.style.display = (expandedReleasedClassId === cls.id) ? 'block' : 'none';
                 studentList.style.padding = '5px 10px';
                 studentList.style.background = '#f1f2f6';
                 studentList.style.borderRadius = '0 0 6px 6px';
@@ -2010,6 +2002,11 @@
                 btn.onclick = () => releaseStudent(m);
                 resultsDiv.appendChild(btn);
             });
+        }
+        
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            performSearch('');
         }
 
         function normalize(str) {
