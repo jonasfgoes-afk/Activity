@@ -899,13 +899,13 @@
                 }
             });
 
-            db.collection('currentCalls').orderBy('calledAt', 'desc').onSnapshot(snapshot => {
+                db.collection('currentCalls').orderBy('calledAt', 'desc').onSnapshot(snapshot => {
                 const newCalls = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 const newIds = new Set(newCalls.map(c => c.id));
                 if (initialCallsLoaded) {
                     for (const id of newIds) {
                         if (!prevCallIds.has(id)) {
-                            playSound();
+                            playRightSound(); // substituído por som de sucesso
                             break;
                         }
                     }
@@ -1425,11 +1425,7 @@
                     observation: '',
                     releasedBy: currentUser.email
                 });
-                if (bypassConfirmation) {
-                    playRightSound(); // som de sucesso para chamada automática
-                } else {
-                    playSound(); // som padrão para chamada manual
-                }
+                // Nenhum som é reproduzido aqui; o listener de currentCalls cuidará do som de sucesso
             } catch (error) {
                 alert('Erro ao liberar estudante: ' + error.message);
             }
@@ -1987,10 +1983,10 @@
             processAutoVoiceResult(transcript);
         }
 
-                function processAutoVoiceResult(transcript) {
+        function processAutoVoiceResult(transcript) {
             const { classId, nameWords } = detectClassAndName(transcript);
             if (nameWords.length === 0) {
-                playWrongSound();
+                // Sem som de erro, apenas busca
                 performSearch(transcript);
                 return;
             }
@@ -1998,16 +1994,13 @@
             const matches = matchStudents(classId, nameWords);
 
             if (matches.length === 1) {
-                // Chamada direta sem confirmação (som de sucesso é tocado dentro de releaseStudent)
+                // Chamada direta sem confirmação; o som de sucesso virá do listener
                 releaseStudent(matches[0], true);
             } else {
-                // Erro: múltiplos ou nenhum
-                playWrongSound();
+                // Sem som de erro; apenas mostrar sugestões ou busca aproximada
                 if (matches.length > 1) {
-                    // Vários estudantes correspondem
                     displaySearchSuggestions(matches);
                 } else {
-                    // Nenhum correspondente; usar busca aproximada como sugestão
                     performSearch(transcript);
                 }
             }
