@@ -427,7 +427,6 @@
                     <div class="search-box">
                         <input type="text" id="search-input" placeholder="Pesquisar estudante..." oninput="performSearch(this.value)">
                         <button class="btn" id="clear-search-btn" onclick="clearSearch()">✖</button>
-                        <button class="btn" id="btn-voice" onclick="toggleVoice()">🎤 Modo de voz</button>
                         <button class="btn" id="btn-auto-voice" onclick="toggleAutoVoice()">🎤 Auto voz</button>
                     </div>
                     <div id="search-results"></div>
@@ -1933,42 +1932,13 @@
                 // Se o modo automático ainda estiver ativo, reinicia a escuta
                 if (autoVoiceActive) {
                     recognition.start();
-                } else {
-                    voiceActive = false;
-                    document.getElementById('btn-voice').textContent = '🎤 Modo de voz';
                 }
             };
             recognition.onerror = (event) => {
-                voiceActive = false;
                 autoVoiceActive = false;
-                document.getElementById('btn-voice').textContent = '🎤 Modo de voz';
                 document.getElementById('btn-auto-voice').textContent = '🎤 Auto voz';
                 alert('Erro no reconhecimento: ' + event.error);
             };
-        }
-
-        function toggleVoice() {
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                alert('Reconhecimento de voz não suportado neste navegador.');
-                return;
-            }
-            initRecognitionIfNeeded();
-            // Desativa o modo automático se estiver ativo
-            if (autoVoiceActive) {
-                autoVoiceActive = false;
-                document.getElementById('btn-auto-voice').textContent = '🎤 Auto voz';
-            }
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            if (voiceActive) {
-                recognition.stop();
-                voiceActive = false;
-                document.getElementById('btn-voice').textContent = '🎤 Modo de voz';
-            } else {
-                recognition.start();
-                voiceActive = true;
-                document.getElementById('btn-voice').textContent = '🔴 Ouvindo...';
-            }
         }
 
         function toggleAutoVoice() {
@@ -1985,7 +1955,6 @@
             } else {
                 // Ativar modo automático
                 autoVoiceActive = true;
-                voiceActive = false; // desativa o modo manual
                 recognition.continuous = true;
                 recognition.interimResults = false;
                 recognition.start();
@@ -1995,13 +1964,7 @@
 
         function handleVoiceResult(transcript) {
             document.getElementById('search-input').value = transcript;
-            if (autoVoiceActive) {
-                processAutoVoiceResult(transcript);
-            } else {
-                performSearch(transcript);
-                voiceActive = false;
-                document.getElementById('btn-voice').textContent = '🎤 Modo de voz';
-            }
+            processAutoVoiceResult(transcript);
         }
 
         function processAutoVoiceResult(transcript) {
