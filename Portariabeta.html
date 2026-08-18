@@ -1423,7 +1423,11 @@
                     observation: '',
                     releasedBy: currentUser.email
                 });
-                playSound();
+                if (bypassConfirmation) {
+                    playRightSound(); // som de sucesso para chamada automática
+                } else {
+                    playSound(); // som padrão para chamada manual
+                }
             } catch (error) {
                 alert('Erro ao liberar estudante: ' + error.message);
             }
@@ -1967,7 +1971,7 @@
             processAutoVoiceResult(transcript);
         }
 
-        function processAutoVoiceResult(transcript) {
+                function processAutoVoiceResult(transcript) {
             const { classId, nameWords } = detectClassAndName(transcript);
             if (nameWords.length === 0) {
                 playWrongSound();
@@ -1978,9 +1982,8 @@
             const matches = matchStudents(classId, nameWords);
 
             if (matches.length === 1) {
-                // Chamada direta sem confirmação
+                // Chamada direta sem confirmação (som de sucesso é tocado dentro de releaseStudent)
                 releaseStudent(matches[0], true);
-                playRightSound();
             } else {
                 // Erro: múltiplos ou nenhum
                 playWrongSound();
