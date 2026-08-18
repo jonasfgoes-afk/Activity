@@ -354,6 +354,9 @@
         .order-arrows button:hover {
             background: #ecf0f1;
         }
+        #toggle-logs-btn {
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
@@ -423,7 +426,9 @@
                 <div id="portaria-subview-main">
                     <div class="search-box">
                         <input type="text" id="search-input" placeholder="Pesquisar estudante..." oninput="performSearch(this.value)">
+                        <button class="btn" id="clear-search-btn" onclick="clearSearch()">✖</button>
                         <button class="btn" id="btn-voice" onclick="toggleVoice()">🎤 Modo de voz</button>
+                        <button class="btn" id="btn-auto-voice" onclick="toggleAutoVoice()">🎤 Auto voz</button>
                     </div>
                     <div id="search-results"></div>
 
@@ -449,7 +454,7 @@
             <!-- Tela da Turma (Professor) -->
             <section id="screen-class" class="screen">
                 <h2 id="class-screen-title"></h2>
-                <button class="btn btn-success" onclick="releaseCurrentClass()">🔓 Turma liberada</button>
+                <button class="btn btn-success" onclick="releaseCurrentClass()">🔓 Liberar Turma</button>
                 <h3>🔔 Chamadas ativas</h3>
                 <div id="class-active-calls"></div>
                 <h3>✅ Histórico</h3>
@@ -473,6 +478,11 @@
                     <input type="checkbox" id="confirmation-toggle">
                     Ativar confirmações
                 </label>
+                <br>
+                <label>
+                    <input type="checkbox" id="show-portaria-classes-toggle">
+                    Mostrar seção "Turmas" na Portaria
+                </label>
 
                 <h3>🔑 Alterar senha do administrador</h3>
                 <div class="search-box">
@@ -493,14 +503,17 @@
                 <button class="btn" onclick="exportData()">⬇️ Exportar dados</button>
                 <input type="file" id="import-file" accept=".json" onchange="importData(event)" style="display:block; margin:10px 0;">
 
-                                <h3>👥 Usuários logados <button id="toggle-logs-btn" class="btn" onclick="toggleLogs()">Expandir/Retrair</button></h3>
+                <h3>👥 Usuários logados <button id="toggle-logs-btn" class="btn" onclick="toggleLogs()">Expandir/Retrair</button></h3>
                 <div id="logged-users-list" style="display:block;"></div>
-
-                <h3>🏠 Definir tela inicial dos usuários</h3>
-                <div id="user-home-list"></div>
 
                 <h3>📝 Solicitações de cadastro</h3>
                 <div id="registration-requests-list"></div>
+
+                <h3>🔍 Observações <button id="toggle-observations" class="btn" onclick="toggleObservations()">Expandir/Retrair</button></h3>
+                <div id="observations-list" style="display:none;"></div>
+
+                <h3>🏠 Definir tela inicial dos usuários</h3>
+                <div id="user-home-list"></div>
 
                 <h3>🗄️ Arquivo diário</h3>
                 <div id="archive-list"></div>
@@ -546,7 +559,7 @@
     </div>
 
     <script>
-        // ================= CONFIGURAÇÃO FIREBASE (SUBSTITUA PELOS SEUS DADOS) =================
+        // ================= CONFIGURAÇÃO FIREBASE =================
         const firebaseConfig = {
             apiKey: "AIzaSyBklvdhjguLojjwRLv6pbCVkUA21mXUOPY",
             authDomain: "portaria-da-escola.firebaseapp.com",
@@ -579,6 +592,10 @@
         let homeScreen = 'screen-main-menu';
         let setupDone = false;
         let settingsPassword = null;
+        let portariaShowClasses = true; // padrão
+        let classGridExpanded = true; // controla se a grade de turmas está expandida
+        let expandedReleasedClassId = null; // guarda o ID da turma com lista expandida
+        let autoVoiceActive = false; // indica se o modo de voz automática está ativo
 
         // ================= CARREGAR SENHA DO FIRESTORE =================
         async function loadSettingsPassword() {
@@ -590,6 +607,12 @@
                     await db.collection('settings').doc('adminPassword').set({ password: 'admin123' });
                     settingsPassword = 'admin123';
                 }
+                // Carregar preferência de mostrar turmas
+                const showClassesDoc = await db.collection('settings').doc('portariaShowClasses').get();
+                if (showClassesDoc.exists) {
+                    portariaShowClasses = showClassesDoc.data().value === true;
+                }
+                document.getElementById('show-portaria-classes-toggle').checked = portariaShowClasses;
             } catch (error) {
                 console.error('Erro ao carregar senha:', error);
                 settingsPassword = 'admin123';
@@ -644,23 +667,22 @@
                 localStorage.setItem('confirmationEnabled', confirmationEnabled);
             });
 
+            document.getElementById('show-portaria-classes-toggle').addEventListener('change', (e) => {
+                portariaShowClasses = e.target.checked;
+                db.collection('settings').doc('portariaShowClasses').set({ value: portariaShowClasses });
+                updatePortariaClassesVisibility();
+            });
+
             // Listener para o botão voltar do navegador (Android)
             window.addEventListener('popstate', (event) => {
                 if (event.state && event.state.screenId) {
-                    // Impede que a tela seja empilhada novamente
                     showScreen(event.state.screenId, false);
                 } else {
-                    // Fallback: volta para o menu principal
                     showScreen('screen-main-menu', false);
                 }
             });
 
-            // Trata o botão voltar do navegador (Android)
-            window.addEventListener('popstate', () => {
-                goBack();
-            });
-
-                        auth.onAuthStateChanged(async (user) => {
+            auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     try {
                         const userDoc = await db.collection('users').doc(user.uid).get();
@@ -681,12 +703,10 @@
                         userName = userDoc.data().name || '';
                         await loadSettingsPassword();
 
-                                                // Verifica se já tem configuração salva (prioriza Firestore)
                         const userData = userDoc.data();
                         let savedHome = userData.homeScreen || localStorage.getItem(`homeScreen_${user.uid}`);
                         let savedName = userData.name || localStorage.getItem(`userName_${user.uid}`);
                         if (savedHome && savedName) {
-                            // Usuário já configurado
                             userName = savedName;
                             homeScreen = savedHome;
                             setupDone = true;
@@ -694,7 +714,6 @@
                             enterHomeScreen();
                             recordLogin(userName);
                         } else {
-                            // Primeiro acesso: mostrar tela de configuração
                             setupDone = false;
                             showApp();
                             showSetupScreen();
@@ -737,24 +756,39 @@
             document.getElementById('app-screen').style.display = 'none';
         }
 
-                function showApp() {
+        function showApp() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app-screen').style.display = 'block';
-            // Restaura a última tela visitada (se houver) após um refresh
             const savedScreen = sessionStorage.getItem('lastScreen');
             if (savedScreen && savedScreen !== 'screen-main-menu') {
                 showScreen(savedScreen, false);
             } else {
                 showScreen('screen-main-menu', false);
             }
-            // Substitui o estado atual do histórico para que o botão voltar não saia do app
             history.replaceState({ screenId: currentScreen }, '');
         }
 
-                function showScreen(screenId, push = true) {
+        function showScreen(screenId, push = true, action = null) {
             if (push && currentScreen !== screenId) {
                 navStack.push(currentScreen);
                 history.pushState({ screenId: screenId }, '');
+            }
+            if (action && currentUser) {
+                db.collection('logins')
+                    .where('uid', '==', currentUser.uid)
+                    .orderBy('timestamp', 'desc')
+                    .limit(1)
+                    .get()
+                    .then(snapshot => {
+                        if (!snapshot.empty) {
+                            const docId = snapshot.docs[0].id;
+                            db.collection('logins').doc(docId).update({
+                                lastAction: action,
+                                lastActionTimestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            }).catch(err => console.error('Erro ao registrar ação:', err));
+                        }
+                    })
+                    .catch(err => console.error('Erro ao buscar login:', err));
             }
             document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
             document.getElementById(screenId).style.display = 'block';
@@ -779,14 +813,12 @@
                 return;
             }
             if (navStack.length > 0) {
-                // Remove o estado atual do histórico e navega de volta
                 history.back();
             } else {
-                // Se não há histórico interno, volta para o menu principal sem sair do app
                 showScreen('screen-main-menu', false);
             }
         }
-        
+
         function logout() {
             auth.signOut().then(() => {
                 showLogin();
@@ -852,7 +884,6 @@
         function initializeRealtimeListeners() {
             db.collection('classes').onSnapshot(snapshot => {
                 allClasses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                // Ordenar por campo 'order' (se existir)
                 allClasses.sort((a, b) => {
                     const orderA = a.order !== undefined ? a.order : Number.MAX_SAFE_INTEGER;
                     const orderB = b.order !== undefined ? b.order : Number.MAX_SAFE_INTEGER;
@@ -862,6 +893,7 @@
                 renderProfessoresClassButtons();
                 renderPortariaClassButtons();
                 renderSettingsClassList();
+                updatePortariaClassesVisibility();
                 if (!setupDone) {
                     renderSetupClassList();
                 }
@@ -884,7 +916,11 @@
                 renderHistory();
                 renderPortariaClassStudents();
                 renderClassScreen();
-                renderReleasedClasses(); // adicionado para atualizar cores e lista
+                renderReleasedClasses();
+                const obsDiv = document.getElementById('observations-list');
+                if (obsDiv && obsDiv.style.display === 'block') {
+                    renderObservations();
+                }
             });
 
             db.collection('releasedClasses').onSnapshot(snapshot => {
@@ -946,7 +982,6 @@
                 row.className = 'call-row';
                 row.innerHTML = `<span><strong>${cls.name}</strong> (${cls.students?.length || 0} alunos)</span>`;
 
-                // Botões de ordem
                 const orderDiv = document.createElement('span');
                 orderDiv.className = 'order-arrows';
                 if (index > 0) {
@@ -1015,22 +1050,17 @@
                 return;
             }
             const releasedIds = new Set(releasedClasses.map(r => r.classId));
-            // Ordena as turmas conforme a ordem definida em configurações
             const sortedClasses = allClasses.slice().sort((a, b) => {
                 const orderA = a.order !== undefined ? a.order : Number.MAX_SAFE_INTEGER;
                 const orderB = b.order !== undefined ? b.order : Number.MAX_SAFE_INTEGER;
                 return orderA - orderB;
             });
 
-            // Guarda referência ao elemento atualmente expandido (por turma)
-            let currentlyExpanded = null;
-
             sortedClasses.forEach(cls => {
                 const isReleased = releasedIds.has(cls.id);
                 const container = document.createElement('div');
                 container.style.marginBottom = '5px';
 
-                // Cabeçalho da turma (clicável para expandir/retrair)
                 const header = document.createElement('div');
                 header.style.display = 'flex';
                 header.style.alignItems = 'center';
@@ -1039,25 +1069,11 @@
                 header.style.background = '#f8f9fa';
                 header.style.borderRadius = '6px';
                 header.onclick = () => {
-                    const studentList = container.querySelector('.student-list');
-                    if (!studentList) return;
-
-                    // Se esta turma já está expandida, retrai
-                    if (studentList.style.display === 'block') {
-                        studentList.style.display = 'none';
-                        currentlyExpanded = null;
-                    } else {
-                        // Retrai qualquer turma expandida anteriormente
-                        if (currentlyExpanded) {
-                            currentlyExpanded.style.display = 'none';
-                        }
-                        // Expande a turma clicada
-                        studentList.style.display = 'block';
-                        currentlyExpanded = studentList;
-                    }
+                    // Alterna a expansão da turma
+                    expandedReleasedClassId = (expandedReleasedClassId === cls.id) ? null : cls.id;
+                    renderReleasedClasses(); // Re-renderiza para aplicar o estado
                 };
 
-                // Círculo indicador (cinza/verde)
                 const circle = document.createElement('span');
                 circle.style.display = 'inline-block';
                 circle.style.width = '12px';
@@ -1073,13 +1089,11 @@
 
                 header.appendChild(circle);
                 header.appendChild(className);
-
                 container.appendChild(header);
 
-                // Lista de estudantes (inicialmente oculta)
                 const studentList = document.createElement('div');
                 studentList.className = 'student-list';
-                studentList.style.display = 'none';
+                studentList.style.display = (expandedReleasedClassId === cls.id) ? 'block' : 'none';
                 studentList.style.padding = '5px 10px';
                 studentList.style.background = '#f1f2f6';
                 studentList.style.borderRadius = '0 0 6px 6px';
@@ -1094,7 +1108,6 @@
                     studentRow.style.gap = '5px';
                     let bgColor = '';
                     if (activeCall) {
-                        // Laranja para chamado (não apressado)
                         bgColor = activeCall.status === 'hurried' ? '#ffcccc' : '#FFA500';
                     } else if (leftCall) {
                         bgColor = '#cce0ff';
@@ -1103,11 +1116,10 @@
                     studentRow.style.borderRadius = '4px';
                     studentRow.style.padding = '3px 6px';
 
-                    // Botão com o nome do estudante
                     const nameBtn = document.createElement('button');
                     nameBtn.className = 'btn';
                     nameBtn.textContent = name;
-                    nameBtn.disabled = !!activeCall; // desabilita se já houver chamada ativa
+                    nameBtn.disabled = !!activeCall;
                     nameBtn.style.flex = '1';
                     nameBtn.style.backgroundColor = 'transparent';
                     nameBtn.style.border = 'none';
@@ -1120,7 +1132,6 @@
                     };
                     studentRow.appendChild(nameBtn);
 
-                    // Botão de desfazer (aparece apenas se houver chamada ativa)
                     if (activeCall) {
                         const undoBtn = document.createElement('button');
                         undoBtn.className = 'btn';
@@ -1128,6 +1139,18 @@
                         undoBtn.title = 'Desfazer chamada';
                         undoBtn.onclick = () => undoCall(activeCall.id);
                         studentRow.appendChild(undoBtn);
+
+                        const obsBtn = document.createElement('button');
+                        obsBtn.className = 'btn';
+                        obsBtn.textContent = '📝';
+                        obsBtn.title = 'Observação';
+                        obsBtn.onclick = () => {
+                            const newObs = prompt('Observação:', activeCall.observation || '');
+                            if (newObs !== null) {
+                                db.collection('currentCalls').doc(activeCall.id).update({ observation: newObs });
+                            }
+                        };
+                        studentRow.appendChild(obsBtn);
                     }
 
                     studentList.appendChild(studentRow);
@@ -1138,7 +1161,7 @@
             });
         }
 
-                function renderPortariaClassStudents() {
+        function renderPortariaClassStudents() {
             const div = document.getElementById('portaria-class-students');
             if (!currentPortariaClass) return;
             const cls = allClasses.find(c => c.id === currentPortariaClass);
@@ -1153,12 +1176,11 @@
                 let statusText = '';
                 let bgColor = '';
                 if (activeCall) {
-                    // Laranja para chamado (não apressado)
                     bgColor = activeCall.status === 'hurried' ? '#ffcccc' : '#FFA500';
                     const time = activeCall.calledAt ? new Date(activeCall.calledAt.toMillis()).toLocaleTimeString('pt-BR') : '';
                     statusText = ` - ${activeCall.status === 'hurried' ? '🏃 Apressado' : '🟠 Chamado'} ${time}`;
                 } else if (leftCall) {
-                    bgColor = '#cce0ff'; // azul para quem já saiu
+                    bgColor = '#cce0ff';
                     statusText = ' - ✅ Saiu';
                 }
                 const btn = document.createElement('button');
@@ -1169,7 +1191,6 @@
                 btn.onclick = () => releaseStudent({ name, className: cls.name, classId: cls.id });
                 row.appendChild(btn);
 
-                // Botão desfazer chamada (somente se houver chamada ativa)
                 if (activeCall) {
                     const undoBtn = document.createElement('button');
                     undoBtn.className = 'btn';
@@ -1273,14 +1294,124 @@
             });
         }
 
+        function renderObservations() {
+            const div = document.getElementById('observations-list');
+            div.innerHTML = '';
+            const callsWithObservations = activeCalls.filter(c => c.observation && c.observation.trim() !== '');
+            if (callsWithObservations.length === 0) {
+                div.innerHTML = '<p>Nenhuma observação registrada.</p>';
+                return;
+            }
+            callsWithObservations.forEach(c => {
+                const p = document.createElement('p');
+                p.style.padding = '4px 0';
+                const time = c.calledAt ? new Date(c.calledAt.toMillis()).toLocaleTimeString('pt-BR') : '';
+                p.textContent = `${c.studentName} (${c.className}) - ${time}: ${c.observation}`;
+                div.appendChild(p);
+            });
+        }
+
+        function renderLoggedUsers() {
+            db.collection('logins').orderBy('timestamp', 'desc').limit(50).onSnapshot(snapshot => {
+                const div = document.getElementById('logged-users-list');
+                div.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    const time = d.timestamp ? new Date(d.timestamp.toMillis()).toLocaleString('pt-BR') : '';
+                    const name = d.name ? d.name : 'Nome não informado';
+                    let actionInfo = '';
+                    if (d.lastAction) {
+                        const lastActionTime = d.lastActionTimestamp ? new Date(d.lastActionTimestamp.toMillis()).toLocaleString('pt-BR') : '';
+                        actionInfo = ` - Última ação: ${d.lastAction} às ${lastActionTime}`;
+                    }
+                    div.innerHTML += `<p>👤 ${name} (📧 ${d.email}) - ${time}${actionInfo}</p>`;
+                });
+            });
+        }
+
+        function renderUserHomeList() {
+            db.collection('users').onSnapshot(snapshot => {
+                const div = document.getElementById('user-home-list');
+                div.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const userData = doc.data();
+                    const userId = doc.id;
+                    const row = document.createElement('div');
+                    row.className = 'request-row';
+                    row.innerHTML = `<span>${userData.name || 'Sem nome'} (${userData.email || 'sem email'})</span>`;
+                    
+                    const select = document.createElement('select');
+                    select.id = `home-select-${userId}`;
+                    const optionPortaria = document.createElement('option');
+                    optionPortaria.value = 'portaria';
+                    optionPortaria.textContent = 'Portaria';
+                    select.appendChild(optionPortaria);
+                    allClasses.forEach(cls => {
+                        const option = document.createElement('option');
+                        option.value = cls.id;
+                        option.textContent = cls.name;
+                        select.appendChild(option);
+                    });
+                    const currentHome = userData.homeScreen || 'portaria';
+                    select.value = currentHome;
+                    row.appendChild(select);
+                    
+                    const saveBtn = document.createElement('button');
+                    saveBtn.className = 'btn btn-primary';
+                    saveBtn.textContent = 'Salvar';
+                    saveBtn.onclick = () => saveUserHomeSetting(userId, select.value);
+                    row.appendChild(saveBtn);
+                    
+                    div.appendChild(row);
+                });
+            });
+        }
+
+        async function saveUserHomeSetting(userId, homeScreenValue) {
+            try {
+                await db.collection('users').doc(userId).update({ homeScreen: homeScreenValue });
+                alert('Tela inicial atualizada!');
+            } catch (error) {
+                alert('Erro ao salvar: ' + error.message);
+            }
+        }
+
+        function renderArchiveList() {
+            db.collection('archive').orderBy('date', 'desc').onSnapshot(snapshot => {
+                const div = document.getElementById('archive-list');
+                div.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn';
+                    btn.textContent = `📅 ${doc.id}`;
+                    btn.onclick = () => viewArchive(doc.id);
+                    div.appendChild(btn);
+                });
+            });
+        }
+
+        function viewArchive(date) {
+            db.collection('archive').doc(date).get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('archive-content').textContent = JSON.stringify(data, null, 2);
+                    document.getElementById('archive-modal').style.display = 'flex';
+                }
+            });
+        }
+
+        function closeArchiveModal() {
+            document.getElementById('archive-modal').style.display = 'none';
+        }
+
         // ================= AÇÕES =================
-        async function releaseStudent(student) {
+        async function releaseStudent(student, bypassConfirmation = false) {
             const alreadyCalled = activeCalls.some(c => c.classId === student.classId && c.studentName === student.name && c.status !== 'left');
             if (alreadyCalled) {
                 alert('Este estudante já foi chamado.');
                 return;
             }
-            if (confirmationEnabled) {
+            if (confirmationEnabled && !bypassConfirmation) {
                 if (!confirm(`Liberar "${student.name} - ${student.className}"?`)) return;
             }
             try {
@@ -1340,6 +1471,30 @@
             }
         }
 
+        function toggleLogs() {
+            const div = document.getElementById('logged-users-list');
+            div.style.display = div.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleObservations() {
+            const div = document.getElementById('observations-list');
+            if (div.style.display === 'none') {
+                div.style.display = 'block';
+                renderObservations();
+            } else {
+                div.style.display = 'none';
+            }
+        }
+
+        function updatePortariaClassesVisibility() {
+            const turmasHeading = document.querySelector('#screen-portaria h2:nth-of-type(2)');
+            const turmasDiv = document.getElementById('portaria-class-buttons');
+            if (turmasHeading && turmasDiv) {
+                turmasHeading.style.display = portariaShowClasses ? 'block' : 'none';
+                turmasDiv.style.display = portariaShowClasses ? 'block' : 'none';
+            }
+        }
+
         function openClassScreen(classId) {
             currentClass = allClasses.find(c => c.id === classId);
             if (!currentClass) return;
@@ -1361,12 +1516,11 @@
             document.getElementById('portaria-subview-class').style.display = 'none';
         }
 
-                async function releaseCurrentClass() {
+        async function releaseCurrentClass() {
             if (!currentClass) return;
             const alreadyReleased = releasedClasses.some(r => r.classId === currentClass.id);
 
             if (alreadyReleased) {
-                // Cancelar liberação com confirmação em três etapas
                 if (!confirm(`Cancelar liberação da turma ${currentClass.name}?`)) return;
                 if (!confirm('Tem certeza? A turma voltará a ficar bloqueada.')) return;
                 if (!confirm('Confirmação final: cancelar liberação?')) return;
@@ -1384,12 +1538,10 @@
                 return;
             }
 
-            // Liberar turma (apenas uma vez)
             if (confirmationEnabled) {
                 if (!confirm(`Liberar turma ${currentClass.name}?`)) return;
             }
             try {
-                // Garante que não há registro duplicado antes de adicionar
                 const existing = await db.collection('releasedClasses')
                     .where('classId', '==', currentClass.id)
                     .get();
@@ -1451,6 +1603,7 @@
             if (password === settingsPassword) {
                 closePasswordModal();
                 showScreen('screen-settings');
+                document.getElementById('show-portaria-classes-toggle').checked = portariaShowClasses;
                 renderLoggedUsers();
                 renderUserHomeList();
                 renderArchiveList();
@@ -1502,7 +1655,7 @@
                     name,
                     students: [],
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    order: Date.now() // Ordem inicial baseada no momento da criação
+                    order: Date.now()
                 });
                 document.getElementById('new-class-name').value = '';
             } catch (error) {
@@ -1577,7 +1730,7 @@
                                 name: cls.name,
                                 students: cls.students || [],
                                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                order: Date.now() + Math.random() // evita colisão
+                                order: Date.now() + Math.random()
                             });
                         }
                     }
@@ -1594,142 +1747,58 @@
             reader.readAsText(file);
         }
 
-                        function toggleLogs() {
-            const div = document.getElementById('logged-users-list');
-            if (div.style.display === 'none') {
-                div.style.display = 'block';
-            } else {
-                div.style.display = 'none';
-            }
-        }
-
-        function renderLoggedUsers() {
-            db.collection('logins').orderBy('timestamp', 'desc').limit(50).onSnapshot(snapshot => {
-                const div = document.getElementById('logged-users-list');
-                div.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const d = doc.data();
-                    const time = d.timestamp ? new Date(d.timestamp.toMillis()).toLocaleString('pt-BR') : '';
-                    const name = d.name ? d.name : 'Nome não informado';
-                    let actionInfo = '';
-                    if (d.lastAction) {
-                        const lastActionTime = d.lastActionTimestamp ? new Date(d.lastActionTimestamp.toMillis()).toLocaleString('pt-BR') : '';
-                        actionInfo = ` - Última ação: ${d.lastAction} às ${lastActionTime}`;
-                    }
-                    div.innerHTML += `<p>👤 ${name} (📧 ${d.email}) - ${time}${actionInfo}</p>`;
-                });
-            });
-        }
-
-        function renderUserHomeList() {
-            db.collection('users').onSnapshot(snapshot => {
-                const div = document.getElementById('user-home-list');
-                div.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const userData = doc.data();
-                    const userId = doc.id;
-                    const row = document.createElement('div');
-                    row.className = 'request-row';
-                    row.innerHTML = `<span>${userData.name || 'Sem nome'} (${userData.email || 'sem email'})</span>`;
-                    
-                    // Dropdown para tela inicial
-                    const select = document.createElement('select');
-                    select.id = `home-select-${userId}`;
-                    const optionPortaria = document.createElement('option');
-                    optionPortaria.value = 'portaria';
-                    optionPortaria.textContent = 'Portaria';
-                    select.appendChild(optionPortaria);
-                    allClasses.forEach(cls => {
-                        const option = document.createElement('option');
-                        option.value = cls.id;
-                        option.textContent = cls.name;
-                        select.appendChild(option);
-                    });
-                    // Seleciona o valor atual
-                    const currentHome = userData.homeScreen || 'portaria';
-                    select.value = currentHome;
-                    row.appendChild(select);
-                    
-                    const saveBtn = document.createElement('button');
-                    saveBtn.className = 'btn btn-primary';
-                    saveBtn.textContent = 'Salvar';
-                    saveBtn.onclick = () => saveUserHomeSetting(userId, select.value);
-                    row.appendChild(saveBtn);
-                    
-                    div.appendChild(row);
-                });
-            });
-        }
-
-        async function saveUserHomeSetting(userId, homeScreenValue) {
-            try {
-                await db.collection('users').doc(userId).update({ homeScreen: homeScreenValue });
-                alert('Tela inicial atualizada!');
-            } catch (error) {
-                alert('Erro ao salvar: ' + error.message);
-            }
-        }
-
-        function renderArchiveList() {
-            db.collection('archive').orderBy('date', 'desc').onSnapshot(snapshot => {
-                const div = document.getElementById('archive-list');
-                div.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const btn = document.createElement('button');
-                    btn.className = 'btn';
-                    btn.textContent = `📅 ${doc.id}`;
-                    btn.onclick = () => viewArchive(doc.id);
-                    div.appendChild(btn);
-                });
-            });
-        }
-
-        function viewArchive(date) {
-            db.collection('archive').doc(date).get().then(doc => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    document.getElementById('archive-content').textContent = JSON.stringify(data, null, 2);
-                    document.getElementById('archive-modal').style.display = 'flex';
-                }
-            });
-        }
-
-        function closeArchiveModal() {
-            document.getElementById('archive-modal').style.display = 'none';
-        }
-
         // ================= APROVAÇÃO DE CADASTRO =================
-                async function approveRegistration(requestId, data) {
+        async function approveRegistration(requestId, data) {
             if (!confirm(`Aprovar cadastro de ${data.name} (${data.email})?`)) return;
             try {
                 const apiKey = firebaseConfig.apiKey;
-                const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
+                let uid;
+                const signUpResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         email: data.email,
-                        password: data.email, // senha = e-mail
+                        password: data.email,
                         returnSecureToken: false
                     })
                 });
-                const result = await response.json();
-                if (!response.ok) {
-                    throw new Error(result.error?.message || 'Erro ao criar usuário');
+                const signUpResult = await signUpResponse.json();
+
+                if (signUpResponse.ok) {
+                    uid = signUpResult.localId;
+                } else if (signUpResult.error?.message === 'EMAIL_EXISTS') {
+                    const signInResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: data.email,
+                            password: data.email,
+                            returnSecureToken: false
+                        })
+                    });
+                    const signInResult = await signInResponse.json();
+                    if (!signInResponse.ok) {
+                        throw new Error('E-mail já existe, mas a senha não é a padrão. Exclua o usuário manualmente no Firebase Auth e tente novamente.');
+                    }
+                    uid = signInResult.localId;
+                } else {
+                    throw new Error(signUpResult.error?.message || 'Erro ao criar usuário');
                 }
-                const uid = result.localId;
+
                 await db.collection('users').doc(uid).set({
                     email: data.email,
                     name: data.name,
                     role: 'user',
                     active: true,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                }, { merge: true });
+
                 await db.collection('registrationRequests').doc(requestId).update({
                     status: 'approved',
                     approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     uid: uid
                 });
-                alert('Cadastro aprovado! Senha do usuário = e-mail.');
+                alert('Cadastro aprovado! Senha do usuário = e-mail (ou a senha já existente).');
             } catch (error) {
                 alert('Erro ao aprovar: ' + error.message);
             }
@@ -1747,15 +1816,13 @@
             }
         }
 
-         async function deleteRegistration(requestId) {
+        async function deleteRegistration(requestId) {
             if (!confirm('Excluir esta solicitação permanentemente?')) return;
             try {
-                // Obter dados da solicitação antes de excluir
                 const requestDoc = await db.collection('registrationRequests').doc(requestId).get();
                 if (requestDoc.exists) {
                     const data = requestDoc.data();
                     if (data.status === 'approved' && data.uid) {
-                        // Marcar usuário como inativo no Firestore
                         await db.collection('users').doc(data.uid).update({ active: false });
                     }
                 }
@@ -1778,11 +1845,9 @@
             }
 
             try {
-                // Atualizar nome no Firestore
                 const userRef = db.collection('users').doc(currentUser.uid);
                 await userRef.update({ name: newName });
 
-                // Atualizar senha se fornecida
                 if (newPassword) {
                     if (newPassword !== confirmPassword) {
                         alert('A nova senha e a confirmação não coincidem.');
@@ -1798,7 +1863,6 @@
                 alert('Perfil atualizado com sucesso!');
                 document.getElementById('profile-new-password').value = '';
                 document.getElementById('profile-confirm-password').value = '';
-                // Atualizar nome local
                 userName = newName;
                 localStorage.setItem(`userName_${currentUser.uid}`, newName);
             } catch (error) {
@@ -1855,34 +1919,47 @@
         }
 
         // ================= RECONHECIMENTO DE VOZ =================
+        function initRecognitionIfNeeded() {
+            if (recognition) return;
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'pt-BR';
+            recognition.maxAlternatives = 1;
+            recognition.onresult = (event) => {
+                const transcript = event.results[event.results.length - 1][0].transcript;
+                handleVoiceResult(transcript);
+            };
+            recognition.onend = () => {
+                // Se o modo automático ainda estiver ativo, reinicia a escuta
+                if (autoVoiceActive) {
+                    recognition.start();
+                } else {
+                    voiceActive = false;
+                    document.getElementById('btn-voice').textContent = '🎤 Modo de voz';
+                }
+            };
+            recognition.onerror = (event) => {
+                voiceActive = false;
+                autoVoiceActive = false;
+                document.getElementById('btn-voice').textContent = '🎤 Modo de voz';
+                document.getElementById('btn-auto-voice').textContent = '🎤 Auto voz';
+                alert('Erro no reconhecimento: ' + event.error);
+            };
+        }
+
         function toggleVoice() {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
                 alert('Reconhecimento de voz não suportado neste navegador.');
                 return;
             }
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!recognition) {
-                recognition = new SpeechRecognition();
-                recognition.lang = 'pt-BR';
-                recognition.interimResults = false;
-                recognition.maxAlternatives = 1;
-                recognition.onresult = (event) => {
-                    const transcript = event.results[0][0].transcript;
-                    document.getElementById('search-input').value = transcript;
-                    performSearch(transcript);
-                    voiceActive = false;
-                    document.getElementById('btn-voice').textContent = '🎤 Modo de voz';
-                };
-                recognition.onend = () => {
-                    voiceActive = false;
-                    document.getElementById('btn-voice').textContent = '🎤 Modo de voz';
-                };
-                recognition.onerror = (event) => {
-                    voiceActive = false;
-                    document.getElementById('btn-voice').textContent = '🎤 Modo de voz';
-                    alert('Erro no reconhecimento: ' + event.error);
-                };
+            initRecognitionIfNeeded();
+            // Desativa o modo automático se estiver ativo
+            if (autoVoiceActive) {
+                autoVoiceActive = false;
+                document.getElementById('btn-auto-voice').textContent = '🎤 Auto voz';
             }
+            recognition.continuous = false;
+            recognition.interimResults = false;
             if (voiceActive) {
                 recognition.stop();
                 voiceActive = false;
@@ -1891,6 +1968,127 @@
                 recognition.start();
                 voiceActive = true;
                 document.getElementById('btn-voice').textContent = '🔴 Ouvindo...';
+            }
+        }
+
+        function toggleAutoVoice() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('Reconhecimento de voz não suportado neste navegador.');
+                return;
+            }
+            initRecognitionIfNeeded();
+            if (autoVoiceActive) {
+                // Desativar modo automático
+                autoVoiceActive = false;
+                recognition.stop();
+                document.getElementById('btn-auto-voice').textContent = '🎤 Auto voz';
+            } else {
+                // Ativar modo automático
+                autoVoiceActive = true;
+                voiceActive = false; // desativa o modo manual
+                recognition.continuous = true;
+                recognition.interimResults = false;
+                recognition.start();
+                document.getElementById('btn-auto-voice').textContent = '🔴 Auto voz';
+            }
+        }
+
+        function handleVoiceResult(transcript) {
+            document.getElementById('search-input').value = transcript;
+            if (autoVoiceActive) {
+                processAutoVoiceResult(transcript);
+            } else {
+                performSearch(transcript);
+                voiceActive = false;
+                document.getElementById('btn-voice').textContent = '🎤 Modo de voz';
+            }
+        }
+
+        function processAutoVoiceResult(transcript) {
+            // Extrair o primeiro nome (primeira palavra do transcript)
+            const firstName = transcript.trim().split(/\s+/)[0].toLowerCase();
+            if (!firstName) return;
+
+            // Buscar todos os estudantes cujo primeiro nome normalizado corresponde
+            const matches = [];
+            allClasses.forEach(cls => {
+                (cls.students || []).forEach(name => {
+                    const nameParts = name.trim().split(/\s+/);
+                    if (nameParts.length > 0) {
+                        const studentFirstName = nameParts[0].toLowerCase();
+                        if (normalize(studentFirstName) === normalize(firstName)) {
+                            matches.push({ name, className: cls.name, classId: cls.id });
+                        }
+                    }
+                });
+            });
+
+            if (matches.length === 1) {
+                // Chamada direta sem confirmação
+                releaseStudent(matches[0], true);
+                playRightSound();
+            } else {
+                // Erro: múltiplos ou nenhum
+                playWrongSound();
+                // Mostra sugestões abaixo do campo de busca
+                if (matches.length > 1) {
+                    // Vários estudantes com o mesmo primeiro nome
+                    displaySearchSuggestions(matches);
+                } else {
+                    // Nenhum correspondente; usar busca aproximada como sugestão
+                    performSearch(transcript);
+                }
+            }
+        }
+
+        function displaySearchSuggestions(suggestions) {
+            const resultsDiv = document.getElementById('search-results');
+            resultsDiv.innerHTML = '';
+            const p = document.createElement('p');
+            p.textContent = 'Vários estudantes encontrados. Selecione abaixo:';
+            resultsDiv.appendChild(p);
+            suggestions.forEach(m => {
+                const btn = document.createElement('button');
+                btn.className = 'student-result';
+                btn.textContent = `${m.name} - ${m.className}`;
+                btn.onclick = () => releaseStudent(m);
+                resultsDiv.appendChild(btn);
+            });
+        }
+
+        function playRightSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.frequency.value = 1200; // som agudo
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            } catch (e) {
+                console.warn('Áudio não suportado:', e);
+            }
+        }
+
+        function playWrongSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.frequency.value = 300; // som grave
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.6);
+            } catch (e) {
+                console.warn('Áudio não suportado:', e);
             }
         }
 
@@ -1929,7 +2127,7 @@
                 const leftCall = activeCalls.find(c => c.classId === m.classId && c.studentName === m.name && c.status === 'left');
                 let bgColor = '';
                 if (activeCall) {
-                    bgColor = activeCall.status === 'hurried' ? '#ffcccc' : '#ffe0b3';
+                    bgColor = activeCall.status === 'hurried' ? '#ffcccc' : '#FFA500';
                 } else if (leftCall) {
                     bgColor = '#cce0ff';
                 }
@@ -1940,6 +2138,11 @@
                 btn.onclick = () => releaseStudent(m);
                 resultsDiv.appendChild(btn);
             });
+        }
+        
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            performSearch('');
         }
 
         function normalize(str) {
