@@ -2005,23 +2005,14 @@
         }
 
         function processAutoVoiceResult(transcript) {
-            // Extrair o primeiro nome (primeira palavra do transcript)
-            const firstName = transcript.trim().split(/\s+/)[0].toLowerCase();
-            if (!firstName) return;
+            const { classId, nameWords } = detectClassAndName(transcript);
+            if (nameWords.length === 0) {
+                playWrongSound();
+                performSearch(transcript);
+                return;
+            }
 
-            // Buscar todos os estudantes cujo primeiro nome normalizado corresponde
-            const matches = [];
-            allClasses.forEach(cls => {
-                (cls.students || []).forEach(name => {
-                    const nameParts = name.trim().split(/\s+/);
-                    if (nameParts.length > 0) {
-                        const studentFirstName = nameParts[0].toLowerCase();
-                        if (normalize(studentFirstName) === normalize(firstName)) {
-                            matches.push({ name, className: cls.name, classId: cls.id });
-                        }
-                    }
-                });
-            });
+            const matches = matchStudents(classId, nameWords);
 
             if (matches.length === 1) {
                 // Chamada direta sem confirmação
@@ -2030,9 +2021,8 @@
             } else {
                 // Erro: múltiplos ou nenhum
                 playWrongSound();
-                // Mostra sugestões abaixo do campo de busca
                 if (matches.length > 1) {
-                    // Vários estudantes com o mesmo primeiro nome
+                    // Vários estudantes correspondem
                     displaySearchSuggestions(matches);
                 } else {
                     // Nenhum correspondente; usar busca aproximada como sugestão
@@ -2090,6 +2080,94 @@
             } catch (e) {
                 console.warn('Áudio não suportado:', e);
             }
+        }
+
+        // ================= FUNÇÕES AUXILIARES PARA AUTO VOZ =================
+        function normalizeClassInput(str) {
+            return str
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/º/g, 'o')
+                .replace(/ª/g, 'a')
+                .replace(/[^\w\s]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function getClassAliases(cls) {
+            const name = normalizeClassInput(cls.name);
+            const aliasesMap = {
+                'g2': ['g2', 'grupo 2', 'grupo dois'],
+                'g3': ['g3', 'grupo 3', 'grupo tres'],
+                'g4': ['g4', 'grupo 4', 'grupo quatro'],
+                'g5': ['g5', 'grupo 5', 'grupo cinco'],
+                '1o ano a': ['1o ano a', 'primeiro ano a', '1 ano a', 'primeiro a'],
+                '1o ano b': ['1o ano b', 'primeiro ano b', '1 ano b', 'primeiro b'],
+                '2o ano': ['2o ano', 'segundo ano', '2 ano', 'segundo'],
+                '3o ano a': ['3o ano a', 'terceiro ano a', '3 ano a', 'terceiro a'],
+                '3o ano b': ['3o ano b', 'terceiro ano b', '3 ano b', 'terceiro b'],
+                '4o ano': ['4o ano', 'quarto ano', '4 ano', 'quarto'],
+                '5o ano': ['5o ano', 'quinto ano', '5 ano', 'quinto']
+            };
+            return aliasesMap[name] || [name];
+        }
+
+        function detectClassAndName(transcript) {
+            const words = normalizeClassInput(transcript).split(/\s+/).filter(Boolean);
+            let detected = null; // { classId, startIdx, endIdx }
+
+            // Procurar por turma em todas as classes
+            for (const cls of allClasses) {
+                const aliases = getClassAliases(cls);
+                for (const alias of aliases) {
+                    const aliasWords = alias.split(/\s+/).filter(Boolean);
+                    if (aliasWords.length === 0) continue;
+                    for (let i = 0; i <= words.length - aliasWords.length; i++) {
+                        let match = true;
+                        for (let j = 0; j < aliasWords.length; j++) {
+                            if (words[i + j] !== aliasWords[j]) {
+                                match = false;
+                                break;
+                            }
+                        }
+                        if (match) {
+                            detected = { classId: cls.id, startIdx: i, endIdx: i + aliasWords.length - 1 };
+                            break;
+                        }
+                    }
+                    if (detected) break;
+                }
+                if (detected) break;
+            }
+
+            // Extrair nome: remover palavras da turma
+            let nameWords;
+            if (detected) {
+                nameWords = words.filter((_, idx) => idx < detected.startIdx || idx > detected.endIdx);
+            } else {
+                nameWords = words.slice();
+            }
+
+            return { classId: detected ? detected.classId : null, nameWords };
+        }
+
+        function matchStudents(classId, nameWords) {
+            // Se houver turma detectada, filtra por ela
+            const candidates = classId ? allClasses.filter(c => c.id === classId) : allClasses.slice();
+            const matches = [];
+
+            for (const cls of candidates) {
+                for (const name of cls.students || []) {
+                    const studentTokens = normalizeClassInput(name).split(/\s+/).filter(Boolean);
+                    // Todos os tokens do nome falado devem estar presentes no nome do estudante
+                    const allIncluded = nameWords.every(w => studentTokens.includes(w));
+                    if (allIncluded && nameWords.length > 0) {
+                        matches.push({ name, className: cls.name, classId: cls.id });
+                    }
+                }
+            }
+            return matches;
         }
 
         function performSearch(query) {
