@@ -2223,30 +2223,84 @@
             performSearch('');
         }
 
+                // Grupos de fonemas semelhantes para custo reduzido na distância de Levenshtein
+        const PHONETIC_GROUPS = [
+            ['a', 'ã', 'á', 'à', 'â'],
+            ['e', 'ê', 'é', 'i', 'y'],
+            ['o', 'ô', 'ó', 'u'],
+            ['c', 'ç', 's', 'ss', 'x', 'ch'],
+            ['g', 'j'],
+            ['k', 'q'],
+            ['p', 'b'],
+            ['t', 'd'],
+            ['f', 'v'],
+            ['m', 'n'],
+            ['r', 'rr', 'l', 'lh'],
+            ['z', 's', 'x']
+        ];
+
+        function getPhoneticGroup(char) {
+            for (const group of PHONETIC_GROUPS) {
+                if (group.includes(char)) return group;
+            }
+            return null;
+        }
+
         function normalize(str) {
             return str
+                .toLowerCase()
                 .normalize('NFD')
                 .replace(/[\u0300-\u036f]/g, '')
+                .replace(/ç/g, 's')
+                .replace(/ñ/g, 'n')
                 .replace(/nh/g, 'n')
                 .replace(/lh/g, 'l')
                 .replace(/th/g, 't')
-                .replace(/o/g, 'u')
-                .replace(/e/g, 'i')
+                .replace(/ss/g, 's')
+                .replace(/rr/g, 'r')
+                .replace(/ch/g, 'x')
+                .replace(/gu([ei])/g, 'g$1') // "gu" antes de e/i soa como g
+                .replace(/qu([ei])/g, 'k$1') // "qu" antes de e/i soa como k
+                .replace(/y/g, 'i')
+                .replace(/w/g, 'v')
+                .replace(/k/g, 'c')
                 .replace(/(.)\1+/g, '$1');
         }
 
         function levenshtein(a, b) {
+            const aLen = a.length;
+            const bLen = b.length;
             const matrix = [];
-            for (let i = 0; i <= b.length; i++) matrix[i] = [i];
-            for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-            for (let i = 1; i <= b.length; i++) {
-                for (let j = 1; j <= a.length; j++) {
-                    matrix[i][j] = b.charAt(i - 1) === a.charAt(j - 1)
-                        ? matrix[i - 1][j - 1]
-                        : Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+
+            for (let i = 0; i <= bLen; i++) {
+                matrix[i] = [i];
+            }
+            for (let j = 0; j <= aLen; j++) {
+                matrix[0][j] = j;
+            }
+
+            for (let i = 1; i <= bLen; i++) {
+                for (let j = 1; j <= aLen; j++) {
+                    const charA = a.charAt(j - 1);
+                    const charB = b.charAt(i - 1);
+                    let substitutionCost = 1;
+                    if (charA === charB) {
+                        substitutionCost = 0;
+                    } else {
+                        const groupA = getPhoneticGroup(charA);
+                        const groupB = getPhoneticGroup(charB);
+                        if (groupA && groupB && groupA === groupB) {
+                            substitutionCost = 0.5; // custo reduzido para sons parecidos
+                        }
+                    }
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1] + substitutionCost,
+                        matrix[i][j - 1] + 1,
+                        matrix[i - 1][j] + 1
+                    );
                 }
             }
-            return matrix[b.length][a.length];
+            return matrix[bLen][aLen];
         }
 
         // ================= SOM =================
