@@ -1985,15 +1985,14 @@
             }
 
             const matches = matchStudents(classId, nameWords);
+            const strictMatches = matches.filter(m => m.strict);
 
-            if (matches.length === 1) {
-                releaseStudent(matches[0], true);
+            if (strictMatches.length === 1) {
+                releaseStudent(strictMatches[0], true);
+            } else if (matches.length > 0) {
+                displaySearchSuggestions(matches);
             } else {
-                if (matches.length > 1) {
-                    displaySearchSuggestions(matches);
-                } else {
-                    performSearch(transcript);
-                }
+                performSearch(transcript);
             }
         }
 
@@ -2083,16 +2082,37 @@
         function matchStudents(classId, nameWords) {
             const candidates = classId ? allClasses.filter(c => c.id === classId) : allClasses.slice();
             const matches = [];
+            const searchTokens = nameWords.map(w => normalize(w));
+            const searchNoSpace = searchTokens.join('');
 
             for (const cls of candidates) {
                 for (const name of cls.students || []) {
-                    const studentTokens = normalizeClassInput(name).split(/\s+/).filter(Boolean);
-                    const allIncluded = nameWords.every(w => studentTokens.includes(w));
-                    if (allIncluded && nameWords.length > 0) {
-                        matches.push({ name, className: cls.name, classId: cls.id });
+                    const studentTokens = normalize(name).split(/\s+/).filter(Boolean);
+                    const studentNoSpace = studentTokens.join('');
+                    const strict = searchTokens.length > 0 && searchTokens.every(w => studentTokens.includes(w));
+                    let score = 0;
+
+                    if (strict) {
+                        score = 1;
+                    } else {
+                        const dist = levenshtein(searchNoSpace, studentNoSpace);
+                        const maxLen = Math.max(searchNoSpace.length, studentNoSpace.length);
+                        score = maxLen > 0 ? 1 - dist / maxLen : 0;
+                    }
+
+                    if (score >= 0.65) {
+                        matches.push({
+                            name,
+                            className: cls.name,
+                            classId: cls.id,
+                            score,
+                            strict
+                        });
                     }
                 }
             }
+
+            matches.sort((a, b) => b.score - a.score);
             return matches;
         }
 
@@ -2112,7 +2132,7 @@
                         const distance = levenshtein(q, normalizedName);
                         const maxLen = Math.max(q.length, normalizedName.length);
                         const similarity = 1 - distance / maxLen;
-                        if (similarity >= 0.7) {
+                        if (similarity >= 0.65) {
                             matches.push({ name, className: cls.name, classId: cls.id, score: similarity * 100 });
                         }
                     }
@@ -2178,6 +2198,7 @@
                 .replace(/[\u0300-\u036f]/g, '')
                 .replace(/ç/g, 's')
                 .replace(/ñ/g, 'n')
+                .replace(/ph/g, 'f')
                 .replace(/nh/g, 'n')
                 .replace(/lh/g, 'l')
                 .replace(/th/g, 't')
@@ -2186,9 +2207,13 @@
                 .replace(/ch/g, 'x')
                 .replace(/gu([ei])/g, 'g$1')
                 .replace(/qu([ei])/g, 'k$1')
+                .replace(/z/g, 's')
                 .replace(/y/g, 'i')
                 .replace(/w/g, 'v')
                 .replace(/k/g, 'c')
+                .replace(/h/g, '') // remove h mudo restante
+                .replace(/e/g, 'i')
+                .replace(/o/g, 'u')
                 .replace(/(.)\1+/g, '$1');
         }
 
