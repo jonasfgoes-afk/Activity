@@ -434,18 +434,17 @@
                         </button>                    </div>
                     <div id="search-results"></div>
 
-                    <h2>🟢 Turmas liberadas</h2>
-                    <div id="released-classes-list"></div>
-
                     <h2 id="portaria-turmas-heading">📚 Turmas <button id="toggle-class-grid" class="btn" onclick="toggleClassGrid()">Expandir/Retrair</button></h2>
                     <div id="portaria-class-buttons" class="grid" style="display:block;"></div>
 
                     <button class="btn" id="btn-toggle-history" onclick="toggleHistory()">📜 Histórico</button>
-                    <div id="history-section" style="display:none;">
+                    <div id="history-section" style="display:block;">
                         <button class="btn btn-danger" onclick="undoLastAction()">↩️ Desfazer última ação</button>
                         <div id="history-list"></div>
                     </div>
-                </div>
+
+                    <h2>🟢 Turmas liberadas</h2>
+                    <div id="released-classes-list"></div>
 
                 <div id="portaria-subview-class" style="display:none;">
                     <h2 id="portaria-class-title"></h2>
@@ -599,7 +598,8 @@
         let classGridExpanded = true;
         let expandedReleasedClassId = null;
         let autoVoiceActive = false;
-
+        let historyExpanded = false; // controla se o histórico mostra todos os nomes ou apenas os 3 últimos
+        
         // ================= CARREGAR SENHA DO FIRESTORE =================
         async function loadSettingsPassword() {
             try {
@@ -1022,10 +1022,14 @@
             });
         }
 
-        function renderHistory() {
+         function renderHistory() {
             const div = document.getElementById('history-list');
             div.innerHTML = '';
-            activeCalls.slice().sort((a, b) => (b.calledAt?.toMillis?.() || 0) - (a.calledAt?.toMillis?.() || 0)).forEach(c => {
+            let callsToShow = activeCalls.slice().sort((a, b) => (b.calledAt?.toMillis?.() || 0) - (a.calledAt?.toMillis?.() || 0));
+            if (!historyExpanded) {
+                callsToShow = callsToShow.slice(0, 3); // apenas os 3 primeiros (mais recentes)
+            }
+            callsToShow.forEach(c => {
                 const row = document.createElement('div');
                 row.className = 'history-row';
                 if (c.teacherReleased) {
@@ -1474,8 +1478,10 @@
         }
 
         function toggleHistory() {
-            const section = document.getElementById('history-section');
-            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+            historyExpanded = !historyExpanded;
+            renderHistory();
+            const btn = document.getElementById('btn-toggle-history');
+            btn.textContent = historyExpanded ? '📜 Ocultar histórico' : '📜 Ver todo o histórico';
         }
 
         function toggleClassGrid() {
