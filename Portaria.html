@@ -439,7 +439,6 @@
 
                     <button class="btn" id="btn-toggle-history" onclick="toggleHistory()">📜 Histórico</button>
                     <div id="history-section" style="display:block;">
-                        <button class="btn btn-danger" onclick="undoLastAction()">↩️ Desfazer última ação</button>
                         <div id="history-list"></div>
                     </div>
 
@@ -1467,16 +1466,6 @@
             }
         }
 
-        async function undoLastAction() {
-            if (!confirm('Desfazer última ação?')) return;
-            const sorted = activeCalls.slice().sort((a, b) => (b.calledAt?.toMillis?.() || 0) - (a.calledAt?.toMillis?.() || 0));
-            if (sorted.length === 0) {
-                alert('Nenhuma ação para desfazer.');
-                return;
-            }
-            await undoCall(sorted[0].id);
-        }
-
         function toggleHistory() {
             historyExpanded = !historyExpanded;
             renderHistory();
@@ -2060,8 +2049,10 @@
         }
 
         function handleVoiceResult(transcript) {
-            document.getElementById('search-input').value = transcript;
-            processAutoVoiceResult(transcript);
+            // Exceção: o reconhecimento costuma retornar "aqui" no lugar de "Akin"
+            const correctedTranscript = transcript.replace(/\baqui\b/gi, 'Akin');
+            document.getElementById('search-input').value = correctedTranscript;
+            processAutoVoiceResult(correctedTranscript);
         }
 
         function processAutoVoiceResult(transcript) {
