@@ -429,9 +429,8 @@
                         <button class="btn" id="clear-search-btn" onclick="clearSearch()">✖</button>
                         <button class="btn" id="btn-auto-voice" 
                                 style="padding: 15px 25px; font-size: 18px; width: 100%;" 
-                                onmousedown="startPushToTalk()" onmouseup="stopPushToTalk()" onmouseleave="stopPushToTalk()"
-                                ontouchstart="startPushToTalk()" ontouchend="stopPushToTalk()" ontouchcancel="stopPushToTalk()">
-                            🎤 Segure para falar
+                                onclick="toggleVoiceRecording()">
+                            🎤 Iniciar voz
                         </button>                    </div>
                     <div id="search-results"></div>
 
@@ -1998,6 +1997,8 @@
         }
 
         // ================= RECONHECIMENTO DE VOZ =================
+        let autoVoiceTimeout = null; // variável global para o timeout (adicione ao estado global, se preferir)
+
         function initRecognitionIfNeeded() {
             if (recognition) return;
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -2011,33 +2012,45 @@
                 handleVoiceResult(transcript);
             };
             recognition.onend = () => {
-                // Reconhecimento encerrado; reseta o botão
+                // Reconhecimento encerrado; limpa timeout e reseta botão
+                clearTimeout(autoVoiceTimeout);
                 autoVoiceActive = false;
-                document.getElementById('btn-auto-voice').textContent = '🎤 Segure para falar';
+                document.getElementById('btn-auto-voice').textContent = '🎤 Iniciar voz';
             };
             recognition.onerror = (event) => {
+                clearTimeout(autoVoiceTimeout);
                 autoVoiceActive = false;
-                document.getElementById('btn-auto-voice').textContent = '🎤 Segure para falar';
+                document.getElementById('btn-auto-voice').textContent = '🎤 Iniciar voz';
                 alert('Erro no reconhecimento: ' + event.error);
             };
         }
 
-        function startPushToTalk() {
+        function toggleVoiceRecording() {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
                 alert('Reconhecimento de voz não suportado neste navegador.');
                 return;
             }
             initRecognitionIfNeeded();
-            if (autoVoiceActive) return; // já está ativo
-            autoVoiceActive = true;
-            recognition.start();
-            document.getElementById('btn-auto-voice').textContent = '🔴 Solte para enviar';
-        }
 
-        function stopPushToTalk() {
-            if (!autoVoiceActive) return;
-            recognition.stop();
-            // O evento onend cuidará do reset do botão
+            if (autoVoiceActive) {
+                // Já está gravando: parar imediatamente
+                clearTimeout(autoVoiceTimeout);
+                recognition.stop();
+                autoVoiceActive = false;
+                document.getElementById('btn-auto-voice').textContent = '🎤 Iniciar voz';
+            } else {
+                // Iniciar gravação
+                autoVoiceActive = true;
+                recognition.start();
+                document.getElementById('btn-auto-voice').textContent = '🔴 Enviar agora';
+                // Configurar timeout de 7 segundos para parar automaticamente
+                autoVoiceTimeout = setTimeout(() => {
+                    if (autoVoiceActive) {
+                        recognition.stop();
+                        // O onend fará a limpeza
+                    }
+                }, 7000);
+            }
         }
 
         function handleVoiceResult(transcript) {
