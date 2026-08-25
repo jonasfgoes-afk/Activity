@@ -2041,13 +2041,13 @@
         }
 
         function processAutoVoiceResult(transcript) {
-            const { classId, nameWords } = detectClassAndName(transcript);
+            const { classIds, nameWords } = detectClassAndName(transcript);
             if (nameWords.length === 0) {
                 performSearch(transcript);
                 return;
             }
 
-            const matches = matchStudents(classId, nameWords);
+            const matches = matchStudents(classIds, nameWords);
             const strictMatches = matches.filter(m => m.strict);
 
             if (strictMatches.length === 1) {
@@ -2107,8 +2107,9 @@
 
         function detectClassAndName(transcript) {
             const words = normalizeClassInput(transcript).split(/\s+/).filter(Boolean);
-            let detected = null;
+            let detectedExact = null;
 
+            // Tentar detecção exata primeiro
             for (const cls of allClasses) {
                 const aliases = getClassAliases(cls);
                 for (const alias of aliases) {
@@ -2123,27 +2124,87 @@
                             }
                         }
                         if (match) {
-                            detected = { classId: cls.id, startIdx: i, endIdx: i + aliasWords.length - 1 };
+                            detectedExact = { classId: cls.id, startIdx: i, endIdx: i + aliasWords.length - 1 };
                             break;
                         }
                     }
-                    if (detected) break;
+                    if (detectedExact) break;
                 }
-                if (detected) break;
+                if (detectedExact) break;
             }
 
-            let nameWords;
-            if (detected) {
-                nameWords = words.filter((_, idx) => idx < detected.startIdx || idx > detected.endIdx);
-            } else {
-                nameWords = words.slice();
+            // Se encontrou exata, remove as palavras da turma e retorna classId único
+            if (detectedExact) {
+                const nameWords = words.filter((_, idx) => idx < detectedExact.startIdx || idx > detectedExact.endIdx);
+                return { classIds: [detectedExact.classId], nameWords };
             }
 
-            return { classId: detected ? detected.classId : null, nameWords };
+            // Detecção genérica de nível (ex: "primeiro ano", "1o ano", "segundo ano", etc.)
+            const levelAliases = {
+                '1o ano': ['1o ano', 'primeiro ano', '1 ano', 'primeiro'],
+                '2o ano': ['2o ano', 'segundo ano', '2 ano', 'segundo'],
+                '3o ano': ['3o ano', 'terceiro ano', '3 ano', 'terceiro'],
+                '4o ano': ['4o ano', 'quarto ano', '4 ano', 'quarto'],
+                '5o ano': ['5o ano', 'quinto ano', '5 ano', 'quinto']
+            };
+
+            const levelPrefixMap = {
+                '1o ano': '1o ano',
+                '2o ano': '2o ano',
+                '3o ano': '3o ano',
+                '4o ano': '4o ano',
+                '5o ano': '5o ano'
+            };
+
+            let detectedLevel = null;
+            let detectedLevelStart = -1;
+            let detectedLevelEnd = -1;
+
+            for (const [levelKey, aliases] of Object.entries(levelAliases)) {
+                for (const alias of aliases) {
+                    const aliasWords = alias.split(/\s+/).filter(Boolean);
+                    if (aliasWords.length === 0) continue;
+                    for (let i = 0; i <= words.length - aliasWords.length; i++) {
+                        let match = true;
+                        for (let j = 0; j < aliasWords.length; j++) {
+                            if (words[i + j] !== aliasWords[j]) {
+                                match = false;
+                                break;
+                            }
+                        }
+                        if (match) {
+                            detectedLevel = levelKey;
+                            detectedLevelStart = i;
+                            detectedLevelEnd = i + aliasWords.length - 1;
+                            break;
+                        }
+                    }
+                    if (detectedLevel) break;
+                }
+                if (detectedLevel) break;
+            }
+
+            if (detectedLevel) {
+                const prefix = levelPrefixMap[detectedLevel];
+                const levelClassIds = allClasses
+                    .filter(cls => normalizeClassInput(cls.name).startsWith(prefix))
+                    .map(cls => cls.id);
+
+                const nameWords = words.filter((_, idx) => idx < detectedLevelStart || idx > detectedLevelEnd);
+                return { classIds: levelClassIds, nameWords };
+            }
+
+            // Nenhuma turma detectada
+            return { classIds: [], nameWords: words };
         }
 
-        function matchStudents(classId, nameWords) {
-            const candidates = classId ? allClasses.filter(c => c.id === classId) : allClasses.slice();
+        function matchStudents(classIds, nameWords) {
+            let candidates;
+            if (classIds && classIds.length > 0) {
+                candidates = allClasses.filter(c => classIds.includes(c.id));
+            } else {
+                candidates = allClasses.slice();
+            }
             const matches = [];
             const searchTokens = nameWords.map(w => normalize(w));
             const searchNoSpace = searchTokens.join('');
