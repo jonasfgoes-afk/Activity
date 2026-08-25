@@ -427,8 +427,12 @@
                     <div class="search-box">
                         <input type="text" id="search-input" placeholder="Pesquisar estudante..." oninput="performSearch(this.value)">
                         <button class="btn" id="clear-search-btn" onclick="clearSearch()">✖</button>
-                        <button class="btn" id="btn-auto-voice" onclick="toggleAutoVoice()">🎤 Auto voz</button>
-                    </div>
+                        <button class="btn" id="btn-auto-voice" 
+                                style="padding: 15px 25px; font-size: 18px; width: 100%;" 
+                                onmousedown="startPushToTalk()" onmouseup="stopPushToTalk()" onmouseleave="stopPushToTalk()"
+                                ontouchstart="startPushToTalk()" ontouchend="stopPushToTalk()" ontouchcancel="stopPushToTalk()">
+                            🎤 Segure para falar
+                        </button>                    </div>
                     <div id="search-results"></div>
 
                     <h2>🟢 Turmas liberadas</h2>
@@ -2000,39 +2004,40 @@
             recognition = new SpeechRecognition();
             recognition.lang = 'pt-BR';
             recognition.maxAlternatives = 1;
+            recognition.continuous = false;
+            recognition.interimResults = false;
             recognition.onresult = (event) => {
                 const transcript = event.results[event.results.length - 1][0].transcript;
                 handleVoiceResult(transcript);
             };
             recognition.onend = () => {
-                if (autoVoiceActive) {
-                    recognition.start();
-                }
+                // Reconhecimento encerrado; reseta o botão
+                autoVoiceActive = false;
+                document.getElementById('btn-auto-voice').textContent = '🎤 Segure para falar';
             };
             recognition.onerror = (event) => {
                 autoVoiceActive = false;
-                document.getElementById('btn-auto-voice').textContent = '🎤 Auto voz';
+                document.getElementById('btn-auto-voice').textContent = '🎤 Segure para falar';
                 alert('Erro no reconhecimento: ' + event.error);
             };
         }
 
-        function toggleAutoVoice() {
+        function startPushToTalk() {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
                 alert('Reconhecimento de voz não suportado neste navegador.');
                 return;
             }
             initRecognitionIfNeeded();
-            if (autoVoiceActive) {
-                autoVoiceActive = false;
-                recognition.stop();
-                document.getElementById('btn-auto-voice').textContent = '🎤 Auto voz';
-            } else {
-                autoVoiceActive = true;
-                recognition.continuous = true;
-                recognition.interimResults = false;
-                recognition.start();
-                document.getElementById('btn-auto-voice').textContent = '🔴 Auto voz';
-            }
+            if (autoVoiceActive) return; // já está ativo
+            autoVoiceActive = true;
+            recognition.start();
+            document.getElementById('btn-auto-voice').textContent = '🔴 Solte para enviar';
+        }
+
+        function stopPushToTalk() {
+            if (!autoVoiceActive) return;
+            recognition.stop();
+            // O evento onend cuidará do reset do botão
         }
 
         function handleVoiceResult(transcript) {
