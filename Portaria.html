@@ -455,7 +455,7 @@
             <section id="screen-class" class="screen">
                 <h2 id="class-screen-title"></h2>
                 <button id="btn-release-class" class="btn" onclick="releaseCurrentClass()">🔓 Liberar turma</button>
-                <button class="btn" onclick="openStudentListModal()">📋 Lista de alunos</button>
+                <button class="btn" onclick="openStudentListModal()">📋 Lista de estudantes</button>
                 <h3>🔔 Chamadas ativas</h3>
                 <div id="class-active-calls"></div>
                 <h3>✅ Histórico</h3>
@@ -1538,9 +1538,25 @@
             const div = document.getElementById('student-list-content');
             div.innerHTML = '';
             (currentClass.students || []).forEach(name => {
+                const activeCall = activeCalls.find(c => c.classId === currentClass.id && c.studentName === name && c.status !== 'left');
+                const leftCall = activeCalls.find(c => c.classId === currentClass.id && c.studentName === name && c.status === 'left');
                 const row = document.createElement('div');
                 row.className = 'student-row';
                 row.style.justifyContent = 'space-between';
+
+                let bgColor = '';
+                if (activeCall) {
+                    bgColor = activeCall.status === 'hurried' ? '#ffcccc' : '#FFA500';
+                } else if (leftCall) {
+                    if (leftCall.teacherReleased) {
+                        bgColor = '#e8d5f5'; // roxo
+                    } else {
+                        bgColor = '#cce0ff'; // azul
+                    }
+                }
+                row.style.backgroundColor = bgColor;
+                row.style.borderRadius = '4px';
+                row.style.padding = '3px 6px';
 
                 const nameSpan = document.createElement('span');
                 nameSpan.textContent = name;
@@ -1549,6 +1565,8 @@
                 const releaseBtn = document.createElement('button');
                 releaseBtn.className = 'btn';
                 releaseBtn.textContent = '✅ Saiu sozinho';
+                // Se já houver chamada ativa, desabilita o botão
+                releaseBtn.disabled = !!activeCall;
                 releaseBtn.onclick = () => releaseStudentWithoutPortaria(name);
                 row.appendChild(releaseBtn);
 
@@ -1558,6 +1576,14 @@
 
         async function releaseStudentWithoutPortaria(studentName) {
             if (!currentClass) return;
+
+            // Verifica se existe chamada ativa para este aluno
+            const existingActive = activeCalls.find(c => c.classId === currentClass.id && c.studentName === studentName && c.status !== 'left');
+            if (existingActive) {
+                alert('Este aluno já possui chamada ativa da portaria. Use a confirmação de saída normal.');
+                return;
+            }
+
             if (!confirm(`Confirmar que ${studentName} saiu sem chamada da portaria?`)) return;
             try {
                 await db.collection('currentCalls').add({
